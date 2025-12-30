@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master v3.1</title>
+    <title>IB Bio Master Suite</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -12,84 +12,83 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
         .perspective { perspective: 1200px; }
-        .flip-card-inner { transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
+        .flip-inner { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; height: 400px; position: relative; }
         .flipped { transform: rotateY(180deg); }
-        .flip-front, .flip-back { backface-visibility: hidden; position: absolute; width: 100%; height: 100%; top: 0; left: 0; border-radius: 40px; }
-        .flip-back { transform: rotateY(180deg); background: #0f172a; color: white; }
+        .flip-front, .flip-back { backface-visibility: hidden; border-radius: 40px; position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
+        .flip-back { transform: rotateY(180deg); background: #0f172a; color: white; padding: 32px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        // 從全域變數中取出 Lucide 圖標
-        const { 
-            GraduationCap, Settings, Zap, ImageIcon, Target, Dna, 
-            Layers, BookOpen, ChevronLeft, ChevronRight, XCircle, Sparkles, Lightbulb
-        } = lucide;
+        const { useState, useEffect } = React;
+        const { GraduationCap, Settings, Target, Image: ImageIcon, ChevronLeft, ChevronRight, Zap, Sparkles, Dna, RotateCcw } = lucide;
 
+        // --- 視覺圖鑑數據 ---
         const atlasData = [
-            { id: "A1", title: "DNA Nucleotide", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Nucleotide_nucleoside_general.svg/800px-Nucleotide_nucleoside_general.svg.png", points: ["Phosphate Group (5')", "Pentose Sugar", "Nitrogenous Base (1')"] },
-            { id: "C1", title: "Mitochondrion", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Animal_mitochondrion_diagram_en.svg/800px-Animal_mitochondrion_diagram_en.svg.png", points: ["Matrix (Krebs)", "Cristae (ETC)", "Intermembrane Space"] },
-            { id: "B1", title: "Cell Membrane", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Cell_membrane_detailed_diagram_en.svg/800px-Cell_membrane_detailed_diagram_en.svg.png", points: ["Phospholipid Bilayer", "Cholesterol", "Integral Proteins"] }
+            { id: "A1", title: "DNA Nucleotide", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Nucleotide_nucleoside_general.svg/500px-Nucleotide_nucleoside_general.svg.png", points: ["Phosphate at 5'", "Pentose Sugar", "Base at 1'"] },
+            { id: "C1", title: "Mitochondrion", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Animal_mitochondrion_diagram_en.svg/600px-Animal_mitochondrion_diagram_en.svg.png", points: ["Matrix (Krebs)", "Cristae (Surface Area)", "Intermembrane Space"] },
+            { id: "C2", title: "Chloroplast", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Chloroplast_II.svg/600px-Chloroplast_II.svg.png", points: ["Thylakoid (Light)", "Stroma (Calvin)", "Lumen (H+ buildup)"] }
         ];
 
         const App = () => {
-            const [tab, setTab] = React.useState('home');
-            const [apiKey, setApiKey] = React.useState(localStorage.getItem('gemini_key') || '');
-            const [atlasIdx, setAtlasIdx] = React.useState(0);
-            const [isFlipped, setIsFlipped] = React.useState(false);
-            const [quizTopic, setQuizTopic] = React.useState('Cell Biology');
-            const [aiRes, setAiRes] = React.useState('');
-            const [loading, setLoading] = React.useState(false);
+            const [tab, setTab] = useState('home');
+            const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_key') || '');
+            const [isFlipped, setIsFlipped] = useState(false);
+            const [atlasIdx, setAtlasIdx] = useState(0);
+            const [aiRes, setAiRes] = useState('');
+            const [loading, setLoading] = useState(false);
+            const [userAns, setUserAns] = useState('');
 
-            const callAI = async (prompt) => {
-                if(!apiKey) return "Please set API Key in Settings.";
+            // --- AI 呼叫邏輯 (Google Gemini v1) ---
+            const askAI = async (prompt) => {
+                if(!apiKey) return "Error: Please set your Gemini Key in Settings.";
                 setLoading(true);
                 try {
-                    const resp = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                     });
-                    const data = await resp.json();
+                    const data = await response.json();
                     setLoading(false);
                     return data.candidates[0].content.parts[0].text;
                 } catch (e) {
                     setLoading(false);
-                    return "AI Connection Failed.";
+                    return "Connection Failed. Check your internet or API Key.";
                 }
             };
 
             return (
-                <div className="min-h-screen max-w-md mx-auto bg-white shadow-2xl relative overflow-hidden flex flex-col">
+                <div className="min-h-screen max-w-md mx-auto bg-white flex flex-col shadow-2xl relative border-x border-slate-100 overflow-hidden">
                     {/* Header */}
                     <header className="p-6 pt-12 flex justify-between items-center bg-white/80 backdrop-blur-xl sticky top-0 z-50">
                         <div className="flex items-center gap-2 cursor-pointer" onClick={() => setTab('home')}>
-                            <div className="bg-slate-900 p-2 rounded-xl text-white shadow-lg"><GraduationCap size={20}/></div>
-                            <span className="font-black text-slate-900 text-xl tracking-tighter">IB BIO MASTER</span>
+                            <div className="bg-slate-900 p-2.5 rounded-2xl text-white"><GraduationCap size={24}/></div>
+                            <span className="font-black text-slate-900 text-xl tracking-tighter italic">IB BIO PRO</span>
                         </div>
-                        <button onClick={() => setTab('settings')} className={`p-3 rounded-2xl border transition-all ${tab === 'settings' ? 'bg-blue-600 text-white' : 'bg-white text-slate-300'}`}><Settings size={20}/></button>
+                        <button onClick={() => setTab('settings')} className={`p-3 rounded-2xl transition-all ${tab === 'settings' ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-300'}`}><Settings size={22}/></button>
                     </header>
 
-                    <main className="flex-1 p-6 overflow-y-auto pb-32">
+                    <main className="flex-1 p-6 overflow-y-auto hide-scrollbar pb-32">
                         {tab === 'home' && (
                             <div className="space-y-6 animate-in fade-in">
-                                <div className="bg-slate-900 rounded-[40px] p-8 text-white shadow-2xl relative overflow-hidden border border-white/10">
+                                <div className="bg-slate-900 rounded-[40px] p-8 text-white shadow-2xl relative overflow-hidden">
                                     <h2 className="text-3xl font-black mb-2 italic">EXAM CENTER</h2>
-                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-6">AI-Powered Evaluation</p>
-                                    <button onClick={() => setTab('quiz')} className="w-full bg-blue-600 py-5 rounded-3xl font-bold shadow-xl shadow-blue-500/20 active:scale-95 transition-all">START SIMULATION</button>
+                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-8">Google AI Intelligent Grading</p>
+                                    <button onClick={() => setTab('quiz')} className="w-full bg-blue-600 py-5 rounded-3xl font-bold active:scale-95 transition-all shadow-lg shadow-blue-500/20">ENTER SIMULATION</button>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div onClick={() => setTab('atlas')} className="bg-white p-8 rounded-[35px] border border-slate-100 shadow-sm flex flex-col items-center gap-4 cursor-pointer active:scale-95 transition-all">
+                                    <div onClick={() => setTab('atlas')} className="bg-white p-8 rounded-[35px] border border-slate-100 shadow-sm flex flex-col items-center gap-4 cursor-pointer">
                                         <div className="p-4 bg-indigo-50 rounded-2xl text-indigo-500"><ImageIcon size={24}/></div>
                                         <span className="font-bold text-slate-800 text-sm">Visual Atlas</span>
                                     </div>
-                                    <div onClick={() => setTab('home')} className="bg-white p-8 rounded-[35px] border border-slate-100 shadow-sm flex flex-col items-center gap-4 opacity-40">
-                                        <div className="p-4 bg-slate-50 rounded-2xl text-slate-300"><Target size={24}/></div>
-                                        <span className="font-bold text-slate-400 text-sm">Flashcards</span>
+                                    <div onClick={() => setTab('settings')} className="bg-white p-8 rounded-[35px] border border-slate-100 shadow-sm flex flex-col items-center gap-4 cursor-pointer">
+                                        <div className="p-4 bg-emerald-50 rounded-2xl text-emerald-500"><Zap size={24}/></div>
+                                        <span className="font-bold text-slate-800 text-sm">AI Config</span>
                                     </div>
                                 </div>
                             </div>
@@ -99,56 +98,57 @@
                             <div className="space-y-8 animate-in fade-in">
                                 <h2 className="text-2xl font-black text-slate-800 italic">Visual Atlas</h2>
                                 <div className="perspective h-[450px] w-full" onClick={() => setIsFlipped(!isFlipped)}>
-                                    <div className={`flip-card-inner relative w-full h-full ${isFlipped ? 'flipped' : ''}`}>
-                                        <div className="flip-front bg-white border p-6 flex flex-col shadow-xl">
-                                            <div className="flex-1 flex items-center justify-center bg-slate-50 rounded-[32px] p-4 overflow-hidden">
+                                    <div className={`flip-inner w-full h-full ${isFlipped ? 'flipped' : ''}`}>
+                                        <div className="flip-front bg-white border-2 border-slate-50 p-6 flex flex-col shadow-xl">
+                                            <div className="flex-1 flex items-center justify-center bg-slate-50 rounded-[35px] p-6">
                                                 <img src={atlasData[atlasIdx].url} className="max-w-full max-h-full object-contain" />
                                             </div>
-                                            <div className="text-center pt-6">
-                                                <h3 className="text-xl font-black">{atlasData[atlasIdx].title}</h3>
+                                            <div className="text-center pt-8">
+                                                <h3 className="text-2xl font-bold text-slate-800 tracking-tight">{atlasData[atlasIdx].title}</h3>
                                                 <p className="text-[10px] text-blue-500 font-bold uppercase mt-2 tracking-widest">Tap to reveal annotations</p>
                                             </div>
                                         </div>
-                                        <div className="flip-back p-10 flex flex-col justify-center">
-                                            <h3 className="text-blue-400 font-bold mb-8 uppercase tracking-widest text-xs border-b border-white/10 pb-2">Structure Details</h3>
+                                        <div className="flip-back flex flex-col justify-center">
+                                            <h3 className="text-blue-400 font-bold mb-8 uppercase tracking-widest text-xs border-b border-white/10 pb-2">Examiner Points</h3>
                                             <div className="space-y-4">
                                                 {atlasData[atlasIdx].points.map((p, i) => (
-                                                    <div key={i} className="flex items-center gap-4 p-4 bg-white/10 rounded-2xl border border-white/5">
-                                                        <span className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center text-[10px] font-black">{i+1}</span>
-                                                        <span className="text-sm font-bold">{p}</span>
+                                                    <div key={i} className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+                                                        <span className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center font-black text-xs">{i+1}</span>
+                                                        <span className="text-sm font-semibold">{p}</span>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-between px-4">
-                                    <button onClick={(e) => { e.stopPropagation(); setIsFlipped(false); setAtlasIdx((atlasIdx - 1 + atlasData.length) % atlasData.length); }} className="p-4 bg-white border rounded-full shadow-md hover:shadow-xl"><ChevronLeft/></button>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{atlasIdx + 1} / {atlasData.length}</span>
-                                    <button onClick={(e) => { e.stopPropagation(); setIsFlipped(false); setAtlasIdx((atlasIdx + 1) % atlasData.length); }} className="p-4 bg-white border rounded-full shadow-md hover:shadow-xl"><ChevronRight/></button>
+                                <div className="flex items-center justify-between px-6">
+                                    <button onClick={(e) => { e.stopPropagation(); setAtlasIdx((atlasIdx - 1 + atlasData.length) % atlasData.length); setIsFlipped(false); }} className="p-4 bg-white border rounded-full shadow-md"><ChevronLeft/></button>
+                                    <span className="text-xs font-black text-slate-400">{atlasIdx + 1} / {atlasData.length}</span>
+                                    <button onClick={(e) => { e.stopPropagation(); setAtlasIdx((atlasIdx + 1) % atlasData.length); setIsFlipped(false); }} className="p-4 bg-white border rounded-full shadow-md"><ChevronRight/></button>
                                 </div>
                             </div>
                         )}
 
                         {tab === 'quiz' && (
-                            <div className="space-y-6 animate-in slide-in-from-bottom-10">
+                            <div className="space-y-6">
                                 <div className="bg-white p-8 rounded-[40px] border shadow-sm">
-                                    <h2 className="text-2xl font-black mb-8 flex items-center gap-2"><Target className="text-rose-500"/> AI Tutor</h2>
-                                    <select className="w-full p-5 bg-slate-50 rounded-2xl font-bold mb-4 outline-none" value={quizTopic} onChange={e => setQuizTopic(e.target.value)}>
-                                        <option>Cell Biology</option>
-                                        <option>Molecular Biology</option>
-                                        <option>Genetics</option>
-                                        <option>Metabolism (HL)</option>
-                                    </select>
+                                    <h2 className="text-2xl font-black mb-6 flex items-center gap-2"><Target className="text-rose-500"/> AI Examiner</h2>
+                                    <textarea 
+                                        className="w-full p-6 bg-slate-50 border rounded-3xl min-h-[180px] mb-4 outline-none focus:ring-2 ring-blue-500"
+                                        placeholder="Paste a long answer question or type your response here..."
+                                        value={userAns}
+                                        onChange={(e) => setUserAns(e.target.value)}
+                                    />
                                     <button 
-                                        onClick={async () => setAiRes(await callAI(`Generate a difficult IB Biology HL question about ${quizTopic} with marking points.`))}
+                                        onClick={async () => setAiRes(await askAI(`Act as an IB Biology Examiner. Grade this response against IB HL standards and provide marking points: ${userAns}`))}
                                         className="w-full bg-slate-900 text-white py-5 rounded-3xl font-bold flex items-center justify-center gap-2"
                                     >
-                                        <Sparkles size={18}/> {loading ? "GENERATING..." : "GENERATE QUESTION"}
+                                        {loading ? <RotateCcw className="animate-spin"/> : <Sparkles size={18}/>}
+                                        {loading ? "GRADING..." : "GRADE WITH AI"}
                                     </button>
                                 </div>
                                 {aiRes && (
-                                    <div className="bg-white p-8 rounded-[40px] border border-blue-100 shadow-sm animate-in fade-in">
+                                    <div className="bg-blue-50 p-8 rounded-[40px] border border-blue-100 shadow-sm animate-in fade-in">
                                         <div className="prose prose-slate text-sm leading-relaxed whitespace-pre-wrap">{aiRes}</div>
                                     </div>
                                 )}
@@ -157,12 +157,12 @@
 
                         {tab === 'settings' && (
                             <div className="bg-white p-10 rounded-[40px] border shadow-sm space-y-6 animate-in zoom-in-95">
-                                <h2 className="text-2xl font-black flex items-center gap-2 italic"><Settings className="text-blue-500"/> Configuration</h2>
+                                <h2 className="text-2xl font-black flex items-center gap-2 italic"><Settings className="text-blue-500"/> AI Settings</h2>
                                 <div>
-                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-2">Google Gemini API Key</label>
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-2 ml-4">Google Gemini API Key</label>
                                     <input 
                                         type="password" 
-                                        className="w-full p-5 bg-slate-50 rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full p-5 bg-slate-50 rounded-2xl font-bold text-slate-700 outline-none"
                                         value={apiKey}
                                         onChange={(e) => { setApiKey(e.target.value); localStorage.setItem('gemini_key', e.target.value); }}
                                         placeholder="AIza..."
@@ -173,7 +173,7 @@
                         )}
                     </main>
 
-                    {/* Bottom Nav */}
+                    {/* Navigation Bar */}
                     <nav className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[85%] max-w-[400px] bg-slate-900/90 backdrop-blur-2xl rounded-[40px] p-2 flex justify-around shadow-2xl z-50 border border-white/10">
                         {['home', 'atlas', 'quiz'].map(id => (
                             <button key={id} onClick={() => setTab(id)} className={`p-5 rounded-full transition-all ${tab === id ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500'}`}>
