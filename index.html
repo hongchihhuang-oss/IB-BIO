@@ -8,7 +8,7 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Core Lucide library for UMD compatibility -->
+    <!-- Core Lucide library -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -20,48 +20,57 @@
             -webkit-tap-highlight-color: transparent;
             overscroll-behavior: none;
         }
+        /* iPad Optimized Container */
+        .app-container {
+            min-height: 100vh;
+            width: 100%;
+            max-width: 800px; /* Tablet width */
+            margin: 0 auto;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.05);
+        }
         .perspective { perspective: 2000px; }
         .flip-inner { transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; }
         .flipped { transform: rotateY(180deg); }
-        .flip-front, .flip-back { backface-visibility: hidden; border-radius: 2.5rem; position: absolute; width: 100%; height: 100%; top: 0; left: 0; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.1); }
+        .flip-front, .flip-back { backface-visibility: hidden; border-radius: 3rem; position: absolute; width: 100%; height: 100%; top: 0; left: 0; box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.1); }
         .flip-back { transform: rotateY(180deg); background: #0f172a; color: white; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .glass-nav { 
             background: rgba(255, 255, 255, 0.98); 
-            backdrop-filter: blur(24px); 
-            -webkit-backdrop-filter: blur(24px); 
+            backdrop-filter: blur(30px); 
+            -webkit-backdrop-filter: blur(30px); 
             border-top: 1px solid rgba(0,0,0,0.08);
         }
-        @keyframes pulse-soft { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(0.98); } }
+        @keyframes pulse-soft { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(0.99); } }
         .animate-pulse-soft { animation: pulse-soft 3s infinite; }
         .loading-shimmer { background: linear-gradient(90deg, #f1f5f9 25%, #f8fafc 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        
+        /* iPad Button Fixes */
+        button:active { transform: scale(0.96); transition: 0.1s; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, createElement, useCallback } = React;
+        const { useState, useEffect, createElement, useCallback, useRef } = React;
 
         /**
-         * Robust Lucide Icon Component
-         * Resolves Minified React error #130 by ensuring all element tags are strings.
+         * Enhanced Lucide Icon Component (Final Fix)
+         * Ensures robust rendering of Lucide elements in React UMD environment.
          */
         const LucideIcon = ({ name, size = 24, className = "" }) => {
             if (typeof lucide === 'undefined' || !lucide.icons) return null;
             
-            // Normalize names: CamelCase to kebab-case (e.g., ChevronLeft -> chevron-left)
             const kebabName = name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
             const iconData = lucide.icons[kebabName] || lucide.icons[name.toLowerCase()] || lucide.icons[name];
             
             if (!iconData || !Array.isArray(iconData)) {
-                // Fallback UI to avoid empty space or crashes
-                return (
-                    <div className={`inline-flex items-center justify-center border-2 border-slate-200 rounded-lg ${className}`} style={{ width: size, height: size }}>
-                        <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
-                    </div>
-                );
+                return <div className={`inline-flex items-center justify-center border-2 border-slate-200 rounded-xl ${className}`} style={{ width: size, height: size }}></div>;
             }
 
             const [tag, attrs, children] = iconData;
@@ -69,15 +78,9 @@
             const renderChildren = (childList) => {
                 if (!childList || !Array.isArray(childList)) return null;
                 return childList.map((child, index) => {
-                    if (!Array.isArray(child) || child.length < 2) return null;
+                    if (!Array.isArray(child) || typeof child[0] !== 'string') return null;
                     const [cTag, cAttrs, cChildren] = child;
-                    // Critical Fix: Tag must be a string for React.createElement
-                    if (typeof cTag !== 'string') return null;
-                    return createElement(
-                        cTag, 
-                        { ...cAttrs, key: index }, 
-                        renderChildren(cChildren)
-                    );
+                    return createElement(cTag, { ...cAttrs, key: index }, renderChildren(cChildren));
                 });
             };
 
@@ -91,7 +94,7 @@
                     height: size, 
                     className, 
                     stroke: "currentColor", 
-                    strokeWidth: 2, 
+                    strokeWidth: 2.5, 
                     strokeLinecap: "round",
                     strokeLinejoin: "round",
                     fill: "none" 
@@ -103,22 +106,22 @@
         const SafeImage = ({ src, alt, className, iconName }) => {
             const [status, setStatus] = useState('loading');
             return (
-                <div className={`relative flex items-center justify-center overflow-hidden ${className} bg-slate-50 rounded-[30px]`}>
+                <div className={`relative flex items-center justify-center overflow-hidden ${className} bg-slate-50 rounded-[40px]`}>
                     {status === 'loading' && (
                         <div className="absolute inset-0 flex items-center justify-center bg-slate-100 loading-shimmer z-10">
-                            <LucideIcon name="RefreshCw" className="animate-spin text-blue-500" size={32} />
+                            <LucideIcon name="RefreshCw" className="animate-spin text-blue-500" size={40} />
                         </div>
                     )}
                     {status === 'error' && (
                         <div className="flex flex-col items-center justify-center p-8 text-slate-300">
-                            <LucideIcon name={iconName || "FileWarning"} size={64} className="mb-4 opacity-40" />
-                            <p className="text-[10px] font-black uppercase text-slate-400 text-center tracking-widest leading-tight">Diagram Load Error</p>
+                            <LucideIcon name={iconName || "FileWarning"} size={80} className="mb-4 opacity-40" />
+                            <p className="text-xs font-black uppercase text-slate-400 text-center tracking-widest">Image unavailable</p>
                         </div>
                     )}
                     <img 
                         src={src} 
                         alt={alt} 
-                        className={`w-full h-full object-contain p-4 mix-blend-multiply transition-all duration-700 ${status === 'success' ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`} 
+                        className={`w-full h-full object-contain p-6 mix-blend-multiply transition-all duration-700 ${status === 'success' ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`} 
                         onLoad={() => setStatus('success')} 
                         onError={() => setStatus('error')} 
                     />
@@ -126,15 +129,13 @@
             );
         };
 
-        // --- 2025 Themes Mapping ---
         const THEMES = [
-            { id: "A", name: "Unity and Diversity", desc: "Water, Nucleic Acids, Cells, Viruses", icon: "Dna" },
-            { id: "B", name: "Form and Function", desc: "Membranes, Transport, Gas Exchange", icon: "Layout" },
-            { id: "C", name: "Interaction", desc: "Enzymes, Respiration, Photosynthesis", icon: "Zap" },
-            { id: "D", name: "Continuity and Change", desc: "Genetics, Replication, Evolution", icon: "RefreshCw" }
+            { id: "A", name: "Unity & Diversity", desc: "Molecules, Cells, Viruses, and Water", icon: "Dna" },
+            { id: "B", name: "Form & Function", desc: "Membranes, Transport, Gas Exchange, Nutrition", icon: "Layout" },
+            { id: "C", name: "Interaction", desc: "Enzymes, Respiration, Photosynthesis, Ecosystems", icon: "Zap" },
+            { id: "D", name: "Continuity & Change", desc: "Genetics, Replication, Meiosis, Evolution", icon: "RefreshCw" }
         ];
 
-        // --- Expanded Diagram Database ---
         const ATLAS_DATA = [
             { id: "A1", title: "DNA Nucleotide", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/DNA_chemical_structure.svg/600px-DNA_chemical_structure.svg.png", points: ["Phosphate at 5' Carbon", "Deoxyribose Pentose Sugar", "Nitrogenous Base at 1'", "Covalent Phosphodiester Bond"], icon: "Dna" },
             { id: "B1", title: "Fluid Mosaic Model", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Cell_membrane_detailed_diagram_en.svg/800px-Cell_membrane_detailed_diagram_en.svg.png", points: ["Amphipathic Bilayer", "Integral & Peripheral Proteins", "Cholesterol (Fluidity Control)", "Glycoprotein Identification"], icon: "Layers" },
@@ -187,10 +188,14 @@
             };
 
             const generateQuestion = async () => {
+                // Clear old states
+                setUserAnswer('');
+                setAiFeedback('');
+                
                 setQuizStep('loading');
                 const themeData = THEMES.find(t => t.id === selTheme);
                 const prompt = `Generate a rigorous IB Biology 2025 question for Theme ${selTheme}: ${themeData.name}. Type: ${selType === 'MCQ' ? 'Multiple Choice (Include A, B, C, D options)' : 'Extended Response (4-8 marks essay)'}. Return ONLY the question text.`;
-                const system = "You are a professional IB Biology Curriculum Specialist for the 2025 Syllabus.";
+                const system = "You are a professional IB Biology Curriculum Designer for the 2025 Syllabus.";
                 const q = await askAI(prompt, system);
                 setCurrentQuestion(q);
                 setQuizStep('asking');
@@ -198,8 +203,8 @@
 
             const submitAnswer = async () => {
                 setQuizStep('grading');
-                const prompt = `Question: "${currentQuestion}"\nStudent Answer: "${userAnswer}"\n\nGrade based on 2025 IB Biology HL criteria. Provide:\n1. Marks given.\n2. Marking Points (MP) Evaluation.\n3. Content errors/missing terms.\n4. Strategy for Level 7 mastery. Format in Markdown. Use Professional English.`;
-                const system = "You are a Chief IB Biology Moderator. Be critical, detailed, and constructive.";
+                const prompt = `Question: "${currentQuestion}"\nStudent Answer: "${userAnswer}"\n\nGrade based on 2025 IB Biology HL criteria. For MCQ, state if correct and explain. For ERQ, provide Marks, Marking Points met, Logical errors, and Level 7 Roadmap. Use professional English. Format in Markdown.`;
+                const system = "You are a Chief IB Biology Moderator. Be critical yet helpful.";
                 const fb = await askAI(prompt, system);
                 setAiFeedback(fb);
             };
@@ -210,236 +215,251 @@
             };
 
             return (
-                <div className="min-h-screen max-w-md mx-auto bg-white flex flex-col shadow-2xl relative border-x border-slate-100 overflow-hidden">
+                <div className="app-container border-x border-slate-100 overflow-hidden">
                     
-                    {/* Header */}
-                    <header className="p-6 pt-12 flex justify-between items-center bg-white sticky top-0 z-50 border-b border-slate-50">
-                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setTab('home')}>
-                            <div className="bg-blue-600 p-2.5 rounded-2xl text-white shadow-xl">
-                                <LucideIcon name="GraduationCap" size={24}/>
+                    {/* Header - iPad Optimized */}
+                    <header className="p-8 pt-12 flex justify-between items-center bg-white sticky top-0 z-50 border-b border-slate-100">
+                        <div className="flex items-center gap-4 cursor-pointer" onClick={() => setTab('home')}>
+                            <div className="bg-blue-600 p-3 rounded-[1.2rem] text-white shadow-xl">
+                                <LucideIcon name="GraduationCap" size={28}/>
                             </div>
                             <div>
-                                <h1 className="font-extrabold text-slate-900 text-lg tracking-tighter italic leading-none mb-1">IB BIO HUB</h1>
-                                <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest leading-none">AI MASTER SUITE</p>
+                                <h1 className="font-extrabold text-slate-900 text-2xl tracking-tighter italic leading-none mb-1">IB BIO HUB</h1>
+                                <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] leading-none">2025 MASTER SUITE</p>
                             </div>
                         </div>
                         <button 
                             onClick={() => setTab('settings')} 
-                            className={`p-3 rounded-2xl border transition-all ${tab === 'settings' ? 'bg-slate-900 text-white border-slate-900 shadow-lg' : 'bg-slate-50 text-slate-500 border-slate-100 active:bg-slate-200'}`}
+                            className={`p-4 rounded-2xl border transition-all ${tab === 'settings' ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-500 border-slate-100 active:bg-slate-200'}`}
                         >
-                            <LucideIcon name="Settings" size={20}/>
+                            <LucideIcon name="Settings" size={24}/>
                         </button>
                     </header>
 
-                    <main className="flex-1 p-6 overflow-y-auto hide-scrollbar pb-40">
+                    <main className="flex-1 p-8 overflow-y-auto hide-scrollbar pb-44">
                         
                         {tab === 'home' && (
-                            <div className="space-y-6 animate-in fade-in duration-500">
-                                <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group">
-                                    <div className="absolute -top-10 -right-10 opacity-10 group-hover:scale-110 transition-transform duration-700">
-                                        <LucideIcon name="Sparkles" size={180}/>
+                            <div className="space-y-8 animate-in fade-in duration-500">
+                                <div className="bg-slate-900 rounded-[3.5rem] p-12 text-white shadow-2xl relative overflow-hidden group">
+                                    <div className="absolute -top-12 -right-12 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                                        <LucideIcon name="Sparkles" size={240}/>
                                     </div>
                                     <div className="relative z-10">
-                                        <div className="bg-blue-600/30 border border-blue-500/50 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest inline-block mb-4">Gemini 2.5 Active</div>
-                                        <h2 className="text-3xl font-black italic mb-2 leading-tight uppercase">Syllabus<br/>Station</h2>
-                                        <p className="text-slate-400 text-xs mb-8 font-medium leading-relaxed">Dynamic practice targeting 2025 Theme A-D concepts. Master the Marking Points.</p>
-                                        <button onClick={() => setTab('quiz')} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2">LAUNCH EXAMINE <LucideIcon name="Target" size={18}/></button>
+                                        <div className="bg-blue-600/30 border border-blue-500/50 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] inline-block mb-6">Gemini 2.5 Active</div>
+                                        <h2 className="text-5xl font-black italic mb-4 leading-tight uppercase tracking-tighter">Syllabus<br/>Station</h2>
+                                        <p className="text-slate-400 text-base mb-10 font-medium leading-relaxed max-w-md">Dynamic training module mapped to 2025 Theme A-D concepts. Master marking criteria with AI assistance.</p>
+                                        <button onClick={() => setTab('quiz')} className="w-full md:w-auto bg-blue-600 text-white px-10 py-5 rounded-3xl font-black shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 text-lg">OPEN EXAM SIMULATOR <LucideIcon name="Target" size={20}/></button>
                                     </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div onClick={() => setTab('atlas')} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center gap-4 cursor-pointer hover:border-blue-200 transition-all active:scale-95">
-                                        <div className="p-4 bg-indigo-50 rounded-2xl text-indigo-500"><LucideIcon name="Image" size={24}/></div>
-                                        <span className="font-extrabold text-slate-800 text-[10px] uppercase tracking-wider">Atlas Gallery</span>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div onClick={() => setTab('atlas')} className="bg-white p-8 rounded-[3rem] border-2 border-slate-50 shadow-sm flex flex-col items-center gap-6 cursor-pointer hover:border-blue-200 transition-all active:scale-95">
+                                        <div className="p-6 bg-indigo-50 rounded-3xl text-indigo-500"><LucideIcon name="Image" size={32}/></div>
+                                        <span className="font-extrabold text-slate-800 text-sm uppercase tracking-widest">Atlas Gallery</span>
                                     </div>
-                                    <div onClick={() => setTab('quiz')} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center gap-4 cursor-pointer hover:border-rose-200 transition-all active:scale-95">
-                                        <div className="p-4 bg-rose-50 rounded-2xl text-rose-500"><LucideIcon name="FileText" size={24}/></div>
-                                        <span className="font-extrabold text-slate-800 text-[10px] uppercase tracking-wider">Exam Prep</span>
+                                    <div onClick={() => setTab('quiz')} className="bg-white p-8 rounded-[3rem] border-2 border-slate-50 shadow-sm flex flex-col items-center gap-6 cursor-pointer hover:border-rose-200 transition-all active:scale-95">
+                                        <div className="p-6 bg-rose-50 rounded-3xl text-rose-500"><LucideIcon name="BookOpen" size={32}/></div>
+                                        <span className="font-extrabold text-slate-800 text-sm uppercase tracking-widest">Exam Prep</span>
                                     </div>
                                 </div>
                             </div>
                         )}
 
                         {tab === 'atlas' && (
-                            <div className="space-y-6 animate-in slide-in-from-bottom-8 duration-500">
-                                <div className="flex justify-between items-end mb-2">
-                                    <h2 className="text-2xl font-black text-slate-900 italic uppercase">Visual Atlas</h2>
-                                    <div className="px-4 py-1.5 bg-slate-100 rounded-full font-black text-[10px] text-slate-500 tracking-widest">{atlasIdx + 1} / {ATLAS_DATA.length}</div>
+                            <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-500">
+                                <div className="flex justify-between items-end">
+                                    <h2 className="text-3xl font-black text-slate-900 italic uppercase tracking-tighter">Visual Atlas</h2>
+                                    <div className="px-6 py-2 bg-slate-100 rounded-full font-black text-xs text-slate-500 tracking-widest">{atlasIdx + 1} / {ATLAS_DATA.length}</div>
                                 </div>
-                                <div className="perspective h-[460px] w-full" onClick={() => setIsFlipped(!isFlipped)}>
+                                <div className="perspective h-[520px] w-full" onClick={() => setIsFlipped(!isFlipped)}>
                                     <div className={`flip-inner w-full h-full ${isFlipped ? 'flipped' : ''}`}>
-                                        <div className="flip-front bg-white p-6 flex flex-col border border-slate-100 shadow-sm">
+                                        <div className="flip-front bg-white p-10 flex flex-col border border-slate-100 shadow-sm">
                                             <SafeImage src={ATLAS_DATA[atlasIdx].url} alt={ATLAS_DATA[atlasIdx].title} className="flex-1" iconName={ATLAS_DATA[atlasIdx].icon} />
-                                            <div className="text-center pt-8">
-                                                <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-tight leading-none">{ATLAS_DATA[atlasIdx].title}</h3>
-                                                <div className="inline-flex items-center gap-2 text-blue-600 font-bold text-[10px] uppercase tracking-widest bg-blue-50 px-4 py-2 rounded-full animate-pulse-soft mt-3">
-                                                    <LucideIcon name="MousePointer2" size={14} /> Tap to Flip
+                                            <div className="text-center pt-10">
+                                                <h3 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">{ATLAS_DATA[atlasIdx].title}</h3>
+                                                <div className="inline-flex items-center gap-3 text-blue-600 font-bold text-xs uppercase tracking-widest bg-blue-50 px-6 py-2.5 rounded-full animate-pulse-soft">
+                                                    <LucideIcon name="MousePointer2" size={16} /> Tap to Flip
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="flip-back p-10 flex flex-col justify-center relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 p-8 opacity-5"><LucideIcon name={ATLAS_DATA[atlasIdx].icon} size={150} /></div>
-                                            <h3 className="text-blue-400 font-black mb-6 uppercase tracking-widest text-xs border-b border-white/10 pb-3 flex items-center gap-2 relative z-10"><LucideIcon name="ClipboardCheck" size={18}/> Examiner Points</h3>
-                                            <div className="space-y-4 relative z-10">
+                                        <div className="flip-back p-12 flex flex-col justify-center relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 p-12 opacity-5"><LucideIcon name={ATLAS_DATA[atlasIdx].icon} size={200} /></div>
+                                            <h3 className="text-blue-400 font-black mb-8 uppercase tracking-widest text-sm border-b border-white/10 pb-4 flex items-center gap-3 relative z-10"><LucideIcon name="ClipboardCheck" size={24}/> Examiner Points</h3>
+                                            <div className="space-y-5 relative z-10">
                                                 {ATLAS_DATA[atlasIdx].points.map((p, i) => (
-                                                    <div key={i} className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-sm">
-                                                        <span className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center font-black text-xs">{i+1}</span>
-                                                        <span className="text-sm font-semibold text-slate-200">{p}</span>
+                                                    <div key={i} className="flex items-center gap-6 p-5 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-md">
+                                                        <span className="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center font-black text-sm shadow-xl">{i+1}</span>
+                                                        <span className="text-lg font-semibold text-slate-100">{p}</span>
                                                     </div>
                                                 ))}
                                             </div>
-                                            <p className="mt-8 text-center text-slate-500 text-[9px] font-bold uppercase tracking-widest relative z-10">Tap to flip back</p>
+                                            <p className="mt-12 text-center text-slate-500 text-xs font-bold uppercase tracking-widest relative z-10">Tap to flip back</p>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex gap-4">
+                                <div className="flex gap-6">
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); setAtlasIdx((atlasIdx - 1 + ATLAS_DATA.length) % ATLAS_DATA.length); setIsFlipped(false); }} 
-                                        className="flex-1 py-5 bg-white border border-slate-100 rounded-3xl shadow-xl flex justify-center items-center active:scale-90 transition-all"
+                                        className="flex-1 py-6 bg-white border border-slate-100 rounded-[2rem] shadow-xl flex justify-center items-center"
                                     >
-                                        <LucideIcon name="ChevronLeft" size={32} className="text-slate-900"/>
+                                        <LucideIcon name="ChevronLeft" size={40} className="text-slate-900"/>
                                     </button>
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); setAtlasIdx((atlasIdx + 1) % ATLAS_DATA.length); setIsFlipped(false); }} 
-                                        className="flex-1 py-5 bg-white border border-slate-100 rounded-3xl shadow-xl flex justify-center items-center active:scale-90 transition-all"
+                                        className="flex-1 py-6 bg-white border border-slate-100 rounded-[2rem] shadow-xl flex justify-center items-center"
                                     >
-                                        <LucideIcon name="ChevronRight" size={32} className="text-slate-900"/>
+                                        <LucideIcon name="ChevronRight" size={40} className="text-slate-900"/>
                                     </button>
                                 </div>
                             </div>
                         )}
 
                         {tab === 'quiz' && (
-                            <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+                            <div className="space-y-8 animate-in fade-in duration-500 pb-10">
                                 {quizStep === 'setup' && (
-                                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
-                                        <div className="flex items-center gap-3 uppercase">
-                                            <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl shadow-sm"><LucideIcon name="Compass" size={24} /></div>
-                                            <h2 className="text-xl font-black italic tracking-tighter">Exam Logic</h2>
+                                    <div className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10">
+                                        <div className="flex items-center gap-4 uppercase">
+                                            <div className="p-4 bg-blue-50 text-blue-600 rounded-3xl shadow-sm"><LucideIcon name="Compass" size={32} /></div>
+                                            <h2 className="text-3xl font-black italic tracking-tighter">Exam Logic</h2>
                                         </div>
-                                        <div className="space-y-4">
-                                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-4">Select 2025 Theme</label>
-                                            <div className="grid grid-cols-1 gap-3">
+                                        <div className="space-y-6">
+                                            <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-4">Select 2025 Theme</label>
+                                            <div className="grid grid-cols-1 gap-4">
                                                 {THEMES.map(t => (
-                                                    <button key={t.id} onClick={() => setSelTheme(t.id)} className={`p-5 rounded-3xl text-left border-2 transition-all flex items-center gap-4 ${selTheme === t.id ? 'border-blue-600 bg-blue-50 shadow-md scale-[1.02]' : 'border-slate-50 bg-slate-50 text-slate-400 opacity-60'}`}>
-                                                        <div className={`p-3 rounded-xl ${selTheme === t.id ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}><LucideIcon name={t.icon} size={20} /></div>
+                                                    <button key={t.id} onClick={() => setSelTheme(t.id)} className={`p-6 rounded-[2rem] text-left border-2 transition-all flex items-center gap-6 ${selTheme === t.id ? 'border-blue-600 bg-blue-50 shadow-md scale-[1.02]' : 'border-slate-50 bg-slate-50 text-slate-400 opacity-60'}`}>
+                                                        <div className={`p-4 rounded-2xl ${selTheme === t.id ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}><LucideIcon name={t.icon} size={24} /></div>
                                                         <div className="flex-1">
-                                                            <div className="font-black text-sm mb-0.5">{t.id}. {t.name}</div>
-                                                            <div className="text-[9px] font-bold opacity-70">{t.desc}</div>
+                                                            <div className="font-black text-lg mb-0.5 text-slate-900">{t.id}. {t.name}</div>
+                                                            <div className="text-xs font-bold opacity-70">{t.desc}</div>
                                                         </div>
                                                     </button>
                                                 ))}
                                             </div>
                                         </div>
-                                        <div className="space-y-4">
-                                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-4">Format Selection</label>
-                                            <div className="flex gap-3">
+                                        <div className="space-y-6">
+                                            <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-4">Format Selection</label>
+                                            <div className="flex gap-4">
                                                 {['MCQ', 'ERQ'].map(type => (
-                                                    <button key={type} onClick={() => setSelType(type)} className={`flex-1 py-4 rounded-2xl font-black text-xs border-2 transition-all uppercase tracking-widest ${selType === type ? 'border-blue-600 bg-blue-600 text-white shadow-lg' : 'border-slate-50 bg-slate-50 text-slate-400'}`}>{type === 'MCQ' ? 'MCQ Choice' : 'ERQ Essay'}</button>
+                                                    <button key={type} onClick={() => setSelType(type)} className={`flex-1 py-5 rounded-3xl font-black text-sm border-2 transition-all uppercase tracking-widest ${selType === type ? 'border-blue-600 bg-blue-600 text-white shadow-lg' : 'border-slate-50 bg-slate-50 text-slate-400'}`}>{type === 'MCQ' ? 'MCQ Choice' : 'ERQ Essay'}</button>
                                                 ))}
                                             </div>
                                         </div>
-                                        <button onClick={generateQuestion} className="w-full bg-slate-900 text-white py-5 rounded-3xl font-black shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">GENERATE PAPER <LucideIcon name="Zap" size={18}/></button>
+                                        <button onClick={generateQuestion} className="w-full bg-slate-900 text-white py-6 rounded-[2.5rem] font-black shadow-xl active:scale-95 transition-all flex items-center justify-center gap-4 text-xl tracking-widest">GENERATE PAPER <LucideIcon name="Zap" size={24}/></button>
                                     </div>
                                 )}
 
                                 {quizStep === 'loading' && (
-                                    <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[2.5rem] border border-slate-50 shadow-sm">
-                                        <div className="relative mb-10">
+                                    <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[3.5rem] border border-slate-50 shadow-sm">
+                                        <div className="relative mb-12">
                                             <div className="absolute inset-0 bg-blue-200 rounded-full animate-ping opacity-10"></div>
-                                            <div className="bg-blue-50 p-12 rounded-full relative z-10 shadow-inner"><LucideIcon name="BrainCircuit" size={72} className="text-blue-600" /></div>
+                                            <div className="bg-blue-50 p-16 rounded-full relative z-10 shadow-inner"><LucideIcon name="BrainCircuit" size={100} className="text-blue-600" /></div>
                                         </div>
-                                        <p className="font-black text-slate-900 text-center px-10 text-xl italic uppercase tracking-tighter">Analyzing Syllabus...</p>
+                                        <p className="font-black text-slate-900 text-center px-10 text-2xl italic uppercase tracking-tighter leading-tight">Curating Curriculum...</p>
                                     </div>
                                 )}
 
                                 {quizStep === 'asking' && (
-                                    <div className="space-y-6 animate-in slide-in-from-bottom-4">
-                                        <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
-                                            <div className="bg-blue-600 text-white px-5 py-2 rounded-full text-[10px] font-black absolute top-5 right-6 shadow-lg tracking-widest uppercase">IB 2025 EXAM</div>
-                                            <div className="text-slate-900 font-extrabold text-xl leading-relaxed mb-8 pt-12 border-l-8 border-blue-600 pl-6 pr-2 italic">{currentQuestion}</div>
+                                    <div className="space-y-8 animate-in slide-in-from-bottom-6">
+                                        <div className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
+                                            <div className="bg-blue-600 text-white px-6 py-2 rounded-full text-xs font-black absolute top-6 right-8 shadow-lg tracking-widest uppercase">IB 2025 EXAM</div>
+                                            <div className="text-slate-900 font-extrabold text-2xl leading-relaxed mb-10 pt-16 border-l-8 border-blue-600 pl-8 pr-4 italic">{currentQuestion}</div>
                                             
-                                            <div className="space-y-3 mb-8">
-                                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2 ml-2"><LucideIcon name="PenTool" size={14} /> Response Area</label>
-                                                <textarea className="w-full p-7 bg-slate-50 rounded-[2rem] min-h-[260px] outline-none focus:ring-4 ring-blue-100 transition-all font-medium text-slate-700 shadow-inner resize-none" placeholder="Draft your scientific response..." value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} />
+                                            <div className="space-y-6 mb-10">
+                                                <label className="text-xs font-black uppercase text-slate-400 tracking-widest flex items-center gap-3 ml-2"><LucideIcon name="PenTool" size={18} /> Your Response</label>
+                                                
+                                                {selType === 'MCQ' ? (
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        {['A', 'B', 'C', 'D'].map(opt => (
+                                                            <button 
+                                                                key={opt}
+                                                                onClick={() => setUserAnswer(opt)}
+                                                                className={`py-6 rounded-3xl font-black text-xl border-4 transition-all ${userAnswer === opt ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-slate-50 bg-slate-50 text-slate-400'}`}
+                                                            >
+                                                                Option {opt}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <textarea className="w-full p-8 bg-slate-50 rounded-[3rem] min-h-[300px] outline-none focus:ring-4 ring-blue-100 transition-all font-medium text-slate-700 shadow-inner resize-none leading-relaxed text-lg" placeholder="Draft your scientific response..." value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} />
+                                                )}
                                             </div>
                                             
-                                            <div className="flex gap-4">
-                                                <button onClick={() => setQuizStep('setup')} className="flex-1 bg-slate-50 text-slate-400 py-4 rounded-2xl font-black border border-slate-100">Cancel</button>
-                                                <button onClick={submitAnswer} disabled={!userAnswer.trim()} className="flex-[2] bg-slate-900 text-white py-4 rounded-2xl font-black shadow-xl active:scale-95 disabled:opacity-50 transition-all">Submit Answer <LucideIcon name="Send" size={18}/></button>
+                                            <div className="flex gap-6">
+                                                <button onClick={() => setQuizStep('setup')} className="flex-1 bg-slate-50 text-slate-400 py-6 rounded-3xl font-black border border-slate-100 active:bg-slate-200 transition-colors text-lg">Abort</button>
+                                                <button onClick={submitAnswer} disabled={!userAnswer} className="flex-[2] bg-slate-900 text-white py-6 rounded-3xl font-black shadow-xl active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center gap-3 text-lg uppercase tracking-widest">Evaluate Now <LucideIcon name="Send" size={20}/></button>
                                             </div>
                                         </div>
                                     </div>
                                 )}
 
                                 {quizStep === 'grading' && (
-                                    <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[2.5rem] border border-slate-50 shadow-sm">
-                                        <div className="bg-rose-50 p-12 rounded-full mb-10 shadow-inner animate-pulse"><LucideIcon name="ClipboardCheck" size={72} className="text-rose-500" /></div>
-                                        <p className="font-black text-slate-900 text-center text-xl italic uppercase tracking-tighter">Grading Results...</p>
+                                    <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[3.5rem] border border-slate-50 shadow-sm">
+                                        <div className="bg-rose-50 p-16 rounded-full mb-12 shadow-inner animate-pulse"><LucideIcon name="ClipboardCheck" size={100} className="text-rose-500" /></div>
+                                        <p className="font-black text-slate-900 text-center text-2xl italic tracking-tight uppercase leading-tight">Examiner Diagnostic Analysis...</p>
                                     </div>
                                 )}
 
                                 {aiFeedback && (
-                                    <div className="space-y-6 animate-in zoom-in-95 duration-500">
-                                        <div className="bg-white p-8 rounded-[2.5rem] border border-blue-100 shadow-2xl relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 p-8 opacity-5"><LucideIcon name="Award" size={180} /></div>
-                                            <div className="flex items-center justify-between mb-8 border-b border-slate-100 pb-5 relative z-10">
-                                                <h3 className="flex items-center gap-3 font-black text-slate-900 text-xl italic uppercase tracking-tighter"><LucideIcon name="LineChart" size={26} className="text-blue-600"/> Moderator Report</h3>
-                                                <div className="bg-blue-600 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-md">Complete</div>
+                                    <div className="space-y-8 animate-in zoom-in-95 duration-500">
+                                        <div className="bg-white p-10 rounded-[3.5rem] border border-blue-100 shadow-2xl relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 p-12 opacity-5"><LucideIcon name="Award" size={240} /></div>
+                                            <div className="flex items-center justify-between mb-10 border-b border-slate-100 pb-8 relative z-10">
+                                                <h3 className="flex items-center gap-4 font-black text-slate-900 text-3xl italic uppercase tracking-tighter"><LucideIcon name="LineChart" size={32} className="text-blue-600"/> Moderator Report</h3>
+                                                <div className="bg-blue-600 text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest shadow-md">Complete</div>
                                             </div>
-                                            <div className="prose prose-slate text-slate-700 text-sm leading-relaxed whitespace-pre-wrap font-medium relative z-10">
+                                            <div className="prose prose-slate text-slate-700 text-lg leading-relaxed whitespace-pre-wrap font-medium relative z-10 prose-headings:font-black prose-strong:text-blue-600">
                                                 {aiFeedback}
                                             </div>
                                         </div>
-                                        <button onClick={() => setQuizStep('setup')} className="w-full bg-slate-900 text-white py-5 rounded-[2rem] font-black shadow-xl active:scale-95 hover:bg-slate-800 transition-all flex items-center justify-center gap-2 text-lg uppercase tracking-widest">Next Exercise <LucideIcon name="ChevronRight" size={24}/></button>
+                                        <button onClick={() => setQuizStep('setup')} className="w-full bg-slate-900 text-white py-6 rounded-[2.5rem] font-black shadow-xl active:scale-95 hover:bg-slate-800 transition-all flex items-center justify-center gap-4 text-xl uppercase tracking-widest">Start New Practice <LucideIcon name="ChevronRight" size={28}/></button>
                                     </div>
                                 )}
                             </div>
                         )}
 
                         {tab === 'settings' && (
-                            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8 animate-in zoom-in-95">
-                                <div className="flex items-center gap-4 uppercase">
-                                    <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl shadow-sm"><LucideIcon name="Settings" size={28} /></div>
-                                    <h2 className="text-2xl font-black italic tracking-tighter">Configuration</h2>
+                            <div className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10 animate-in zoom-in-95">
+                                <div className="flex items-center gap-6 uppercase">
+                                    <div className="p-4 bg-blue-50 text-blue-600 rounded-3xl shadow-sm"><LucideIcon name="Settings" size={40} /></div>
+                                    <h2 className="text-3xl font-black italic tracking-tighter">Configuration</h2>
                                 </div>
                                 
-                                <div className="space-y-4">
+                                <div className="space-y-6">
                                     <div className="flex items-center justify-between px-2">
-                                        <label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Gemini API Key</label>
-                                        <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${apiKey ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600'}`}>
-                                            {apiKey ? 'READY' : 'REQUIRED'}
+                                        <label className="text-xs font-black uppercase text-slate-400 tracking-[0.2em]">Google Gemini API Key</label>
+                                        <span className={`text-[10px] font-black px-4 py-1 rounded-full ${apiKey ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600'}`}>
+                                            {apiKey ? 'CONNECTED' : 'KEY MISSING'}
                                         </span>
                                     </div>
                                     <input 
                                         type="password" 
-                                        className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl outline-none focus:border-blue-600 transition-all font-bold text-slate-700 shadow-inner"
-                                        placeholder="AIza..."
+                                        className="w-full p-8 bg-slate-50 border-2 border-slate-100 rounded-[2rem] outline-none focus:border-blue-600 transition-all font-bold text-slate-700 shadow-inner text-lg"
+                                        placeholder="Enter Key (AIza...)"
                                         value={apiKey}
                                         onChange={(e) => handleSaveKey(e.target.value)}
                                     />
-                                    <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100/50 flex gap-3 items-start">
-                                        <LucideIcon name="ShieldCheck" size={16} className="text-blue-600 mt-0.5" />
-                                        <p className="text-[10px] text-slate-500 font-medium leading-relaxed italic">
-                                            Privacy: Your API key is stored only in <strong className="text-slate-900">Local Browser Storage</strong>. Safe for GitHub deployment.
+                                    <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100/50 flex gap-4 items-start">
+                                        <LucideIcon name="ShieldCheck" size={24} className="text-blue-600 mt-1" />
+                                        <p className="text-xs text-slate-500 font-medium leading-relaxed italic">
+                                            Security: Your key is stored only in your <strong className="text-slate-900">Local Browser Storage</strong>. Safe for deployment.
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="p-7 bg-slate-50 rounded-3xl border border-slate-100 space-y-5">
-                                    <div className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2"><LucideIcon name="Cpu" size={14} /> App Manifest</div>
-                                    <div className="text-slate-700 text-xs space-y-4 font-extrabold uppercase tracking-tight">
-                                        <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm"><span>AI Engine</span> <span className="text-blue-600 font-black">Gemini 2.5 Flash</span></div>
-                                        <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm"><span>Syllabus</span> <span className="text-blue-600 font-black">IB Biology 2025</span></div>
+                                <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 space-y-6">
+                                    <div className="text-slate-400 text-xs font-black uppercase tracking-[0.3em] flex items-center gap-3"><LucideIcon name="Cpu" size={20} /> Application Specs</div>
+                                    <div className="text-slate-700 text-sm space-y-5 font-extrabold uppercase tracking-tight">
+                                        <div className="flex justify-between items-center bg-white p-5 rounded-2xl shadow-sm border border-slate-50"><span>AI Model</span> <span className="text-blue-600 font-black">Gemini 2.5 Pro</span></div>
+                                        <div className="flex justify-between items-center bg-white p-5 rounded-2xl shadow-sm border border-slate-50"><span>Target Curriculum</span> <span className="text-blue-600 font-black">IB Biology 2025</span></div>
                                     </div>
                                 </div>
-                                <button onClick={() => setTab('home')} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black shadow-xl active:scale-95 uppercase tracking-widest">Confirm & Return</button>
+                                <button onClick={() => setTab('home')} className="w-full bg-slate-900 text-white py-6 rounded-[2.5rem] font-black shadow-xl active:scale-95 transition-all uppercase tracking-widest text-lg">Confirm & Save</button>
                             </div>
                         )}
                     </main>
 
-                    {/* Fixed Navigation */}
-                    <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-[400px] glass-nav rounded-[2.5rem] p-3 flex justify-around shadow-2xl z-50">
+                    {/* Navigation - Enhanced Visibility for iPad */}
+                    <nav className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[92%] max-w-[500px] glass-nav rounded-[3rem] p-4 flex justify-around shadow-2xl z-50">
                         {[
                             { id: 'home', icon: 'Home', label: 'Home' },
                             { id: 'atlas', icon: 'Image', label: 'Atlas' },
@@ -448,10 +468,10 @@
                             <button 
                                 key={item.id} 
                                 onClick={() => setTab(item.id)} 
-                                className={`flex flex-col items-center justify-center gap-1.5 px-6 py-2.5 rounded-3xl transition-all duration-300 ${tab === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-400/50 scale-105' : 'text-slate-400 hover:text-slate-900'}`}
+                                className={`flex flex-col items-center justify-center gap-2 px-10 py-3 rounded-[2rem] transition-all duration-300 ${tab === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-400/50 scale-105' : 'text-slate-400 hover:text-slate-900'}`}
                             >
-                                <LucideIcon name={item.icon} size={24} className={tab === item.id ? 'scale-110 drop-shadow-sm' : ''} />
-                                <span className="text-[11px] font-black tracking-widest uppercase">{item.label}</span>
+                                <LucideIcon name={item.icon} size={28} className={tab === item.id ? 'scale-110' : ''} />
+                                <span className="text-[11px] font-bold tracking-[0.2em] uppercase">{item.label}</span>
                             </button>
                         ))}
                     </nav>
