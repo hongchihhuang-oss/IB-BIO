@@ -3,183 +3,346 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master v2.0</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>IB Bio HL Master Suite v3.0</title>
+    <script src="[https://unpkg.com/react@18/umd/react.production.min.js](https://unpkg.com/react@18/umd/react.production.min.js)"></script>
+    <script src="[https://unpkg.com/react-dom@18/umd/react-dom.production.min.js](https://unpkg.com/react-dom@18/umd/react-dom.production.min.js)"></script>
+    <script src="[https://unpkg.com/@babel/standalone/babel.min.js](https://unpkg.com/@babel/standalone/babel.min.js)"></script>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <script src="[https://unpkg.com/lucide@latest](https://unpkg.com/lucide@latest)"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        @import url('[https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap)');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; }
-        .perspective { perspective: 1200px; }
-        .flip-inner { transition: transform 0.6s; transform-style: preserve-3d; height: 380px; position: relative; }
-        .flipped { transform: rotateY(180deg); }
-        .flip-front, .flip-back { backface-visibility: hidden; position: absolute; width: 100%; height: 100%; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .flip-back { transform: rotateY(180deg); background: #1e293b; color: white; padding: 24px; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        // --- 解構 Lucide 圖標 ---
+        const { 
+            BookOpen, BrainCircuit, FileText, GraduationCap, ChevronRight, ChevronLeft,
+            CheckCircle2, XCircle, Lightbulb, RotateCcw, Trophy, Eye, Layers,
+            Image: ImageIcon, Settings, Sparkles, Zap, Target, Dna, History, AlertCircle
+        } = lucide;
 
-        // --- 100 QUESTION POOL (Sample Set) ---
-        const masterPool = [
-            { theme: "A", type: "MCQ", q: "Which property allows water to travel up the xylem under tension?", options: ["High specific heat", "Cohesion/Adhesion", "Solvent properties", "Density"], ans: 1, exp: "Cohesion and Adhesion work together for transpiration." },
-            { theme: "C", type: "SAQ", q: "Explain the role of the intermembrane space in mitochondria. (3 marks)", exp: "Keywords: Small volume, rapid H+ buildup, proton gradient." },
-            { theme: "B", type: "MCQ", q: "What is the function of cholesterol in animal membranes?", options: ["ATP synthesis", "Fluidity regulation", "Ion transport", "Protein folding"], ans: 1, exp: "Regulates fluidity by disrupting phospholipid packing." },
-            { theme: "D", type: "MCQ", q: "Role of DNA Helicase?", options: ["Re-winding", "Breaking Hydrogen bonds", "Adding primers", "Joining fragments"], ans: 1, exp: "Helicase unwinds the double helix by breaking H-bonds." }
-            // More questions can be added here...
-        ];
-
-        const atlasData = [
-            { id: "A1", title: "DNA Nucleotide", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Nucleotide_nucleoside_general.svg/500px-Nucleotide_nucleoside_general.svg.png", points: ["Phosphate (5')", "Sugar", "Base (1')"] },
-            { id: "C1", title: "Mitochondrion", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Animal_mitochondrion_diagram_en.svg/600px-Animal_mitochondrion_diagram_en.svg.png", points: ["Matrix", "Cristae", "IMS"] }
-        ];
+        // --- 安全圖片組件 (修正後的圖源路徑) ---
+        const SafeImage = ({ src, alt, className, icon: FallbackIcon }) => {
+            const [status, setStatus] = React.useState('loading');
+            return (
+                <div className={`relative flex items-center justify-center overflow-hidden ${className} bg-slate-50 rounded-[30px]`}>
+                    {status === 'loading' && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-slate-50 z-10">
+                            <div className="w-8 h-8 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin"></div>
+                        </div>
+                    )}
+                    {status === 'error' && (
+                        <div className="flex flex-col items-center justify-center p-6 text-slate-300">
+                            <FallbackIcon size={64} strokeWidth={1} className="mb-2" />
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Diagram Not Available</p>
+                        </div>
+                    )}
+                    <img 
+                        src={src} 
+                        alt={alt}
+                        className={`w-full h-full object-contain transition-opacity duration-500 ${status === 'success' ? 'opacity-100' : 'opacity-0'}`}
+                        onLoad={() => setStatus('success')}
+                        onError={() => setStatus('error')}
+                    />
+                </div>
+            );
+        };
 
         const App = () => {
-            const [tab, setTab] = useState('home');
-            const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_key') || '');
-            const [currentQ, setCurrentQ] = useState(0);
-            const [selectedAns, setSelectedAns] = useState(null);
-            const [showExp, setShowExp] = useState(false);
-            const [userAns, setUserAns] = useState('');
-            const [aiRes, setAiRes] = useState('');
-            const [loading, setLoading] = useState(false);
-            const [flipped, setFlipped] = useState({});
+            const [activeTab, setActiveTab] = React.useState('home');
+            const [quizState, setQuizState] = React.useState('menu');
+            const [isAiLoading, setIsAiLoading] = React.useState(false);
+            const [apiKey, setApiKey] = React.useState(localStorage.getItem('gemini_api_key') || '');
+            
+            const [currentQuestion, setCurrentQuestion] = React.useState(null);
+            const [quizConfig, setQuizConfig] = React.useState({ topic: 'Cell Biology', type: 'MCQ' });
+            const [userResponse, setUserResponse] = React.useState('');
+            const [aiFeedback, setAiFeedback] = React.useState(null);
+            const [selectedMcqOption, setSelectedMcqOption] = React.useState(null);
 
-            const callAI = async (prompt) => {
-                if (!apiKey) { alert("Please set API Key in Settings!"); return; }
-                setLoading(true);
+            const [atlasIndex, setAtlasIndex] = React.useState(0);
+            const [isAtlasFlipped, setIsAtlasFlipped] = React.useState(false);
+            const [atlasTestMode, setAtlasTestMode] = React.useState(false);
+            const [revealedLabels, setRevealedLabels] = React.useState({});
+
+            const topics = [
+                "Cell Biology", "Molecular Biology", "Genetics", "Ecology", 
+                "Human Physiology", "Metabolism & Respiration (HL)", "Plant Biology (HL)"
+            ];
+
+            // 使用穩定的 PNG 縮圖路徑 (Optimized Image Paths)
+            const atlasData = [
+                { 
+                    id: "A1", title: "DNA Nucleotide", 
+                    url: "[https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Nucleotide_nucleoside_general.svg/800px-Nucleotide_nucleoside_general.svg.png](https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Nucleotide_nucleoside_general.svg/800px-Nucleotide_nucleoside_general.svg.png)", 
+                    points: ["Phosphate Group (5' end)", "Pentose Sugar (Deoxyribose)", "Nitrogenous Base (1' end)"],
+                    icon: Dna 
+                },
+                { 
+                    id: "C1", title: "Mitochondrion Structure", 
+                    url: "[https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Animal_mitochondrion_diagram_en.svg/800px-Animal_mitochondrion_diagram_en.svg.png](https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Animal_mitochondrion_diagram_en.svg/800px-Animal_mitochondrion_diagram_en.svg.png)", 
+                    points: ["Matrix (Krebs Cycle site)", "Cristae (ETC Surface)", "Inner Membrane Space (H+ pool)"],
+                    icon: Layers 
+                },
+                {
+                    id: "P1", title: "Phospholipid Bilayer",
+                    url: "[https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Phospholipid_Ties.svg/800px-Phospholipid_Ties.svg.png](https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Phospholipid_Ties.svg/800px-Phospholipid_Ties.svg.png)",
+                    points: ["Hydrophilic Phosphate Head", "Hydrophobic Fatty Acid Tails", "Integral Protein (Channel)"],
+                    icon: BookOpen
+                }
+            ];
+
+            // --- AI CORE ENGINE (修正後的 v1 穩定版) ---
+            const callAI = async (prompt, isJson = false) => {
+                if (!apiKey) throw new Error('API Key Missing');
+                const endpoint = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error?.message || 'AI Connection Failed');
+                
+                let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                // 去除 AI 可能回傳的 Markdown JSON 標籤
+                if (isJson) text = text.replace(/```json|```/g, '').trim();
+                return text;
+            };
+
+            const generateQuestion = async () => {
+                setIsAiLoading(true);
+                setQuizState('loading');
+                const prompt = `Generate a difficult IB Biology HL ${quizConfig.type} question about ${quizConfig.topic}. 
+                Return JSON ONLY: { "question": "...", "options": ["A","B","C","D"], "answerIndex": 0, "explanation": "..." } 
+                For SAQ, include "markScheme" and "pointsPossible" instead of options.`;
+
                 try {
-                    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-                    const res = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                    });
-                    const data = await res.json();
-                    setLoading(false);
-                    return data.candidates[0].content.parts[0].text;
+                    const result = await callAI(prompt, true);
+                    setCurrentQuestion(JSON.parse(result));
+                    setQuizState('active');
                 } catch (e) {
-                    setLoading(false);
-                    return "Connection Failed. Check API Key or Network.";
+                    alert("AI Error: " + e.message);
+                    setQuizState('menu');
+                } finally {
+                    setIsAiLoading(false);
                 }
             };
 
-            const checkMCQ = (i) => {
-                setSelectedAns(i);
-                setShowExp(true);
+            const gradeResponse = async () => {
+                setIsAiLoading(true);
+                const prompt = `Grade this answer based on the IB Bio mark scheme: ${currentQuestion.markScheme}. Question: ${currentQuestion.question}. Student Answer: ${userResponse}. Provide score and feedback in HTML formatting.`;
+                try {
+                    const feedback = await callAI(prompt);
+                    setAiFeedback(feedback);
+                } catch (e) {
+                    alert("Grading failed.");
+                } finally {
+                    setIsAiLoading(false);
+                }
             };
 
-            return (
-                <div className="max-w-md mx-auto min-h-screen bg-white flex flex-col shadow-2xl relative border-x overflow-hidden">
-                    <header className="p-6 pt-12 border-b flex justify-between items-center bg-white sticky top-0 z-50">
-                        <h1 className="text-2xl font-black italic">IB BIO <span className="text-blue-600">PRO</span></h1>
-                        <button onClick={() => setTab('settings')} className="text-xl p-2 bg-slate-50 rounded-xl">⚙️</button>
-                    </header>
+            // --- RENDER COMPONENTS ---
+            const renderHome = () => (
+                <div className="space-y-6 animate-in fade-in duration-500 max-w-md mx-auto">
+                    <div className="bg-slate-900 rounded-[40px] p-10 text-white shadow-2xl relative overflow-hidden border border-white/10">
+                        <div className="relative z-10">
+                            <h1 className="text-4xl font-black mb-2 italic tracking-tighter">IB BIO <span className="text-blue-500 underline decoration-4 underline-offset-4">MASTER</span></h1>
+                            <p className="text-slate-400 mb-8 font-medium uppercase text-[10px] tracking-widest">2025 Edition • AI Thought Partner</p>
+                            <button onClick={() => setActiveTab('quiz')} className="w-full bg-blue-600 py-5 rounded-3xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95 shadow-lg shadow-blue-500/20">
+                                <Zap size={20} fill="currentColor" /> ENTER EXAM CENTER
+                            </button>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <button onClick={() => setActiveTab('atlas')} className="bg-white p-8 rounded-[35px] border border-slate-100 shadow-sm flex flex-col items-center gap-4 transition-all hover:shadow-lg active:scale-95">
+                            <div className="p-4 bg-indigo-50 rounded-2xl text-indigo-500"><ImageIcon size={24} /></div>
+                            <span className="font-bold text-slate-800 text-sm">Visual Atlas</span>
+                        </button>
+                        <button onClick={() => setActiveTab('quiz')} className="bg-white p-8 rounded-[35px] border border-slate-100 shadow-sm flex flex-col items-center gap-4 transition-all hover:shadow-lg active:scale-95">
+                            <div className="p-4 bg-rose-50 rounded-2xl text-rose-500"><Target size={24} /></div>
+                            <span className="font-bold text-slate-800 text-sm">Quiz Mode</span>
+                        </button>
+                    </div>
+                </div>
+            );
 
-                    <main className="flex-1 p-6 pb-32 overflow-y-auto">
-                        {tab === 'home' && (
-                            <div className="space-y-6">
-                                <div className="bg-blue-600 rounded-[32px] p-8 text-white shadow-xl">
-                                    <h2 className="text-2xl font-bold mb-2">Practice Hub</h2>
-                                    <p className="text-blue-100 text-sm mb-6 font-medium">Themes A-D / AI-Powered Feedback</p>
-                                    <button onClick={() => setTab('quiz')} className="w-full bg-white text-blue-600 py-4 rounded-2xl font-bold shadow-lg">Start Quiz</button>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div onClick={() => setTab('atlas')} className="bg-slate-50 p-6 rounded-3xl border text-center cursor-pointer">
-                                        <div className="text-3xl mb-1">🖼️</div>
-                                        <div className="font-bold">Atlas</div>
+            const renderAtlas = () => {
+                const card = atlasData[atlasIndex];
+                return (
+                    <div className="space-y-6 max-w-md mx-auto animate-in fade-in">
+                        <div className="flex items-center justify-between px-2">
+                            <h2 className="text-2xl font-black text-slate-800 italic">Visual Atlas</h2>
+                            <button onClick={() => setAtlasTestMode(!atlasTestMode)} className={`px-4 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all ${atlasTestMode ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500'}`}>TEST MODE</button>
+                        </div>
+                        <div 
+                            className="relative h-[480px] w-full [perspective:1200px] cursor-pointer"
+                            onClick={() => setIsAtlasFlipped(!isAtlasFlipped)}
+                        >
+                            <div className={`relative w-full h-full transition-all duration-700 [transform-style:preserve-3d] ${isAtlasFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
+                                {/* Front Side */}
+                                <div className="absolute inset-0 bg-white border border-slate-100 rounded-[50px] p-8 flex flex-col shadow-xl [backface-visibility:hidden]">
+                                    <div className="flex-grow flex items-center justify-center w-full bg-slate-50 rounded-[40px] overflow-hidden">
+                                        <SafeImage src={card.url} alt={card.title} className="w-full h-full" icon={card.icon} />
                                     </div>
-                                    <div onClick={() => setTab('settings')} className="bg-slate-50 p-6 rounded-3xl border text-center cursor-pointer">
-                                        <div className="text-3xl mb-1">🔑</div>
-                                        <div className="font-bold">API Key</div>
+                                    <div className="text-center pt-6">
+                                        <h3 className="text-xl font-black text-slate-800 tracking-tight">{card.title}</h3>
+                                        <p className="mt-2 text-blue-500 font-black text-[10px] uppercase tracking-widest">Tap to reveal annotations</p>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-
-                        {tab === 'quiz' && (
-                            <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-300">
-                                <div className="flex justify-between text-[10px] font-bold text-slate-400">
-                                    <span>QUESTION {currentQ + 1} / {masterPool.length}</span>
-                                    <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded">HL MODE</span>
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-800">{masterPool[currentQ].q}</h3>
-                                
-                                {masterPool[currentQ].type === 'MCQ' ? (
-                                    <div className="space-y-3">
-                                        {masterPool[currentQ].options.map((opt, i) => (
-                                            <button 
+                                {/* Back Side */}
+                                <div className="absolute inset-0 bg-slate-900 text-white rounded-[50px] p-10 [transform:rotateY(180deg)] [backface-visibility:hidden] flex flex-col justify-center border border-white/10 shadow-2xl">
+                                    <h3 className="text-blue-400 font-bold mb-6 flex items-center gap-2 uppercase tracking-widest text-xs"><Dna size={16}/> Structure Detail</h3>
+                                    <div className="space-y-4">
+                                        {card.points.map((p, i) => (
+                                            <div 
                                                 key={i} 
-                                                onClick={() => checkMCQ(i)}
-                                                className={`w-full text-left p-5 rounded-2xl border-2 transition-all font-bold ${
-                                                    selectedAns === null ? 'border-slate-100 bg-slate-50' :
-                                                    i === masterPool[currentQ].ans ? 'bg-green-500 text-white border-green-500 shadow-lg' :
-                                                    i === selectedAns ? 'bg-red-500 text-white border-red-500' : 'opacity-40 grayscale'
-                                                }`}
+                                                className={`p-4 rounded-2xl border border-white/5 transition-all ${atlasTestMode && !revealedLabels[`${atlasIndex}-${i}`] ? 'bg-white/5' : 'bg-white/10'}`}
+                                                onClick={(e) => { 
+                                                    if(atlasTestMode) { 
+                                                        e.stopPropagation(); 
+                                                        setRevealedLabels(prev => ({...prev, [`${atlasIndex}-${i}`]: true})); 
+                                                    } 
+                                                }}
                                             >
-                                                {opt}
-                                            </button>
+                                                <div className="flex items-center gap-4">
+                                                    <span className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center text-[10px] font-black">{i+1}</span>
+                                                    <span className={`text-sm font-bold transition-all ${atlasTestMode && !revealedLabels[`${atlasIndex}-${i}`] ? 'blur-md select-none' : 'blur-0'}`}>{p}</span>
+                                                </div>
+                                            </div>
                                         ))}
                                     </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        <textarea className="w-full p-6 bg-slate-50 border rounded-3xl min-h-[150px]" placeholder="Answer here..." value={userAns} onChange={(e) => setUserAns(e.target.value)} />
-                                        <button onClick={async () => setAiRes(await callAI(`Grade my answer: "${userAns}" for "${masterPool[currentQ].q}"`))} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold">
-                                            {loading ? "AI Marking..." : "Submit to AI"}
-                                        </button>
-                                    </div>
-                                )}
-
-                                {(showExp || aiRes) && (
-                                    <div className="p-6 bg-blue-50 rounded-[32px] border border-blue-100 animate-in fade-in">
-                                        <h4 className="font-bold text-blue-800 mb-2">Review:</h4>
-                                        <p className="text-sm text-slate-700" dangerouslySetInnerHTML={{__html: aiRes || masterPool[currentQ].exp}}></p>
-                                        <button onClick={() => {setCurrentQ((currentQ+1)%masterPool.length); setSelectedAns(null); setShowExp(false); setAiRes(''); setUserAns('');}} className="mt-4 w-full bg-blue-600 text-white py-3 rounded-xl font-bold">Next Question →</button>
-                                    </div>
-                                )}
+                                </div>
                             </div>
-                        )}
+                        </div>
+                        <div className="flex items-center justify-between px-4">
+                            <button onClick={() => { setIsAtlasFlipped(false); setAtlasIndex((atlasIndex - 1 + atlasData.length) % atlasData.length); }} className="w-14 h-14 bg-white border rounded-full flex items-center justify-center shadow hover:shadow-lg"><ChevronLeft/></button>
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{atlasIndex + 1} / {atlasData.length}</span>
+                            <button onClick={() => { setIsAtlasFlipped(false); setAtlasIndex((atlasIndex + 1) % atlasData.length); }} className="w-14 h-14 bg-white border rounded-full flex items-center justify-center shadow hover:shadow-lg"><ChevronRight/></button>
+                        </div>
+                    </div>
+                );
+            };
 
-                        {tab === 'atlas' && (
-                            <div className="space-y-10">
-                                <h2 className="text-2xl font-bold">Visual Memory Atlas</h2>
-                                {atlasData.map(card => (
-                                    <div key={card.id} className="perspective w-full h-[380px]" onClick={() => setFlipped({...flipped, [card.id]: !flipped[card.id]})}>
-                                        <div className={`flip-inner ${flipped[card.id] ? 'flipped' : ''}`}>
-                                            <div className="flip-front bg-white border p-6 flex flex-col justify-between shadow-xl">
-                                                <img src={card.url} className="w-full h-48 object-contain my-4" />
-                                                <h3 className="text-xl font-bold">{card.title}</h3>
-                                                <p className="text-[10px] text-slate-400 font-bold uppercase mt-2 italic">Tap to flip</p>
+            const renderSettings = () => (
+                <div className="max-w-md mx-auto space-y-6 animate-in zoom-in-95">
+                    <div className="bg-white p-10 rounded-[40px] border shadow-sm">
+                        <h2 className="text-2xl font-black mb-6 flex items-center gap-2 italic"><Settings className="text-blue-500" /> Configuration</h2>
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Google Gemini API Key</label>
+                            <input 
+                                type="password" 
+                                className="w-full p-5 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
+                                value={apiKey}
+                                onChange={(e) => { setApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value); }}
+                                placeholder="Paste your sk-... key"
+                            />
+                            <p className="text-[10px] text-slate-400 leading-relaxed italic">Your key is stored locally in your browser. It powers the dynamic question generation and AI grading features.</p>
+                        </div>
+                        <button onClick={() => setActiveTab('home')} className="mt-8 w-full bg-slate-900 text-white py-5 rounded-3xl font-bold">SAVE & RETURN</button>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen pb-32">
+                    <header className="max-w-md mx-auto p-8 flex justify-between items-center sticky top-0 bg-slate-50/80 backdrop-blur-xl z-50">
+                        <div className="flex items-center gap-2 cursor-pointer group" onClick={() => setActiveTab('home')}>
+                            <div className="bg-slate-900 p-2.5 rounded-2xl text-white shadow-xl group-hover:rotate-12 transition-all"><GraduationCap size={20} /></div>
+                            <span className="font-black text-slate-900 tracking-tighter text-xl italic">IB BIO HUB</span>
+                        </div>
+                        <button onClick={() => setActiveTab('settings')} className={`p-3 rounded-2xl border shadow-sm transition-all ${activeTab === 'settings' ? 'bg-blue-600 text-white' : 'bg-white text-slate-300'}`}><Settings size={20} /></button>
+                    </header>
+
+                    <main className="px-6">
+                        {activeTab === 'home' && renderHome()}
+                        {activeTab === 'atlas' && renderAtlas()}
+                        {activeTab === 'settings' && renderSettings()}
+                        {activeTab === 'quiz' && (
+                            <div className="max-w-md mx-auto">
+                                {quizState === 'menu' && (
+                                    <div className="bg-white p-10 rounded-[40px] border shadow-sm animate-in zoom-in-95">
+                                        <h2 className="text-2xl font-black mb-8 text-slate-800 flex items-center gap-2 italic"><Target className="text-rose-500" /> Exam Setup</h2>
+                                        <div className="space-y-6">
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2 block">Focus Topic</label>
+                                                <select className="w-full p-5 bg-slate-50 rounded-2xl font-bold outline-none" value={quizConfig.topic} onChange={e => setQuizConfig({...quizConfig, topic: e.target.value})}>
+                                                    {topics.map(t => <option key={t}>{t}</option>)}
+                                                </select>
                                             </div>
-                                            <div className="flip-back p-8 flex flex-col justify-center text-center">
-                                                <h3 className="text-xl font-bold text-blue-400 mb-6 underline">{card.title}</h3>
-                                                <ul className="space-y-3">
-                                                    {card.points.map((p, i) => <li key={i}>• {p}</li>)}
-                                                </ul>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {['MCQ', 'SAQ'].map(t => (
+                                                    <button key={t} onClick={() => setQuizConfig({...quizConfig, type: t})} className={`py-4 rounded-2xl font-bold ${quizConfig.type === t ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>{t}</button>
+                                                ))}
                                             </div>
+                                            <button onClick={generateQuestion} className="w-full bg-slate-900 text-white py-5 rounded-3xl font-bold flex items-center justify-center gap-2"><Sparkles size={18} /> GENERATE</button>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {tab === 'settings' && (
-                            <div className="space-y-6">
-                                <h2 className="text-2xl font-bold">Settings</h2>
-                                <input type="password" value={apiKey} onChange={(e) => {setApiKey(e.target.value); localStorage.setItem('gemini_key', e.target.value);}} className="w-full p-6 bg-slate-100 rounded-3xl outline-none" placeholder="AIza..." />
-                                <button onClick={() => setTab('home')} className="w-full bg-blue-600 text-white py-4 rounded-3xl font-bold">Save Key</button>
+                                )}
+                                {quizState === 'loading' && (
+                                    <div className="py-20 flex flex-col items-center gap-4 animate-pulse">
+                                        <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">AI is crafting your exam...</span>
+                                    </div>
+                                )}
+                                {quizState === 'active' && currentQuestion && (
+                                    <div className="bg-white p-10 rounded-[40px] border shadow-sm border-b-[10px] border-blue-600 animate-in slide-in-from-bottom-6">
+                                        <div className="flex justify-between items-center mb-6">
+                                            <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-tighter">{quizConfig.topic}</span>
+                                            <button onClick={() => setQuizState('menu')} className="text-slate-300 hover:text-rose-500 transition-all"><XCircle size={20}/></button>
+                                        </div>
+                                        <h3 className="text-xl font-bold text-slate-800 mb-8 leading-snug">{currentQuestion.question}</h3>
+                                        
+                                        {quizConfig.type === 'MCQ' ? (
+                                            <div className="space-y-2">
+                                                {currentQuestion.options.map((opt, i) => (
+                                                    <button 
+                                                        key={i} 
+                                                        disabled={selectedMcqOption !== null}
+                                                        onClick={() => setSelectedMcqOption(i)}
+                                                        className={`w-full text-left p-5 rounded-2xl border-2 font-bold transition-all ${
+                                                            selectedMcqOption === null ? 'bg-slate-50 border-transparent' :
+                                                            i === currentQuestion.answerIndex ? 'bg-emerald-500 text-white border-emerald-500' :
+                                                            i === selectedMcqOption ? 'bg-rose-500 text-white border-rose-500' : 'opacity-30'
+                                                        }`}
+                                                    >{opt}</button>
+                                                ))}
+                                                {selectedMcqOption !== null && (
+                                                    <div className="mt-6 p-6 bg-slate-50 rounded-2xl text-sm border italic leading-relaxed">{currentQuestion.explanation}</div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                <textarea className="w-full p-6 bg-slate-50 rounded-3xl min-h-[150px] outline-none font-medium" placeholder="Write your scientific answer..." value={userResponse} onChange={e => setUserResponse(e.target.value)} disabled={aiFeedback}></textarea>
+                                                {!aiFeedback ? (
+                                                    <button onClick={gradeResponse} className="w-full bg-slate-900 text-white py-5 rounded-3xl font-bold flex items-center justify-center gap-2 shadow-xl"><Sparkles size={18}/> GRADE WITH AI</button>
+                                                ) : (
+                                                    <div className="p-8 bg-slate-50 rounded-3xl border text-sm leading-relaxed prose prose-slate" dangerouslySetInnerHTML={{__html: aiFeedback}}></div>
+                                                )}
+                                            </div>
+                                        )}
+                                        {(selectedMcqOption !== null || aiFeedback) && (
+                                            <button onClick={() => setQuizState('menu')} className="mt-6 w-full py-4 border-2 border-slate-100 text-slate-400 font-bold rounded-2xl hover:bg-slate-50 transition-all">NEXT TOPIC</button>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </main>
 
-                    <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[85%] bg-white/80 backdrop-blur-xl border rounded-full p-2 flex justify-around shadow-2xl z-50">
-                        <button onClick={() => setTab('home')} className={`p-4 rounded-full ${tab === 'home' ? 'bg-blue-600 text-white' : ''}`}>🏠</button>
-                        <button onClick={() => setTab('atlas')} className={`p-4 rounded-full ${tab === 'atlas' ? 'bg-blue-600 text-white' : ''}`}>🖼️</button>
-                        <button onClick={() => setTab('quiz')} className={`p-4 rounded-full ${tab === 'quiz' ? 'bg-blue-600 text-white' : ''}`}>🎯</button>
+                    <nav className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px] bg-slate-900/90 backdrop-blur-2xl rounded-[40px] p-2 flex justify-around shadow-2xl z-50">
+                        {['home', 'atlas', 'quiz'].map(id => (
+                            <button key={id} onClick={() => setActiveTab(id)} className={`p-5 rounded-full transition-all ${activeTab === id ? 'bg-blue-600 text-white' : 'text-slate-500'}`}>
+                                {id === 'home' ? '🏠' : id === 'atlas' ? <ImageIcon size={22}/> : <Target size={22}/>}
+                            </button>
+                        ))}
                     </nav>
                 </div>
             );
