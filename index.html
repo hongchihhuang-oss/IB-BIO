@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio HL: Ultimate AI Suite</title>
+    <title>IB Bio HL Master Suite</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
-        body { font-family: 'Outfit', sans-serif; background: #f8fafc; overflow-x: hidden; }
-        .perspective { perspective: 2000px; }
-        .flip-card-inner { transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; height: 450px; }
-        .flipped { transform: rotateY(180deg); }
-        .flip-card-front, .flip-card-back { backface-visibility: hidden; border-radius: 32px; position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
-        .flip-card-back { transform: rotateY(180deg); background: #1e293b; color: white; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        body { font-family: 'Outfit', sans-serif; background: #f8fafc; color: #1e293b; }
+        .flip-card { perspective: 2000px; height: 400px; }
+        .flip-card-inner { transition: transform 0.6s; transform-style: preserve-3d; position: relative; width: 100%; height: 100%; }
+        .flipped { transform: rotateX(180deg); }
+        .flip-front, .flip-back { backface-visibility: hidden; position: absolute; width: 100%; height: 100%; border-radius: 24px; }
+        .flip-back { transform: rotateX(180deg); background: #1e293b; color: white; padding: 20px; }
     </style>
 </head>
 <body>
@@ -25,126 +24,94 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- 100 QUESTION POOL (Sample Data for Structure) ---
+        // --- 核心數據：100 題架構 (範例) ---
         const masterPool = [
-            { theme: "A", type: "MCQ", q: "Which property allows water to travel up the xylem under tension?", options: ["High specific heat", "Cohesion and Adhesion", "Density at 4°C", "Solvent properties"], ans: 1, exp: "Cohesion/Adhesion create a continuous column of water." },
-            { theme: "C", type: "SAQ", q: "Explain the process of Photolysis in Photosynthesis. (4 marks)", exp: "Keywords: Light energy, splitting water, O2 waste, Electrons for PSII, Protons." },
-            { theme: "B", type: "MCQ", q: "What is the function of cholesterol in animal membranes?", options: ["ATP synthesis", "Fluidity regulation", "Ion transport", "Protein folding"], ans: 1, exp: "Regulates membrane fluidity across temperatures." }
+            { id: 1, theme: "A", type: "MCQ", q: "Which property of water allows for transpiration under tension?", options: ["Specific heat", "Cohesion/Adhesion", "Solvent ability", "Density"], ans: 1, exp: "Hydrogen bonds create pulling force." },
+            { id: 2, theme: "C", type: "SAQ", q: "Explain the role of the intermembrane space in mitochondria. (3 marks)", exp: "Keywords: Small volume, high H+ concentration, proton gradient." }
         ];
 
-        // --- VISUAL ATLAS DATA ---
+        // --- 視覺圖鑑 ---
         const atlasData = [
-            { id: "A1.1", title: "Water Dipolarity", theme: "A", url: "https://upload.wikimedia.org/wikipedia/commons/e/e3/Water_molecule_structure.svg", points: ["Partial charges (δ+ / δ-)", "Hydrogen bond formation"] },
-            { id: "C1.3", title: "Mitochondrion", theme: "C", url: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Animal_mitochondrion_diagram_en.svg", points: ["Matrix: Krebs cycle", "Intermembrane Space: H+ Gradient"] },
-            { id: "D1.1", title: "Replication Fork", theme: "A", url: "https://upload.wikimedia.org/wikipedia/commons/8/8f/DNA_replication_en.svg", points: ["Helicase unwinds", "DNA Polymerase III synthesis"] }
+            { id: "A1", title: "Water Polarity", url: "https://upload.wikimedia.org/wikipedia/commons/e/e3/Water_molecule_structure.svg", points: ["Partial charges", "Hydrogen bonding"] },
+            { id: "C1", title: "Mitochondrion", url: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Animal_mitochondrion_diagram_en.svg", points: ["Matrix", "Cristae", "IMS"] }
         ];
 
         const App = () => {
-            const [activeTab, setActiveTab] = useState('home');
+            const [tab, setTab] = useState('home');
             const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_key') || '');
-            const [aiStatus, setAiStatus] = useState('Checking...');
-            const [isLoading, setIsLoading] = useState(false);
-            const [currentQ, setCurrentQ] = useState(0);
-            const [userEssay, setUserEssay] = useState('');
-            const [aiFeedback, setAiFeedback] = useState('');
-            const [flippedCard, setFlippedCard] = useState(null);
+            const [logs, setLogs] = useState('System Ready.');
+            const [aiRes, setAiRes] = useState('');
+            const [isFlipped, setIsFlipped] = useState({});
 
-            // --- FIXED API CALL (v1 version) ---
+            // --- 核心 AI 呼叫功能 (修正版) ---
             const callGemini = async (prompt) => {
-                if (!apiKey) return "Error: No API Key.";
-                setIsLoading(true);
+                if(!apiKey) { setLogs("Error: Missing Key"); return; }
+                setLogs("Connecting to Google AI...");
                 try {
-                    // Using 'v1' instead of 'v1beta' to avoid 404 issues
-                    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-                    const resp = await fetch(url, {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                    const response = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                     });
-                    const data = await resp.json();
-                    setIsLoading(false);
-                    if (data.error) return `Error: ${data.error.message}`;
-                    return data.candidates[0].content.parts[0].text;
+                    const data = await response.json();
+                    if (data.error) throw new Error(data.error.message);
+                    setLogs("✅ AI Response Success.");
+                    setAiRes(data.candidates[0].content.parts[0].text);
                 } catch (e) {
-                    setIsLoading(false);
-                    return "Connection Failed.";
+                    setLogs(`❌ Failed: ${e.message}`);
+                    console.error(e);
                 }
             };
 
-            const checkStatus = async () => {
-                const res = await callGemini("Respond with 'OK'");
-                setAiStatus(res.includes('OK') ? 'ONLINE' : 'ERROR');
-            };
-
-            useEffect(() => { if(apiKey) checkStatus(); }, []);
-
-            const gradeMyEssay = async () => {
-                const prompt = `IB Bio HL Grading Task: Question: "${masterPool[currentQ].q}". Student Answer: "${userEssay}". Mark this based on IB criteria. Be strict. Use bullet points.`;
-                const feedback = await callGemini(prompt);
-                setAiFeedback(feedback);
-            };
-
             return (
-                <div className="min-h-screen max-w-md mx-auto bg-white flex flex-col shadow-2xl relative">
-                    {/* Header */}
-                    <header className="p-6 pt-12 flex justify-between items-center border-b">
-                        <div>
-                            <h1 className="text-2xl font-black text-slate-900">IB BIO <span className="text-blue-600">MASTER</span></h1>
-                            <div className="flex items-center gap-2">
-                                <span className={`w-2 h-2 rounded-full ${aiStatus === 'ONLINE' ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`}></span>
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{aiStatus}</span>
-                            </div>
-                        </div>
-                        <button onClick={() => setActiveTab('settings')} className="p-3 bg-slate-50 rounded-2xl">⚙️</button>
+                <div className="max-w-md mx-auto min-h-screen bg-white flex flex-col shadow-2xl relative">
+                    <header className="p-6 pt-10 border-b flex justify-between items-center bg-white sticky top-0 z-50">
+                        <h1 className="text-2xl font-black">IB Bio <span className="text-blue-600">Master</span></h1>
+                        <button onClick={() => setTab('settings')} className="text-xl">⚙️</button>
                     </header>
 
-                    <main className="flex-1 p-6 overflow-y-auto hide-scrollbar pb-32">
-                        {activeTab === 'home' && (
-                            <div className="space-y-6">
-                                <div className="bg-slate-900 rounded-[40px] p-8 text-white shadow-2xl">
-                                    <h2 className="text-2xl font-bold mb-2">Practice Center</h2>
-                                    <p className="text-slate-400 text-sm mb-6 leading-relaxed">Simulate real IB HL exams with AI-powered marking.</p>
-                                    <button onClick={() => setActiveTab('quiz')} className="w-full bg-blue-600 py-4 rounded-2xl font-bold active:scale-95 transition-all">Start 100 Questions</button>
+                    <main className="flex-1 p-6 overflow-y-auto pb-32">
+                        {tab === 'home' && (
+                            <div className="space-y-6 animate-in fade-in">
+                                <div className="bg-blue-600 rounded-[32px] p-8 text-white shadow-xl">
+                                    <h2 className="text-2xl font-bold mb-2">AI Exam Center</h2>
+                                    <p className="text-blue-100 text-sm mb-6">Real-time grading for HL essays.</p>
+                                    <button onClick={() => setTab('quiz')} className="w-full bg-white text-blue-600 py-4 rounded-2xl font-bold">Start Practice</button>
+                                </div>
+                                <div className="p-4 bg-slate-100 rounded-2xl font-mono text-[10px] text-slate-500">
+                                    Debug Log: {logs}
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div onClick={() => setActiveTab('atlas')} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 cursor-pointer">
-                                        <div className="text-3xl mb-2">🖼️</div>
+                                    <button onClick={() => setTab('atlas')} className="bg-slate-50 p-6 rounded-3xl border text-center">
+                                        <div className="text-2xl mb-1">🖼️</div>
                                         <div className="font-bold">Atlas</div>
-                                        <p className="text-[10px] text-slate-400">Diagram Cards</p>
-                                    </div>
-                                    <div onClick={() => setActiveTab('settings')} className="bg-slate-50 p-6 rounded-3xl border border-slate-100 cursor-pointer">
-                                        <div className="text-3xl mb-2">⚡</div>
+                                    </button>
+                                    <button onClick={() => setTab('settings')} className="bg-slate-50 p-6 rounded-3xl border text-center">
+                                        <div className="text-2xl mb-1">🛠️</div>
                                         <div className="font-bold">Config</div>
-                                        <p className="text-[10px] text-slate-400">AI Engine</p>
-                                    </div>
+                                    </button>
                                 </div>
                             </div>
                         )}
 
-                        {activeTab === 'atlas' && (
-                            <div className="space-y-10">
-                                <h2 className="text-2xl font-bold">Visual Atlas</h2>
-                                {atlasData.map((item) => (
-                                    <div key={item.id} className="perspective w-full h-[450px]">
-                                        <div className={`flip-card-inner ${flippedCard === item.id ? 'flipped' : ''}`} onClick={() => setFlippedCard(flippedCard === item.id ? null : item.id)}>
-                                            <div className="flip-card-front bg-white border-2 border-slate-100 p-6 flex flex-col justify-between shadow-xl">
-                                                <span className="text-[10px] font-black bg-blue-100 text-blue-600 px-3 py-1 rounded-full w-fit uppercase">{item.id}</span>
-                                                <img src={item.url} className="w-full h-48 object-contain my-4" />
-                                                <div className="border-t pt-4">
-                                                    <h3 className="text-xl font-bold">{item.title}</h3>
-                                                    <p className="text-xs text-slate-400 mt-1 uppercase tracking-widest font-bold">Theme {item.theme} / Tap to flip</p>
-                                                </div>
+                        {tab === 'atlas' && (
+                            <div className="space-y-10 animate-in slide-in-from-bottom-4">
+                                <h2 className="text-2xl font-bold">Visual Flashcards</h2>
+                                {atlasData.map(card => (
+                                    <div key={card.id} className="flip-card cursor-pointer" onClick={() => setIsFlipped({...isFlipped, [card.id]: !isFlipped[card.id]})}>
+                                        <div className={`flip-card-inner ${isFlipped[card.id] ? 'flipped' : ''}`}>
+                                            <div className="flip-front bg-white border-2 p-6 flex flex-col justify-between shadow-lg">
+                                                <span className="text-xs font-bold text-blue-600">UNIT {card.id}</span>
+                                                <img src={card.url} className="w-full h-40 object-contain my-4" />
+                                                <h3 className="text-xl font-bold">{card.title}</h3>
                                             </div>
-                                            <div className="flip-card-back p-8 flex flex-col">
-                                                <h3 className="text-xl font-bold text-blue-400 mb-6">{item.title}</h3>
-                                                <ul className="flex-1 space-y-4">
-                                                    {item.points.map((p, idx) => (
-                                                        <li key={idx} className="flex items-start gap-3 text-sm text-slate-300">
-                                                            <span className="text-blue-500">✓</span> {p}
-                                                        </li>
-                                                    ))}
+                                            <div className="flip-back flex flex-col justify-center">
+                                                <h3 className="text-xl font-bold text-blue-400 mb-4">{card.title}</h3>
+                                                <ul className="space-y-2 text-sm">
+                                                    {card.points.map((p, i) => <li key={i}>• {p}</li>)}
                                                 </ul>
-                                                <button className="bg-blue-600 py-3 rounded-xl font-bold text-sm">Deep Analysis (AI)</button>
+                                                <button onClick={(e) => {e.stopPropagation(); callGemini(`Explain ${card.title} for IB Bio HL`);}} className="mt-6 bg-blue-600 py-3 rounded-xl font-bold">Ask AI Detail</button>
                                             </div>
                                         </div>
                                     </div>
@@ -152,71 +119,33 @@
                             </div>
                         )}
 
-                        {activeTab === 'quiz' && (
+                        {tab === 'settings' && (
                             <div className="space-y-6">
-                                <div className="p-4 bg-slate-50 rounded-2xl border flex justify-between items-center text-xs font-bold text-slate-400">
-                                    <span>Q {currentQ + 1} / {masterPool.length}</span>
-                                    <span className="text-blue-600">HL MODE</span>
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-800 leading-tight">{masterPool[currentQ].q}</h3>
-                                
-                                {masterPool[currentQ].type === 'MCQ' ? (
-                                    <div className="space-y-3">
-                                        {masterPool[currentQ].options.map((opt, i) => (
-                                            <button key={i} className="w-full text-left p-5 rounded-3xl border-2 border-slate-100 hover:border-blue-500 transition-all font-medium">
-                                                {opt}
-                                            </button>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        <textarea 
-                                            className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-[32px] outline-none focus:border-blue-600 min-h-[200px] text-sm"
-                                            placeholder="Write your answer using biological terminology..."
-                                            value={userEssay}
-                                            onChange={(e) => setUserEssay(e.target.value)}
-                                        />
-                                        <button onClick={gradeMyEssay} className="w-full bg-slate-900 text-white py-5 rounded-3xl font-bold shadow-xl">
-                                            {isLoading ? "AI Examiner is Marking..." : "Submit to AI Examiner"}
-                                        </button>
-                                    </div>
-                                )}
-
-                                {aiFeedback && (
-                                    <div className="mt-8 p-6 bg-blue-50 rounded-[32px] border border-blue-100 text-sm leading-relaxed animate-in fade-in">
-                                        <h4 className="font-bold text-blue-800 mb-3 underline tracking-widest uppercase text-[10px]">Feedback & Marks</h4>
-                                        <div className="whitespace-pre-wrap">{aiFeedback}</div>
-                                        <button onClick={() => {setAiFeedback(''); setUserEssay(''); setCurrentQ((currentQ + 1) % masterPool.length)}} className="mt-6 w-full bg-blue-600 text-white py-4 rounded-2xl font-bold">Next Question</button>
-                                    </div>
-                                )}
+                                <h2 className="text-2xl font-bold">Settings</h2>
+                                <input 
+                                    type="password" 
+                                    value={apiKey} 
+                                    onChange={(e) => {setApiKey(e.target.value); localStorage.setItem('gemini_key', e.target.value);}}
+                                    className="w-full p-5 bg-slate-100 rounded-3xl outline-none border-2 border-transparent focus:border-blue-500"
+                                    placeholder="Paste Gemini Key (AIza...)"
+                                />
+                                <button onClick={() => callGemini("Verify connection")} className="w-full bg-blue-600 text-white py-4 rounded-3xl font-bold">Test AI Now</button>
+                                <button onClick={() => setTab('home')} className="w-full bg-slate-900 text-white py-4 rounded-3xl font-bold">Back Home</button>
                             </div>
                         )}
-
-                        {activeTab === 'settings' && (
-                            <div className="space-y-8 animate-in fade-in">
-                                <h2 className="text-2xl font-bold">Engine Configuration</h2>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-400 ml-4 mb-2 block uppercase tracking-widest">Google API Key</label>
-                                    <input 
-                                        type="password"
-                                        value={apiKey}
-                                        onChange={(e) => {setApiKey(e.target.value); localStorage.setItem('gemini_key', e.target.value);}}
-                                        className="w-full p-6 bg-slate-100 rounded-[32px] border-none outline-none focus:ring-4 ring-blue-500/20"
-                                        placeholder="AIza..."
-                                    />
-                                    <p className="p-4 text-[10px] text-slate-400 text-center">Your key is stored only on this iPad.</p>
-                                </div>
-                                <button onClick={checkStatus} className="w-full bg-blue-600 text-white py-5 rounded-[32px] font-bold shadow-xl">Test Connection</button>
-                                <button onClick={() => setActiveTab('home')} className="w-full bg-slate-900 text-white py-5 rounded-[32px] font-bold">Save & Close</button>
+                        
+                        {aiRes && tab !== 'settings' && (
+                            <div className="mt-6 p-6 bg-blue-50 rounded-3xl border border-blue-100 text-sm animate-in fade-in">
+                                <b className="text-blue-800">AI Feedback:</b>
+                                <div className="mt-2 whitespace-pre-wrap">{aiRes}</div>
                             </div>
                         )}
                     </main>
 
-                    {/* Bottom Nav */}
-                    <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[85%] bg-white/80 backdrop-blur-xl border border-slate-200 rounded-full flex justify-around p-3 shadow-2xl z-50">
-                        <button onClick={() => setActiveTab('home')} className={`p-3 rounded-full ${activeTab === 'home' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>🏠</button>
-                        <button onClick={() => setActiveTab('atlas')} className={`p-3 rounded-full ${activeTab === 'atlas' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>🖼️</button>
-                        <button onClick={() => setActiveTab('quiz')} className={`p-3 rounded-full ${activeTab === 'quiz' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>🎯</button>
+                    <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[80%] bg-white/80 backdrop-blur-xl border rounded-full p-2 flex justify-around shadow-2xl">
+                        <button onClick={() => setTab('home')} className={`p-4 rounded-full ${tab === 'home' ? 'bg-blue-600 text-white' : ''}`}>🏠</button>
+                        <button onClick={() => setTab('atlas')} className={`p-4 rounded-full ${tab === 'atlas' ? 'bg-blue-600 text-white' : ''}`}>🖼️</button>
+                        <button onClick={() => setTab('settings')} className={`p-4 rounded-full ${tab === 'settings' ? 'bg-blue-600 text-white' : ''}`}>⚙️</button>
                     </nav>
                 </div>
             );
