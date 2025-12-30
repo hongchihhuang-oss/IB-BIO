@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IB Bio HL: Visual Atlas</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bento:wght@400;700&family=Outfit:wght@300;600;800&display=swap');
+        body { font-family: 'Outfit', sans-serif; background: #0f172a; color: white; }
+        
+        /* 垂直翻轉特效 */
+        .perspective-2000 { perspective: 2000px; }
+        .flip-card-inner { 
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); 
+            transform-style: preserve-3d; 
+            position: relative;
+            width: 100%;
+            height: 420px;
+        }
+        .flipped { transform: rotateX(180deg); }
+        .flip-card-front, .flip-card-back { 
+            backface-visibility: hidden; 
+            position: absolute; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            border-radius: 24px;
+            overflow: hidden;
+        }
+        .flip-card-back { transform: rotateX(180deg); background: #1e293b; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // --- 所有 Theme A & C 的核心圖庫 ---
+        const atlasData = [
+            { id: "A1.1", title: "Water Dipolarity", theme: "A", url: "https://upload.wikimedia.org/wikipedia/commons/e/e3/Water_molecule_structure.svg", points: ["Partial charges (δ+ / δ-)", "Hydrogen bond formation", "Cohesion & Adhesion"] },
+            { id: "A1.2", title: "DNA Nucleotide", theme: "A", url: "https://upload.wikimedia.org/wikipedia/commons/d/d3/Nucleotide_nucleoside_general.svg", points: ["Phosphate group (5' carbon)", "Pentose sugar", "Nitrogenous base (1' carbon)"] },
+            { id: "B1.1", title: "Fluid Mosaic Model", theme: "A", url: "https://upload.wikimedia.org/wikipedia/commons/d/da/Cell_membrane_detailed_diagram_en.svg", points: ["Phospholipid bilayer", "Cholesterol (fluidity)", "Integral/Peripheral proteins"] },
+            { id: "C1.3", title: "Mitochondrion Ultrastructure", theme: "C", url: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Animal_mitochondrion_diagram_en.svg", points: ["Intermembrane space (H+ accumulation)", "Matrix (Krebs cycle)", "Cristae (Surface area)"] },
+            { id: "C1.3", title: "Chloroplast Ultrastructure", theme: "C", url: "https://upload.wikimedia.org/wikipedia/commons/a/a6/Chloroplast_II.svg", points: ["Thylakoid (Light reactions)", "Stroma (Calvin cycle)", "Starch grains"] },
+            { id: "C1.1", title: "Enzyme Inhibition Curves", theme: "C", url: "https://upload.wikimedia.org/wikipedia/commons/0/08/Enzyme_inhibition.svg", points: ["Vmax & Km values", "Competitive vs Non-competitive", "Allosteric site"] },
+            { id: "D1.1", title: "DNA Replication Fork", theme: "A", url: "https://upload.wikimedia.org/wikipedia/commons/8/8f/DNA_replication_en.svg", points: ["Helicase & Gyrase", "Leading vs Lagging strand", "DNA Polymerase III & I"] }
+        ];
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('atlas');
+            const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
+            const [flippedCards, setFlippedCards] = useState({});
+            const [aiAnalysis, setAiAnalysis] = useState({});
+            const [loadingId, setLoadingId] = useState(null);
+
+            const toggleFlip = (id) => {
+                setFlippedCards(prev => ({ ...prev, [id]: !prev[id] }));
+            };
+
+            const askGemini = async (item) => {
+                if (!apiKey) { alert("Please set Gemini API Key in Settings!"); return; }
+                setLoadingId(item.id);
+                try {
+                    const prompt = `Act as an IB Biology HL Examiner. Explain this diagram: "${item.title}" from Theme ${item.theme}. Focus on the structures and their specific functions in relation to HL syllabus. Use bullet points and focus on Mark Scheme terminology.`;
+                    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                    const data = await resp.json();
+                    setAiAnalysis(prev => ({ ...prev, [item.id]: data.candidates[0].content.parts[0].text }));
+                } catch (e) {
+                    alert("Gemini Error. Check your Key.");
+                }
+                setLoadingId(null);
+            };
+
+            return (
+                <div className="min-h-screen max-w-lg mx-auto flex flex-col relative bg-slate-950">
+                    <header className="p-8 pt-12 flex justify-between items-end border-b border-slate-800">
+                        <div>
+                            <h1 className="text-3xl font-extrabold tracking-tighter">BIO <span className="text-emerald-500">ATLAS</span></h1>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">IB HL Visual Intelligence</p>
+                        </div>
+                        <button onClick={() => setActiveTab('settings')} className="p-3 bg-slate-900 rounded-2xl text-xl">⚙️</button>
+                    </header>
+
+                    <main className="flex-1 p-6 overflow-y-auto hide-scrollbar pb-32 space-y-10">
+                        {activeTab === 'atlas' && atlasData.map((item) => (
+                            <div key={item.id} className="perspective-2000">
+                                <div className={`flip-card-inner ${flippedCards[item.id] ? 'flipped' : ''}`} onClick={() => toggleFlip(item.id)}>
+                                    {/* 正面: 圖片 */}
+                                    <div className="flip-card-front bg-white p-6 shadow-2xl flex flex-col justify-between">
+                                        <div className="flex justify-between items-start">
+                                            <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full uppercase">Unit {item.id}</span>
+                                            <span className="text-slate-300 font-bold">#Theme {item.theme}</span>
+                                        </div>
+                                        <img src={item.url} className="w-full h-48 object-contain my-4" />
+                                        <div className="border-t pt-4">
+                                            <h3 className="text-xl font-bold text-slate-900">{item.title}</h3>
+                                            <p className="text-xs text-slate-400 mt-1 italic">Tap to flip vertically for details</p>
+                                        </div>
+                                    </div>
+
+                                    {/* 背面: 詳解與 AI */}
+                                    <div className="flip-card-back p-8 flex flex-col" onClick={(e) => e.stopPropagation()}>
+                                        <h3 className="text-xl font-bold text-emerald-400 mb-4">{item.title}</h3>
+                                        <div className="flex-1 overflow-y-auto hide-scrollbar">
+                                            <ul className="space-y-3 mb-6">
+                                                {item.points.map((p, idx) => (
+                                                    <li key={idx} className="flex items-start gap-2 text-sm text-slate-300">
+                                                        <span className="text-emerald-500">✓</span> {p}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                            {aiAnalysis[item.id] && (
+                                                <div className="mt-4 p-4 bg-slate-800 rounded-2xl text-xs text-slate-200 border border-slate-700 leading-relaxed whitespace-pre-wrap">
+                                                    <div className="font-bold text-emerald-500 mb-2 underline">Gemini Analysis:</div>
+                                                    {aiAnalysis[item.id]}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-2 mt-4">
+                                            <button onClick={() => askGemini(item)} className="flex-1 bg-emerald-600 py-3 rounded-xl font-bold text-sm">
+                                                {loadingId === item.id ? "Analyzing..." : "Ask Gemini AI"}
+                                            </button>
+                                            <button onClick={() => toggleFlip(item.id)} className="px-6 bg-slate-700 py-3 rounded-xl font-bold text-sm">Back</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+
+                        {activeTab === 'settings' && (
+                            <div className="animate-in fade-in duration-500 space-y-8">
+                                <h2 className="text-2xl font-bold">App Settings</h2>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Google Gemini API Key</label>
+                                    <input 
+                                        type="password" 
+                                        value={apiKey}
+                                        onChange={(e) => { setApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value); }}
+                                        className="w-full p-5 bg-slate-900 border border-slate-800 rounded-3xl text-emerald-400 outline-none focus:border-emerald-500"
+                                        placeholder="Paste sk-..."
+                                    />
+                                    <p className="text-[10px] text-slate-600 px-2">Key stays in your iPad Local Storage.</p>
+                                </div>
+                                <button onClick={() => setActiveTab('atlas')} className="w-full bg-emerald-600 py-4 rounded-3xl font-bold">Return to Atlas</button>
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Navbar */}
+                    <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[70%] bg-slate-900/80 backdrop-blur-2xl border border-white/10 rounded-[32px] p-2 flex justify-around shadow-2xl">
+                        <button onClick={() => setActiveTab('atlas')} className={`p-4 rounded-full transition-all ${activeTab === 'atlas' ? 'bg-emerald-600 text-white' : 'text-slate-500'}`}>🖼️</button>
+                        <button onClick={() => setActiveTab('settings')} className={`p-4 rounded-full transition-all ${activeTab === 'settings' ? 'bg-emerald-600 text-white' : 'text-slate-500'}`}>⚙️</button>
+                    </nav>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
