@@ -8,8 +8,6 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Core Lucide library for UMD -->
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         :root { --primary: #2563eb; --bg: #f8fafc; }
@@ -30,121 +28,85 @@
             position: relative;
             box-shadow: 0 0 100px rgba(0,0,0,0.08);
         }
-        .perspective { perspective: 2000px; }
-        .flip-inner { transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; }
-        .flipped { transform: rotateY(180deg); }
-        .flip-front, .flip-back { backface-visibility: hidden; border-radius: 3rem; position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
-        .flip-back { transform: rotateY(180deg); background: #0f172a; color: white; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .glass-nav { 
-            background: rgba(255, 255, 255, 0.95); 
-            backdrop-filter: blur(25px); 
-            -webkit-backdrop-filter: blur(25px); 
+            background: rgba(255, 255, 255, 0.96); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px); 
             border-top: 1px solid rgba(0,0,0,0.08);
         }
-        .diagnostic-card { border-left-width: 14px; }
+        .diagnostic-card { border-left-width: 12px; }
         .model-answer-card { background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%); border: 1px solid #bae6fd; }
         .nav-active { color: #2563eb; background: #eff6ff; }
         
         button:active { transform: scale(0.97); transition: 0.1s; }
         .mcq-option { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        /* Layout fixes for large font sizes */
-        .dynamic-text { line-height: 1.6; }
+        /* Fixed UI labels that don't scale aggressively */
+        .ui-label { font-size: 0.7rem !important; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; line-height: 1.2 !important; }
+        .content-area { line-height: 1.6; }
+        .faded-q { opacity: 0.4; filter: grayscale(1); }
+        
+        .stat-card { background: white; border: 1px solid #f1f5f9; border-radius: 2rem; padding: 1.5rem; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, createElement, useCallback, useRef } = React;
+        const { useState, useEffect, ReactFragment } = React;
 
         /**
-         * Robust Lucide Icon Driver - Version 2.0
-         * Prevents React Error #130 by strictly validating every element type.
+         * Robust BioIcon Component
+         * Uses inline SVG fragments to guarantee stability in the Canvas environment.
          */
-        const LucideIcon = ({ name, size = 24, className = "" }) => {
-            if (typeof lucide === 'undefined' || !lucide.icons) return null;
-            
-            const kebabName = name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-            const iconData = lucide.icons[kebabName] || lucide.icons[name.toLowerCase()] || lucide.icons[name];
-            
-            if (!iconData || !Array.isArray(iconData)) {
-                return <div className={`inline-flex border-2 border-slate-100 rounded-lg ${className}`} style={{ width: size, height: size }}></div>;
-            }
-
-            const [tag, attrs, children] = iconData;
-            
-            const renderChildren = (childList) => {
-                if (!childList || !Array.isArray(childList)) return null;
-                return childList.map((child, index) => {
-                    if (!Array.isArray(child) || typeof child[0] !== 'string') return null;
-                    const [cTag, cAttrs, cChildren] = child;
-                    // cChildren might be undefined or array
-                    return createElement(cTag, { ...cAttrs, key: index }, renderChildren(cChildren));
-                });
+        const BioIcon = ({ name, size = 24, className = "" }) => {
+            const icons = {
+                Home: <React.Fragment><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></React.Fragment>,
+                Exam: <React.Fragment><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></React.Fragment>,
+                Config: <React.Fragment><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1V13a2 2 0 0 1-2-2 2 2 0 0 1 2-2v-.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></React.Fragment>,
+                Check: <polyline points="20 6 9 17 4 12" />,
+                X: <React.Fragment><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></React.Fragment>,
+                Dna: <React.Fragment><path d="m8 8 8 8"/><path d="m8 16 8-8"/><circle cx="8" cy="8" r="2"/><circle cx="16" cy="16" r="2"/><circle cx="8" cy="16" r="2"/><circle cx="16" cy="8" r="2"/></React.Fragment>,
+                Layers: <React.Fragment><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></React.Fragment>,
+                Zap: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />,
+                Refresh: <React.Fragment><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></React.Fragment>
             };
-
-            if (typeof tag !== 'string') return null;
-
-            return createElement(
-                tag, 
-                { 
-                    ...attrs, 
-                    width: size, 
-                    height: size, 
-                    className, 
-                    stroke: "currentColor", 
-                    strokeWidth: 2.2, 
-                    strokeLinecap: "round",
-                    strokeLinejoin: "round",
-                    fill: "none" 
-                }, 
-                renderChildren(children)
+            return (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name] || icons.Home}
+                </svg>
             );
         };
 
         const THEMES = [
             { id: "A", name: "Unity & Diversity", icon: "Dna" },
-            { id: "B", name: "Form & Function", icon: "Layout" },
+            { id: "B", name: "Form & Function", icon: "Layers" },
             { id: "C", name: "Interaction", icon: "Zap" },
-            { id: "D", name: "Continuity & Change", icon: "RefreshCw" }
+            { id: "D", name: "Continuity & Change", icon: "Refresh" }
         ];
 
-        // --- Question Pool Initial Buffer ---
         const INITIAL_POOL = {
-            A: [
-                { id: "A_M1", theme: "A", type: 'MCQ', question: "Which feature is found in both T4 bacteriophages and tobacco mosaic viruses?", options: { A: "Cytoplasm", B: "Protein capsid", C: "70S ribosomes", D: "Circular DNA" }, answer: "B", explanation: "All viruses consist of genetic material enclosed in a protein capsid." },
-                { id: "A_E1", theme: "A", type: 'ERQ', question: "Explain the importance of the dipolar nature of water molecules for living organisms. (5 marks)" }
-            ],
-            B: [
-                { id: "B_M1", theme: "B", type: 'MCQ', question: "Which organelle is the primary site of ATP production in eukaryotic cells?", options: { A: "Golgi apparatus", B: "Lysosome", C: "Mitochondrion", D: "Rough ER" }, answer: "C", explanation: "Mitochondria are the sites of aerobic respiration where most ATP is produced." }
-            ],
-            C: [
-                { id: "C_M1", theme: "C", type: 'MCQ', question: "What is the role of NADH in aerobic respiration?", options: { A: "Final electron acceptor", B: "Carry electrons to the ETC", C: "Produce glucose in glycolysis", D: "Pump protons into the matrix" }, answer: "B", explanation: "NADH carries high-energy electrons from the Krebs cycle to the Electron Transport Chain." }
-            ],
-            D: [
-                { id: "D_M1", theme: "D", type: 'MCQ', question: "Which event occurs during the S-phase of the cell cycle?", options: { A: "Cytokinesis", B: "DNA replication", C: "Chromosome condensation", D: "Spindle formation" }, answer: "B", explanation: "The S-phase is specifically for the replication of nuclear DNA." }
-            ]
+            A: [{ id: "A1", theme: "A", type: 'MCQ', question: "Which property of water allows organisms to maintain stable body temperatures through evaporation?", options: { A: "Specific heat capacity", B: "Latent heat of vaporization", C: "Cohesion", D: "Density" }, answer: "B", explanation: "Large amounts of energy are required to break the hydrogen bonds in water for it to change from liquid to gas." }],
+            B: [{ id: "B1", theme: "B", type: 'ERQ', question: "Explain how the structure of the villus is adapted for efficient absorption of nutrients. (6 marks)" }],
+            C: [{ id: "C1", theme: "C", type: 'MCQ', question: "How does a non-competitive inhibitor affect the Vmax of an enzyme-catalyzed reaction?", options: { A: "Increases Vmax", B: "Decreases Vmax", C: "No effect on Vmax", D: "Shifts Km only" }, answer: "B", explanation: "Non-competitive inhibitors change the enzyme's shape, reducing its overall catalytic capacity regardless of substrate concentration." }],
+            D: [{ id: "D1", theme: "D", type: 'ERQ', question: "Describe the role of natural selection as a mechanism for evolution. (7 marks)" }]
         };
-
-        const ATLAS_DATA = [
-            { id: "A1", title: "DNA Nucleotide", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/DNA_chemical_structure.svg/600px-DNA_chemical_structure.svg.png", points: ["Phosphate at 5' Carbon", "Deoxyribose Sugar", "Nitrogenous Base at 1'"] },
-            { id: "B1", title: "Fluid Mosaic Model", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Cell_membrane_detailed_diagram_en.svg/800px-Cell_membrane_detailed_diagram_en.svg.png", points: ["Amphipathic Bilayer", "Integral Proteins", "Cholesterol"] }
-        ];
 
         const App = () => {
             const [tab, setTab] = useState('home');
             const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
             const [globalFontSize, setGlobalFontSize] = useState(Number(localStorage.getItem('app_font_size')) || 18);
 
-            // Dashboard Statistics
+            // Statistics management
             const [stats, setStats] = useState(() => {
-                const saved = localStorage.getItem('app_stats');
-                return saved ? JSON.parse(saved) : { answered: 0, mcqCorrect: 0, erqDone: 0, themes: { A: 0, B: 0, C: 0, D: 0 } };
+                const saved = localStorage.getItem('app_stats_v9');
+                const def = { total: 0, mcqCorrect: 0, mcqTotal: 0, erqTotal: 0, themes: { A: 0, B: 0, C: 0, D: 0 } };
+                if (!saved) return def;
+                try { return { ...def, ...JSON.parse(saved) }; } catch(e) { return def; }
             });
 
-            // Quiz Engine States
+            // Quiz engine states
             const [quizStep, setQuizStep] = useState('setup'); 
             const [selThemes, setSelThemes] = useState(['A']); 
             const [selType, setSelType] = useState('MCQ'); 
@@ -153,14 +115,11 @@
             const [userAnswer, setUserAnswer] = useState('');
             const [aiFeedback, setAiFeedback] = useState('');
             const [mcqResult, setMcqResult] = useState(null);
-            const [loading, setLoading] = useState(false);
             const [deepInsight, setDeepInsight] = useState('');
-            const [atlasIdx, setAtlasIdx] = useState(0);
-            const [isFlipped, setIsFlipped] = useState(false);
+            const [loading, setLoading] = useState(false);
 
-            // Persist Settings
             useEffect(() => { localStorage.setItem('app_font_size', globalFontSize.toString()); }, [globalFontSize]);
-            useEffect(() => { localStorage.setItem('app_stats', JSON.stringify(stats)); }, [stats]);
+            useEffect(() => { localStorage.setItem('app_stats_v9', JSON.stringify(stats)); }, [stats]);
 
             const askAI = async (prompt, system, isJson = false) => {
                 if (!apiKey) return "ERROR: API Key missing.";
@@ -182,17 +141,20 @@
             };
 
             const refillPool = async (themeId, type) => {
-                const prompt = `Generate ONE new unique IB Bio 2025 question for Theme ${themeId}. Format: JSON object { "id": "${Date.now()}", "theme": "${themeId}", "type": "${type}", "question": "...", "options": {"A": "...", "B": "...", "C": "...", "D": "..."}, "answer": "A/B/C/D", "explanation": "..." }`;
+                const prompt = `Generate ONE advanced IB Bio 2025 question for Theme ${themeId}. JSON format: { "id": "${Date.now()}", "theme": "${themeId}", "type": "${type}", "question": "...", "options": {"A": "...", "B": "...", "C": "...", "D": "..."}, "answer": "A/B/C/D", "explanation": "..." }`;
                 try {
-                    const res = await askAI(prompt, "IB Bio Q-Bank System. JSON only.", true);
+                    const res = await askAI(prompt, "IB Bio Q-Bank. JSON only.", true);
                     const parsed = JSON.parse(res);
-                    setLocalPool(prev => ({ ...prev, [themeId]: [...(prev[themeId] || []), parsed] }));
+                    setLocalPool(prev => {
+                        const next = { ...prev };
+                        next[themeId] = [...(next[themeId] || []), parsed];
+                        return next;
+                    });
                 } catch (e) {}
             };
 
             const handleTabChange = (newTab) => {
                 if (newTab === 'quiz') {
-                    // Force state reset for new session
                     setQuizStep('setup');
                     setUserAnswer(''); setAiFeedback(''); setMcqResult(null); setDeepInsight('');
                 }
@@ -218,88 +180,87 @@
                 setMcqResult({ isCorrect, correctAnswer: currentQuestion.answer, explanation: currentQuestion.explanation });
                 setQuizStep('mcq_feedback');
                 
-                // Update Dashboard stats
                 setStats(prev => ({
                     ...prev,
-                    answered: prev.answered + 1,
+                    total: prev.total + 1,
+                    mcqTotal: prev.mcqTotal + 1,
                     mcqCorrect: isCorrect ? prev.mcqCorrect + 1 : prev.mcqCorrect,
-                    themes: { ...prev.themes, [currentQuestion.theme]: prev.themes[currentQuestion.theme] + 1 }
+                    themes: { ...prev.themes, [currentQuestion.theme]: (prev.themes[currentQuestion.theme] || 0) + 1 }
                 }));
-                
                 refillPool(currentQuestion.theme, 'MCQ');
             };
 
             const submitErqAnswer = async () => {
                 setLoading(true); setQuizStep('grading');
-                const prompt = `Question: "${currentQuestion.question}"\nStudent Answer: "${userAnswer}"\n\nGrade for IB 2025 HL. Structure with: ### Marks, ### Marking Points Met, ### Critical Diagnostic, ### Level 7 Advice, ### Level 7 Model Answer Example.`;
+                const prompt = `Question: "${currentQuestion.question}"\nStudent Answer: "${userAnswer}"\n\nGrade for IB 2025 HL. Structure with: ### Final Marks, ### Marking Points Met, ### Critical Diagnostic, ### Level 7 Advice, ### Level 7 Model Answer Example. Professional academic English.`;
                 const fb = await askAI(prompt, "Chief IB Moderator.");
                 setAiFeedback(fb); setQuizStep('erq_feedback');
                 setLoading(false);
                 
                 setStats(prev => ({
                     ...prev,
-                    answered: prev.answered + 1,
-                    erqDone: prev.erqDone + 1,
-                    themes: { ...prev.themes, [currentQuestion.theme]: prev.themes[currentQuestion.theme] + 1 }
+                    total: prev.total + 1,
+                    erqTotal: prev.erqTotal + 1,
+                    themes: { ...prev.themes, [currentQuestion.theme]: (prev.themes[currentQuestion.theme] || 0) + 1 }
                 }));
-                
                 refillPool(currentQuestion.theme, 'ERQ');
             };
 
             const requestDeepInsight = async () => {
                 setLoading(true);
-                const prompt = `Explain context of question: "${currentQuestion.question}". Answer was ${currentQuestion.answer}. Provide deep scientific explanation for IB 2025 Syllabus.`;
-                const res = await askAI(prompt, "IB Biology Specialist.");
+                const prompt = `Topic: "${currentQuestion.question}". Answer: ${currentQuestion.answer}. Provide pedagogical biology breakdown for 2025 syllabus.`;
+                const res = await askAI(prompt, "Senior IB Specialist.");
                 setDeepInsight(res);
                 setLoading(false);
             };
 
-            const exportReport = () => {
-                const content = `IB REPORT\nQuestion: ${currentQuestion?.question}\nAnswer: ${userAnswer}\nFeedback: ${aiFeedback || mcqResult?.explanation}`;
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
-                a.download = `Report_${Date.now()}.txt`;
-                a.click();
+            const handleNext = () => {
+                setLocalPool(prev => {
+                    const next = { ...prev };
+                    if (currentQuestion) next[currentQuestion.theme] = next[currentQuestion.theme].filter(q => q.id !== currentQuestion.id);
+                    return next;
+                });
+                startAssessment();
             };
 
-            const toggleThemeSelection = (id) => {
-                setSelThemes(p => p.includes(id) ? (p.length > 1 ? p.filter(t => t !== id) : p) : [...p, id]);
-            };
+            const toggleTheme = (id) => setSelThemes(p => p.includes(id) ? (p.length > 1 ? p.filter(v => v !== id) : p) : [...p, id]);
 
             return (
                 <div className="app-container" style={{ fontSize: `${globalFontSize}px` }}>
                     
-                    {/* Fixed Header */}
                     <header className="p-8 pt-12 flex justify-center bg-white sticky top-0 z-50 border-b border-slate-100">
                         <div className="flex flex-col items-center">
                             <h1 className="font-extrabold text-slate-900 italic" style={{ fontSize: '26px' }}>IB BIO HUB</h1>
-                            <div className="text-blue-600 font-black uppercase tracking-widest" style={{ fontSize: '9px' }}>Learning Dashboard</div>
+                            <div className="text-blue-600 font-black uppercase tracking-widest" style={{ fontSize: '9px' }}>AI Analytics Dashboard</div>
                         </div>
                     </header>
 
-                    <main className="flex-1 p-8 overflow-y-auto hide-scrollbar pb-32">
+                    <main className="flex-1 p-8 overflow-y-auto hide-scrollbar pb-32 content-area">
                         
                         {tab === 'home' && (
-                            <div className="space-y-8 animate-in fade-in">
+                            <div className="space-y-10 animate-in fade-in">
                                 <div className="bg-slate-900 rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden">
-                                    <div className="absolute -top-16 -right-16 opacity-10"><LucideIcon name="Sparkles" size={300}/></div>
+                                    <div className="absolute -top-16 -right-16 opacity-5 bg-white w-64 h-64 rounded-full blur-3xl"></div>
                                     <div className="relative z-10">
-                                        <h2 className="font-black italic mb-4" style={{ fontSize: '36px' }}>Your Statistics</h2>
-                                        <div className="grid grid-cols-2 gap-4 mb-10">
-                                            <div className="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
-                                                <p className="text-blue-400 font-black" style={{ fontSize: '32px' }}>{stats.answered}</p>
-                                                <p className="text-[10px] font-black uppercase text-slate-500">Total Items</p>
+                                        <h2 className="font-black italic mb-4" style={{ fontSize: '36px' }}>Learning Record</h2>
+                                        <div className="grid grid-cols-2 gap-4 mb-8 text-center">
+                                            <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
+                                                <p className="text-blue-400 font-black" style={{ fontSize: '28px' }}>{stats.total}</p>
+                                                <p className="ui-label">Completed</p>
                                             </div>
-                                            <div className="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
-                                                <p className="text-green-400 font-black" style={{ fontSize: '32px' }}>{stats.mcqCorrect}</p>
-                                                <p className="text-[10px] font-black uppercase text-slate-500">MCQ Success</p>
+                                            <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
+                                                <p className="text-green-400 font-black" style={{ fontSize: '28px' }}>{stats.mcqTotal > 0 ? Math.round((stats.mcqCorrect / stats.mcqTotal) * 100) : 0}%</p>
+                                                <p className="ui-label">Accuracy</p>
                                             </div>
                                         </div>
-                                        <div className="space-y-4">
+                                        <div className="space-y-3">
                                             {THEMES.map(t => (
                                                 <div key={t.id} className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/10">
-                                                    <span className="font-bold text-slate-300 text-sm">{t.name}</span>
-                                                    <span className="text-[10px] font-black bg-blue-600 px-3 py-1 rounded-full uppercase italic">Activity: {stats.themes[t.id]}</span>
+                                                    <div className="flex items-center gap-3">
+                                                        <BioIcon name={t.icon} size={20} className="text-blue-400" />
+                                                        <span className="font-bold text-slate-300 text-sm">{t.name}</span>
+                                                    </div>
+                                                    <span className="text-[10px] font-black text-blue-400 bg-blue-400/10 px-3 py-1 rounded-full">Count: {stats.themes[t.id] || 0}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -309,15 +270,14 @@
                         )}
 
                         {tab === 'quiz' && (
-                            <div className="space-y-10">
+                            <div className="space-y-10 animate-in fade-in">
                                 {quizStep === 'setup' && (
                                     <div className="space-y-10 animate-in slide-in-from-bottom-4">
-                                        <div className="space-y-6 text-center">
-                                            <p className="text-xs font-black uppercase text-slate-400 tracking-widest">Select Target Syllabus Themes</p>
+                                        <div className="space-y-6">
+                                            <p className="ui-label text-center">Configuration</p>
                                             <div className="grid grid-cols-2 gap-4">
                                                 {THEMES.map(t => (
-                                                    <button key={t.id} onClick={() => toggleThemeSelection(t.id)} className={`p-6 rounded-[2.5rem] text-left border-2 flex flex-col gap-4 transition-all ${selThemes.includes(t.id) ? 'border-blue-600 bg-blue-50' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
-                                                        <LucideIcon name={t.icon} size={32} className={selThemes.includes(t.id) ? 'text-blue-600' : 'text-slate-300'} />
+                                                    <button key={t.id} onClick={() => toggleTheme(t.id)} className={`p-6 rounded-[2.5rem] text-left border-2 flex flex-col gap-4 transition-all ${selThemes.includes(t.id) ? 'border-blue-600 bg-blue-50' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
                                                         <span className="font-black text-lg">{t.name}</span>
                                                     </button>
                                                 ))}
@@ -334,12 +294,12 @@
 
                                 {quizStep === 'asking' && (
                                     <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-xl relative animate-in zoom-in-95">
-                                        <div className="bg-blue-600 text-white px-8 py-3 rounded-full text-[10px] font-black absolute top-8 right-10 uppercase italic shadow-lg">Candidate active</div>
-                                        <div className="text-slate-900 font-extrabold leading-relaxed mb-12 pt-20 border-l-[12px] border-blue-600 pl-12 pr-4 italic dynamic-text" style={{ fontSize: `${globalFontSize + 4}px` }}>{currentQuestion?.question}</div>
+                                        <div className="bg-blue-600 text-white px-8 py-3 rounded-full text-[10px] font-black absolute top-8 right-10 uppercase italic">Active Stream</div>
+                                        <div className="text-slate-900 font-extrabold leading-relaxed mb-12 pt-20 border-l-[12px] border-blue-600 pl-12 pr-4 italic" style={{ fontSize: `${globalFontSize + 4}px` }}>{currentQuestion?.question}</div>
                                         {selType === 'MCQ' ? (
                                             <div className="grid grid-cols-1 gap-6">
                                                 {Object.entries(currentQuestion?.options || {}).map(([key, val]) => (
-                                                    <button key={key} onClick={() => handleMcqSelect(key)} className="p-8 rounded-[2.5rem] font-bold border-4 text-left border-slate-50 bg-slate-50 text-slate-500 active:border-blue-600 active:bg-blue-50 active:text-blue-800 mcq-option">
+                                                    <button key={key} onClick={() => handleMcqSelect(key)} className="p-10 rounded-[2.5rem] font-bold border-4 text-left border-slate-50 bg-slate-50 text-slate-500 active:border-blue-600 active:bg-blue-50 mcq-option" style={{ fontSize: `${globalFontSize}px` }}>
                                                         <span className="w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black bg-slate-200 text-slate-400 mr-6 inline-flex" style={{ fontSize: '16px' }}>{key}</span>
                                                         <span className="flex-1">{val}</span>
                                                     </button>
@@ -347,10 +307,10 @@
                                             </div>
                                         ) : (
                                             <div className="space-y-8">
-                                                <textarea className="w-full p-10 bg-slate-50 rounded-[3rem] min-h-[400px] outline-none focus:ring-8 ring-blue-100 font-medium text-slate-700 leading-loose" style={{ fontSize: `${globalFontSize}px` }} placeholder="Draft your detailed response..." value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} />
+                                                <textarea className="w-full p-10 bg-slate-50 rounded-[3rem] min-h-[400px] outline-none focus:ring-8 ring-blue-100 font-medium text-slate-700 leading-loose" style={{ fontSize: `${globalFontSize}px` }} placeholder="Draft scientific argument..." value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} />
                                                 <div className="flex gap-4">
-                                                    <button onClick={() => setQuizStep('setup')} className="flex-1 bg-slate-50 text-slate-400 py-8 rounded-[2.5rem] font-black text-xl">Abort Session</button>
-                                                    <button onClick={submitErqAnswer} disabled={!userAnswer.trim()} className="flex-[2] bg-slate-900 text-white py-8 rounded-[2.5rem] font-black text-2xl shadow-2xl">Analyze Paper <LucideIcon name="Send" size={32}/></button>
+                                                    <button onClick={() => setQuizStep('setup')} className="flex-1 bg-slate-50 text-slate-400 py-8 rounded-[2.5rem] font-black text-lg">Abort</button>
+                                                    <button onClick={submitErqAnswer} disabled={!userAnswer.trim()} className="flex-[2] bg-slate-900 text-white py-8 rounded-[2.5rem] font-black text-2xl shadow-2xl">Analyze Submission</button>
                                                 </div>
                                             </div>
                                         )}
@@ -358,120 +318,113 @@
                                 )}
 
                                 {quizStep === 'grading' && (
-                                    <div className="py-40 flex flex-col items-center animate-pulse"><LucideIcon name="RefreshCw" size={120} className="text-blue-600 animate-spin" /><p className="font-black text-3xl mt-12 italic uppercase">Analyzing Submission...</p></div>
+                                    <div className="py-40 flex flex-col items-center animate-pulse"><p className="font-black text-4xl italic uppercase">Analyzing Submission...</p></div>
                                 )}
 
-                                {(quizStep === 'mcq_feedback' || quizStep === 'erq_feedback') && (
+                                {quizStep === 'mcq_feedback' && (
+                                    <div className="space-y-10 animate-in zoom-in-95 pb-20">
+                                        <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-xl relative overflow-hidden">
+                                            <div className="text-slate-900 font-extrabold leading-relaxed mb-12 pt-10 border-l-[12px] border-slate-200 pl-12 pr-4 italic faded-q" style={{ fontSize: `${globalFontSize}px` }}>{currentQuestion?.question}</div>
+                                            
+                                            <div className="grid grid-cols-1 gap-6 mb-12">
+                                                {Object.entries(currentQuestion?.options || {}).map(([key, val]) => {
+                                                    const isCorrect = key === currentQuestion.answer;
+                                                    const isUserChoice = key === userAnswer;
+                                                    let colorStyle = "border-slate-50 bg-slate-50 text-slate-400 opacity-60";
+                                                    if (isCorrect) colorStyle = "border-green-500 bg-green-50 text-green-900 shadow-md scale-[1.01]";
+                                                    else if (isUserChoice) colorStyle = "border-red-500 bg-red-50 text-red-900 shadow-md";
+
+                                                    return (
+                                                        <div key={key} className={`p-8 rounded-[2.5rem] font-bold border-4 flex items-center gap-6 ${colorStyle}`} style={{ fontSize: `${globalFontSize}px` }}>
+                                                            <span className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-black ${isCorrect ? 'bg-green-600 text-white' : (isUserChoice ? 'bg-red-600 text-white' : 'bg-slate-200')}`} style={{ fontSize: '14px' }}>{key}</span>
+                                                            <span className="flex-1">{val}</span>
+                                                            {isCorrect && <BioIcon name="Check" size={20} className="text-green-600" />}
+                                                            {isUserChoice && !isCorrect && <BioIcon name="X" size={20} className="text-red-600" />}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            <div className="p-10 rounded-[3.5rem] border-l-[15px] shadow-sm bg-indigo-50 border-indigo-400 text-indigo-900 mb-6">
+                                                <div className="flex justify-between items-center mb-6">
+                                                    <div className="font-black uppercase italic" style={{ fontSize: `${globalFontSize + 4}px` }}>Expert Explanation</div>
+                                                    {!deepInsight && <button onClick={requestDeepInsight} className="bg-blue-600 text-white text-xs px-5 py-2 rounded-full font-black animate-pulse">Deep Analysis +</button>}
+                                                </div>
+                                                <div className="font-medium opacity-95 content-area" style={{ fontSize: `${globalFontSize}px` }}>{currentQuestion.explanation}</div>
+                                                {deepInsight && <div className="mt-8 pt-8 border-t border-indigo-200 text-indigo-800 font-bold content-area">{deepInsight}</div>}
+                                            </div>
+                                        </div>
+                                        <button onClick={handleNext} className="w-full bg-slate-900 text-white py-8 rounded-[3rem] font-black text-2xl uppercase shadow-2xl flex items-center justify-center gap-6 italic tracking-widest">Continue Practice <BioIcon name="Check" size={32}/></button>
+                                    </div>
+                                )}
+
+                                {quizStep === 'erq_feedback' && (
                                     <div className="space-y-8 animate-in zoom-in-95 pb-20">
-                                        <h3 className="font-black text-4xl italic uppercase px-4" style={{ fontSize: '30px' }}>Diagnostic Review</h3>
                                         <div className="space-y-8">
-                                            {(aiFeedback || (mcqResult ? `### Evaluation: ${mcqResult.isCorrect ? 'CORRECT' : 'INCORRECT'}\n### Correct Key: ${mcqResult.correctAnswer}\n### Basic Explanation\n${mcqResult.explanation}\n${deepInsight ? '### Advanced Pedagogy\n' + deepInsight : ''}` : '')).split('###').filter(s => s.trim()).map((sec, idx) => {
+                                            {String(aiFeedback).split('###').filter(s => s.trim()).map((sec, idx) => {
                                                 const lines = sec.trim().split('\n');
                                                 const title = lines[0].trim();
                                                 const body = lines.slice(1).join('\n');
                                                 let style = "bg-slate-50 border-slate-200 text-slate-900";
-                                                if (title.toLowerCase().includes('marks') || title.toLowerCase().includes('evaluation') || title.toLowerCase().includes('key')) style = "bg-indigo-50 border-indigo-400 text-indigo-900";
+                                                if (title.toLowerCase().includes('marks')) style = "bg-indigo-50 border-indigo-400 text-indigo-900";
                                                 if (title.toLowerCase().includes('points')) style = "bg-green-50 border-green-400 text-green-900";
                                                 if (title.toLowerCase().includes('diag') || title.toLowerCase().includes('critique')) style = "bg-orange-50 border-orange-400 text-orange-900";
-                                                if (title.toLowerCase().includes('model') || title.toLowerCase().includes('level 7') || title.toLowerCase().includes('pedagogy')) style = "model-answer-card border-blue-600 text-blue-900";
+                                                if (title.toLowerCase().includes('model') || title.toLowerCase().includes('level 7')) style = "model-answer-card border-blue-600 text-blue-900 shadow-xl";
 
                                                 return (
                                                     <div key={idx} className={`p-10 rounded-[3.5rem] border-l-[15px] shadow-sm ${style}`}>
-                                                        <div className="flex justify-between items-start mb-4">
-                                                            <div className="font-black uppercase italic" style={{ fontSize: `${globalFontSize + 6}px` }}>{title}</div>
-                                                            {title.includes('Basic') && !deepInsight && (
-                                                                <button onClick={requestDeepInsight} className="bg-blue-600 text-white text-xs px-4 py-1.5 rounded-full font-black animate-pulse">Deep Dive Analysis +</button>
-                                                            )}
-                                                        </div>
-                                                        <div className="font-medium leading-relaxed whitespace-pre-wrap opacity-90 dynamic-text" style={{ fontSize: `${globalFontSize}px` }}>{body.replace(/[*#]/g, '').trim()}</div>
+                                                        <div className="font-black uppercase italic mb-6" style={{ fontSize: `${globalFontSize + 6}px` }}>{title}</div>
+                                                        <div className="font-medium whitespace-pre-wrap opacity-90 content-area" style={{ fontSize: `${globalFontSize}px` }}>{body.replace(/[*#]/g, '').trim()}</div>
                                                     </div>
                                                 );
                                             })}
                                         </div>
-                                        <div className="flex gap-8">
-                                            <button onClick={exportReport} className="flex-1 bg-slate-100 text-slate-600 py-8 rounded-[3rem] font-black text-2xl uppercase shadow-xl border-2 border-slate-200"><LucideIcon name="Download" size={32}/></button>
-                                            <button onClick={handleNext} className="flex-[2] bg-slate-900 text-white py-8 rounded-[3rem] font-black shadow-2xl text-2xl uppercase italic flex items-center justify-center gap-6">Next Paper <LucideIcon name="ChevronRight" size={40}/></button>
-                                        </div>
+                                        <button onClick={handleNext} className="w-full bg-slate-900 text-white py-8 rounded-[3rem] font-black text-2xl uppercase shadow-2xl flex items-center justify-center gap-6 italic tracking-widest">Next Paper</button>
                                     </div>
                                 )}
-                            </div>
-                        )}
-
-                        {tab === 'atlas' && (
-                            <div className="space-y-10 animate-in slide-in-from-bottom-8">
-                                <div className="perspective h-[600px] w-full" onClick={() => setIsFlipped(!isFlipped)}>
-                                    <div className={`flip-inner w-full h-full ${isFlipped ? 'flipped' : ''}`}>
-                                        <div className="flip-front bg-white p-12 border border-slate-100 shadow-xl flex flex-col rounded-[3rem]">
-                                            <div className="flex-1 bg-slate-50 rounded-[2rem] flex items-center justify-center overflow-hidden">
-                                                <img src={ATLAS_DATA[atlasIdx].url} className="w-full h-full object-contain p-8 mix-blend-multiply" />
-                                            </div>
-                                            <div className="text-center pt-8">
-                                                <h3 className="text-3xl font-black italic">{ATLAS_DATA[atlasIdx].title}</h3>
-                                            </div>
-                                        </div>
-                                        <div className="flip-back p-16 flex flex-col justify-center rounded-[3rem]">
-                                            <h3 className="text-blue-400 font-black mb-8 uppercase text-sm border-b border-white/10 pb-4">Key Marking Points</h3>
-                                            <div className="space-y-6">
-                                                {ATLAS_DATA[atlasIdx].points.map((p, i) => (
-                                                    <div key={i} className="flex items-center gap-6 p-6 bg-white/5 rounded-[2rem]">
-                                                        <span className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center font-black" style={{ fontSize: '18px' }}>{i+1}</span>
-                                                        <span className="text-2xl font-semibold" style={{ fontSize: '24px' }}>{p}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex gap-8">
-                                    <button onClick={() => setAtlasIdx((atlasIdx - 1 + ATLAS_DATA.length) % ATLAS_DATA.length)} className="flex-1 py-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-xl flex justify-center"><LucideIcon name="ChevronLeft" size={40}/></button>
-                                    <button onClick={() => setAtlasIdx((atlasIdx + 1) % ATLAS_DATA.length)} className="flex-1 py-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-xl flex justify-center"><LucideIcon name="ChevronRight" size={40}/></button>
-                                </div>
                             </div>
                         )}
 
                         {tab === 'config' && (
                             <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-12 animate-in zoom-in-95">
-                                <h2 className="text-3xl font-black italic uppercase text-center" style={{ fontSize: '32px' }}>Configuration</h2>
+                                <h2 className="text-3xl font-black italic uppercase text-center" style={{ fontSize: '32px' }}>Settings</h2>
                                 
                                 <div className="space-y-8 p-10 bg-slate-50 rounded-[3rem] border border-slate-200">
-                                    <p className="text-sm font-black uppercase text-slate-400 tracking-[0.4em] mb-4">Reading Environment</p>
+                                    <p className="ui-label mb-4">Reading Environment</p>
                                     <div className="flex items-center justify-between">
                                         <span className="font-bold text-xl">App Font Size: {globalFontSize}px</span>
                                         <div className="flex gap-4">
-                                            <button onClick={() => setGlobalFontSize(v => Math.max(14, v - 2))} className="w-16 h-16 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center text-2xl font-black active:bg-blue-600 active:text-white shadow-sm transition-all">A-</button>
-                                            <button onClick={() => setGlobalFontSize(v => Math.min(32, v + 2))} className="w-16 h-16 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center text-2xl font-black active:bg-blue-600 active:text-white shadow-sm transition-all">A+</button>
+                                            <button onClick={() => setGlobalFontSize(v => Math.max(14, v - 2))} className="w-16 h-16 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center text-2xl font-black active:bg-blue-600 active:text-white transition-all shadow-sm">A-</button>
+                                            <button onClick={() => setGlobalFontSize(v => Math.min(32, v + 2))} className="w-16 h-16 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center text-2xl font-black active:bg-blue-600 active:text-white transition-all shadow-sm">A+</button>
                                         </div>
                                     </div>
-                                    <p className="text-slate-400 text-xs italic mt-4">Settings are saved automatically to your device.</p>
+                                    <p className="text-slate-400 text-[10px] mt-4 italic leading-relaxed">Adjust font size for your study comfort. Settings persist across sessions.</p>
                                 </div>
 
                                 <div className="space-y-6">
-                                    <label className="text-sm font-black uppercase text-slate-400 tracking-[0.4em] ml-4">Google API Credentials</label>
+                                    <label className="ui-label ml-4">Gemini Pro API Key</label>
                                     <input type="password" className="w-full p-10 bg-slate-50 border-4 border-slate-100 rounded-[2.5rem] font-bold text-2xl shadow-inner outline-none focus:border-blue-600" value={apiKey} onChange={(e) => { setApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value); }} />
-                                    <div className="p-8 bg-blue-50/50 rounded-3xl border-2 border-blue-100/30 flex gap-6 items-start"><LucideIcon name="ShieldCheck" size={32} className="text-blue-600 mt-1" /><p className="text-base text-slate-500 font-medium leading-relaxed italic leading-snug tracking-tight">Encryption: Your key remains in <strong className="text-slate-900 underline decoration-blue-500">Local Browser Storage</strong>. Safe for GitHub.</p></div>
+                                    <div className="p-8 bg-blue-50/50 rounded-3xl border-2 border-blue-100/30 flex gap-6 items-start"><p className="text-sm text-slate-500 italic leading-snug tracking-tight">Security: Your key is stored in your <strong className="text-slate-900 underline decoration-blue-500">Local Browser Storage</strong>. Never uploaded to servers.</p></div>
                                 </div>
-                                <button onClick={() => setTab('home')} className="w-full bg-slate-900 text-white py-8 rounded-[3rem] font-black shadow-xl text-2xl uppercase italic tracking-widest">Apply & Exit</button>
                             </div>
                         )}
 
                     </main>
 
-                    <nav className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[94%] max-w-[650px] glass-nav rounded-[4rem] p-4 flex justify-around shadow-2xl z-50">
-                        {[
-                            { id: 'home', icon: 'Home', label: 'Home' },
-                            { id: 'quiz', icon: 'BrainCircuit', label: 'Exam' },
-                            { id: 'atlas', icon: 'BookOpen', label: 'Atlas' },
-                            { id: 'config', icon: 'Sliders', label: 'Config' }
-                        ].map(item => (
-                            <button 
-                                key={item.id} 
-                                onClick={() => handleTabChange(item.id)} 
-                                className={`flex flex-col items-center justify-center gap-2 px-10 py-4 rounded-[3rem] transition-all duration-300 ${tab === item.id ? 'nav-active shadow-inner' : 'text-slate-400 hover:text-slate-900'}`}
-                            >
-                                <LucideIcon name={item.icon} size={32} />
-                                <span className="text-[10px] font-black uppercase tracking-widest leading-none">{item.label}</span>
-                            </button>
-                        ))}
+                    {/* Navigation */}
+                    <nav className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[94%] max-w-[650px] glass-nav rounded-[4rem] p-4 flex justify-around shadow-2xl z-50 border border-white/50">
+                        <button onClick={() => handleTabChange('home')} className={`flex flex-col items-center justify-center gap-2 px-10 py-4 rounded-[3rem] transition-all duration-300 ${tab === 'home' ? 'nav-active shadow-inner' : 'text-slate-400'}`}>
+                            <BioIcon name="Home" size={28} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Dashboard</span>
+                        </button>
+                        <button onClick={() => handleTabChange('quiz')} className={`flex flex-col items-center justify-center gap-2 px-10 py-4 rounded-[3rem] transition-all duration-300 ${tab === 'quiz' ? 'nav-active shadow-inner' : 'text-slate-400'}`}>
+                            <BioIcon name="Exam" size={28} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Practice</span>
+                        </button>
+                        <button onClick={() => handleTabChange('config')} className={`flex flex-col items-center justify-center gap-2 px-10 py-4 rounded-[3rem] transition-all duration-300 ${tab === 'config' ? 'nav-active shadow-inner' : 'text-slate-400'}`}>
+                            <BioIcon name="Config" size={28} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Settings</span>
+                        </button>
                     </nav>
                 </div>
             );
