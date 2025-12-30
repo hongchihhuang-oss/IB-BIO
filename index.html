@@ -8,7 +8,7 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Core Lucide library -->
+    <!-- Core Lucide library for UMD -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -17,7 +17,6 @@
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background: var(--bg); 
             color: #1e293b; 
-            -webkit-tap-highlight-color: transparent;
             overscroll-behavior: none;
         }
         .app-container {
@@ -29,23 +28,29 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            box-shadow: 0 0 80px rgba(0,0,0,0.05);
+            box-shadow: 0 0 100px rgba(0,0,0,0.08);
         }
+        .perspective { perspective: 2000px; }
+        .flip-inner { transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; position: relative; }
+        .flipped { transform: rotateY(180deg); }
+        .flip-front, .flip-back { backface-visibility: hidden; border-radius: 3rem; position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
+        .flip-back { transform: rotateY(180deg); background: #0f172a; color: white; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .glass-nav { 
-            background: rgba(255, 255, 255, 0.98); 
-            backdrop-filter: blur(30px); 
-            -webkit-backdrop-filter: blur(30px); 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(25px); 
+            -webkit-backdrop-filter: blur(25px); 
             border-top: 1px solid rgba(0,0,0,0.08);
         }
-        @keyframes pulse-soft { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(0.995); } }
-        .animate-pulse-soft { animation: pulse-soft 3s infinite; }
-        .loading-shimmer { background: linear-gradient(90deg, #f1f5f9 25%, #f8fafc 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .diagnostic-card { border-left-width: 14px; }
+        .model-answer-card { background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%); border: 1px solid #bae6fd; }
+        .nav-active { color: #2563eb; background: #eff6ff; }
         
         button:active { transform: scale(0.97); transition: 0.1s; }
-        .diagnostic-card { border-left-width: 14px; }
-        .model-answer-card { background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%); }
+        .mcq-option { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* Layout fixes for large font sizes */
+        .dynamic-text { line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -55,78 +60,108 @@
         const { useState, useEffect, createElement, useCallback, useRef } = React;
 
         /**
-         * Robust Lucide Icon Driver
-         * Ensures tag is always a string to prevent React Error #130.
+         * Robust Lucide Icon Driver - Version 2.0
+         * Prevents React Error #130 by strictly validating every element type.
          */
         const LucideIcon = ({ name, size = 24, className = "" }) => {
             if (typeof lucide === 'undefined' || !lucide.icons) return null;
+            
             const kebabName = name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
             const iconData = lucide.icons[kebabName] || lucide.icons[name.toLowerCase()] || lucide.icons[name];
             
             if (!iconData || !Array.isArray(iconData)) {
-                return <div className={`inline-flex border border-slate-200 rounded-md ${className}`} style={{ width: size, height: size }}></div>;
+                return <div className={`inline-flex border-2 border-slate-100 rounded-lg ${className}`} style={{ width: size, height: size }}></div>;
             }
 
             const [tag, attrs, children] = iconData;
+            
             const renderChildren = (childList) => {
                 if (!childList || !Array.isArray(childList)) return null;
                 return childList.map((child, index) => {
                     if (!Array.isArray(child) || typeof child[0] !== 'string') return null;
                     const [cTag, cAttrs, cChildren] = child;
+                    // cChildren might be undefined or array
                     return createElement(cTag, { ...cAttrs, key: index }, renderChildren(cChildren));
                 });
             };
 
             if (typeof tag !== 'string') return null;
-            return createElement(tag, { ...attrs, width: size, height: size, className, stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", fill: "none" }, renderChildren(children));
+
+            return createElement(
+                tag, 
+                { 
+                    ...attrs, 
+                    width: size, 
+                    height: size, 
+                    className, 
+                    stroke: "currentColor", 
+                    strokeWidth: 2.2, 
+                    strokeLinecap: "round",
+                    strokeLinejoin: "round",
+                    fill: "none" 
+                }, 
+                renderChildren(children)
+            );
         };
 
         const THEMES = [
-            { id: "A", name: "Unity & Diversity", desc: "Molecules, Cells, Viruses, Water", icon: "Dna" },
-            { id: "B", name: "Form & Function", desc: "Membranes, Transport, Nutrition", icon: "Layout" },
-            { id: "C", name: "Interaction", desc: "Enzymes, Metabolism, Photosynthesis", icon: "Zap" },
-            { id: "D", name: "Continuity & Change", desc: "Genetics, Replication, Evolution", icon: "RefreshCw" }
+            { id: "A", name: "Unity & Diversity", icon: "Dna" },
+            { id: "B", name: "Form & Function", icon: "Layout" },
+            { id: "C", name: "Interaction", icon: "Zap" },
+            { id: "D", name: "Continuity & Change", icon: "RefreshCw" }
         ];
 
-        // --- Expanded Initial Pool for Offline/Fast Access ---
+        // --- Question Pool Initial Buffer ---
         const INITIAL_POOL = {
             A: [
-                { id: "A1", theme: "A", type: 'MCQ', question: "Which feature differentiates viruses from bacteria?", options: { A: "Presence of DNA", B: "Non-cellular structure", C: "Proteins", D: "Reproduction" }, answer: "B", explanation: "Viruses are non-cellular agents that rely on host cell machinery." },
-                { id: "A2", theme: "A", type: 'MCQ', question: "What property of water is responsible for its ability to dissolve a wide range of substances?", options: { A: "High latent heat", B: "Dipolarity", C: "Cohesion", D: "Density" }, answer: "B", explanation: "The dipolar nature allows water to form shells around charged and polar molecules." },
-                { id: "A3", theme: "A", type: 'ERQ', question: "Explain how the properties of water are significant to living organisms. (8 marks)" }
+                { id: "A_M1", theme: "A", type: 'MCQ', question: "Which feature is found in both T4 bacteriophages and tobacco mosaic viruses?", options: { A: "Cytoplasm", B: "Protein capsid", C: "70S ribosomes", D: "Circular DNA" }, answer: "B", explanation: "All viruses consist of genetic material enclosed in a protein capsid." },
+                { id: "A_E1", theme: "A", type: 'ERQ', question: "Explain the importance of the dipolar nature of water molecules for living organisms. (5 marks)" }
             ],
             B: [
-                { id: "B1", theme: "B", type: 'MCQ', question: "What is the primary role of cholesterol in animal cell membranes?", options: { A: "Ion transport", B: "Regulating fluidity", C: "Cell signaling", D: "ATP synthesis" }, answer: "B", explanation: "Cholesterol stabilizes membrane fluidity across different temperatures." },
-                { id: "B2", theme: "B", type: 'ERQ', question: "Outline the role of proteins in the plasma membrane. (6 marks)" }
+                { id: "B_M1", theme: "B", type: 'MCQ', question: "Which organelle is the primary site of ATP production in eukaryotic cells?", options: { A: "Golgi apparatus", B: "Lysosome", C: "Mitochondrion", D: "Rough ER" }, answer: "C", explanation: "Mitochondria are the sites of aerobic respiration where most ATP is produced." }
             ],
             C: [
-                { id: "C1", theme: "C", type: 'MCQ', question: "How does a non-competitive inhibitor affect enzyme activity?", options: { A: "Binds to active site", B: "Changes enzyme shape", C: "Increases Vmax", D: "Competes with substrate" }, answer: "B", explanation: "It binds to an allosteric site, inducing a conformational change." },
-                { id: "C2", theme: "C", type: 'ERQ', question: "Describe the light-independent reactions of photosynthesis (Calvin Cycle). (7 marks)" }
+                { id: "C_M1", theme: "C", type: 'MCQ', question: "What is the role of NADH in aerobic respiration?", options: { A: "Final electron acceptor", B: "Carry electrons to the ETC", C: "Produce glucose in glycolysis", D: "Pump protons into the matrix" }, answer: "B", explanation: "NADH carries high-energy electrons from the Krebs cycle to the Electron Transport Chain." }
             ],
             D: [
-                { id: "D1", theme: "D", type: 'MCQ', question: "During which phase of the cell cycle is DNA replicated?", options: { A: "G1 phase", B: "S phase", C: "G2 phase", D: "Mitosis" }, answer: "B", explanation: "The S (Synthesis) phase is dedicated to DNA replication." },
-                { id: "D2", theme: "D", type: 'ERQ', question: "Explain the causes of genetic variation in a population. (8 marks)" }
+                { id: "D_M1", theme: "D", type: 'MCQ', question: "Which event occurs during the S-phase of the cell cycle?", options: { A: "Cytokinesis", B: "DNA replication", C: "Chromosome condensation", D: "Spindle formation" }, answer: "B", explanation: "The S-phase is specifically for the replication of nuclear DNA." }
             ]
         };
+
+        const ATLAS_DATA = [
+            { id: "A1", title: "DNA Nucleotide", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/DNA_chemical_structure.svg/600px-DNA_chemical_structure.svg.png", points: ["Phosphate at 5' Carbon", "Deoxyribose Sugar", "Nitrogenous Base at 1'"] },
+            { id: "B1", title: "Fluid Mosaic Model", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Cell_membrane_detailed_diagram_en.svg/800px-Cell_membrane_detailed_diagram_en.svg.png", points: ["Amphipathic Bilayer", "Integral Proteins", "Cholesterol"] }
+        ];
 
         const App = () => {
             const [tab, setTab] = useState('home');
             const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
-            const [reportFontSize, setReportFontSize] = useState(20);
+            const [globalFontSize, setGlobalFontSize] = useState(Number(localStorage.getItem('app_font_size')) || 18);
 
-            // States
+            // Dashboard Statistics
+            const [stats, setStats] = useState(() => {
+                const saved = localStorage.getItem('app_stats');
+                return saved ? JSON.parse(saved) : { answered: 0, mcqCorrect: 0, erqDone: 0, themes: { A: 0, B: 0, C: 0, D: 0 } };
+            });
+
+            // Quiz Engine States
             const [quizStep, setQuizStep] = useState('setup'); 
             const [selThemes, setSelThemes] = useState(['A']); 
-            const [selType, setSelType] = useState('ERQ'); 
+            const [selType, setSelType] = useState('MCQ'); 
             const [localPool, setLocalPool] = useState(INITIAL_POOL);
             const [currentQuestion, setCurrentQuestion] = useState(null);
             const [userAnswer, setUserAnswer] = useState('');
             const [aiFeedback, setAiFeedback] = useState('');
             const [mcqResult, setMcqResult] = useState(null);
-            const [deepInsight, setDeepInsight] = useState('');
             const [loading, setLoading] = useState(false);
+            const [deepInsight, setDeepInsight] = useState('');
+            const [atlasIdx, setAtlasIdx] = useState(0);
+            const [isFlipped, setIsFlipped] = useState(false);
 
-            // AI Logic
+            // Persist Settings
+            useEffect(() => { localStorage.setItem('app_font_size', globalFontSize.toString()); }, [globalFontSize]);
+            useEffect(() => { localStorage.setItem('app_stats', JSON.stringify(stats)); }, [stats]);
+
             const askAI = async (prompt, system, isJson = false) => {
                 if (!apiKey) return "ERROR: API Key missing.";
                 const model = "gemini-2.5-flash-preview-09-2025";
@@ -142,22 +177,26 @@
                         })
                     });
                     const data = await response.json();
-                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Error processing AI response.";
-                } catch (e) { return `SYSTEM ERROR: ${e.message}`; }
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "AI error.";
+                } catch (e) { return "System busy."; }
             };
 
             const refillPool = async (themeId, type) => {
-                const themeData = THEMES.find(t => t.id === themeId);
-                const prompt = `Generate ONE new advanced IB Bio 2025 question for Theme ${themeId}. Format: JSON object { "id": "${Date.now()}", "theme": "${themeId}", "type": "${type}", "question": "...", "options": {"A": "...", "B": "...", "C": "...", "D": "..."}, "answer": "A/B/C/D", "explanation": "..." }`;
+                const prompt = `Generate ONE new unique IB Bio 2025 question for Theme ${themeId}. Format: JSON object { "id": "${Date.now()}", "theme": "${themeId}", "type": "${type}", "question": "...", "options": {"A": "...", "B": "...", "C": "...", "D": "..."}, "answer": "A/B/C/D", "explanation": "..." }`;
                 try {
-                    const result = await askAI(prompt, "IB Question System. Output JSON only.", true);
-                    const parsed = JSON.parse(result);
-                    setLocalPool(prev => {
-                        const newPool = { ...prev };
-                        newPool[themeId] = [...(newPool[themeId] || []), parsed];
-                        return newPool;
-                    });
+                    const res = await askAI(prompt, "IB Bio Q-Bank System. JSON only.", true);
+                    const parsed = JSON.parse(res);
+                    setLocalPool(prev => ({ ...prev, [themeId]: [...(prev[themeId] || []), parsed] }));
                 } catch (e) {}
+            };
+
+            const handleTabChange = (newTab) => {
+                if (newTab === 'quiz') {
+                    // Force state reset for new session
+                    setQuizStep('setup');
+                    setUserAnswer(''); setAiFeedback(''); setMcqResult(null); setDeepInsight('');
+                }
+                setTab(newTab);
             };
 
             const startAssessment = () => {
@@ -169,282 +208,268 @@
                     setQuizStep('asking');
                 } else {
                     setQuizStep('loading');
-                    refillPool(selThemes[0], selType).then(() => {
-                        setQuizStep('setup');
-                        // Retry start once after fetch
-                    });
+                    refillPool(selThemes[0], selType).then(() => setQuizStep('setup'));
                 }
             };
 
             const handleMcqSelect = (choice) => {
+                const isCorrect = choice === currentQuestion.answer;
                 setUserAnswer(choice);
-                setMcqResult({
-                    isCorrect: choice === currentQuestion.answer,
-                    correctAnswer: currentQuestion.answer,
-                    explanation: currentQuestion.explanation
-                });
+                setMcqResult({ isCorrect, correctAnswer: currentQuestion.answer, explanation: currentQuestion.explanation });
                 setQuizStep('mcq_feedback');
-                // Trigger background refill
+                
+                // Update Dashboard stats
+                setStats(prev => ({
+                    ...prev,
+                    answered: prev.answered + 1,
+                    mcqCorrect: isCorrect ? prev.mcqCorrect + 1 : prev.mcqCorrect,
+                    themes: { ...prev.themes, [currentQuestion.theme]: prev.themes[currentQuestion.theme] + 1 }
+                }));
+                
                 refillPool(currentQuestion.theme, 'MCQ');
-            };
-
-            const requestDeepInsight = async () => {
-                setLoading(true);
-                const prompt = `Question: "${currentQuestion.question}"\nSelected: ${userAnswer}\nCorrect: ${currentQuestion.answer}\n\nProvide an advanced pedagogical breakdown linked to IB 2025 Syllabus. Professional academic English.`;
-                const insight = await askAI(prompt, "Senior IB Biology Specialist.");
-                setDeepInsight(insight);
-                setLoading(false);
             };
 
             const submitErqAnswer = async () => {
                 setLoading(true); setQuizStep('grading');
-                const prompt = `Question: "${currentQuestion.question}"\nStudent Answer: "${userAnswer}"\n\nGrade for IB 2025 HL. Structure using exactly these sections: \n### Final Marks\n### Marking Points Met\n### Critical Diagnostic\n### Level 7 Advice\n### Level 7 Model Answer Example\nUse professional English.`;
+                const prompt = `Question: "${currentQuestion.question}"\nStudent Answer: "${userAnswer}"\n\nGrade for IB 2025 HL. Structure with: ### Marks, ### Marking Points Met, ### Critical Diagnostic, ### Level 7 Advice, ### Level 7 Model Answer Example.`;
                 const fb = await askAI(prompt, "Chief IB Moderator.");
                 setAiFeedback(fb); setQuizStep('erq_feedback');
                 setLoading(false);
+                
+                setStats(prev => ({
+                    ...prev,
+                    answered: prev.answered + 1,
+                    erqDone: prev.erqDone + 1,
+                    themes: { ...prev.themes, [currentQuestion.theme]: prev.themes[currentQuestion.theme] + 1 }
+                }));
+                
                 refillPool(currentQuestion.theme, 'ERQ');
             };
 
-            const handleNext = () => {
-                // Remove the current question from pool to avoid repetition
-                setLocalPool(prev => {
-                    const newPool = { ...prev };
-                    const theme = currentQuestion?.theme;
-                    if (theme) {
-                        newPool[theme] = newPool[theme].filter(q => q.id !== currentQuestion.id);
-                    }
-                    return newPool;
-                });
-                startAssessment();
+            const requestDeepInsight = async () => {
+                setLoading(true);
+                const prompt = `Explain context of question: "${currentQuestion.question}". Answer was ${currentQuestion.answer}. Provide deep scientific explanation for IB 2025 Syllabus.`;
+                const res = await askAI(prompt, "IB Biology Specialist.");
+                setDeepInsight(res);
+                setLoading(false);
             };
 
             const exportReport = () => {
-                const content = `IB BIOLOGY 2025 REPORT\n--------------------\nQuestion: ${currentQuestion?.question}\nYour Answer: ${userAnswer}\n\nAnalysis:\n${aiFeedback || mcqResult?.explanation || ""}\n${deepInsight ? "\nDeep Insight:\n" + deepInsight : ""}`;
-                const blob = new Blob([content], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
+                const content = `IB REPORT\nQuestion: ${currentQuestion?.question}\nAnswer: ${userAnswer}\nFeedback: ${aiFeedback || mcqResult?.explanation}`;
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = `IB_Bio_Report_${Date.now()}.txt`;
+                a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
+                a.download = `Report_${Date.now()}.txt`;
                 a.click();
             };
 
-            const adjustFontSize = (d) => setReportFontSize(v => Math.max(14, Math.min(32, v + d)));
-            const toggleTheme = (id) => setSelThemes(p => p.includes(id) ? (p.length > 1 ? p.filter(t => t !== id) : p) : [...p, id]);
-            const handleSaveKey = (val) => { setApiKey(val); localStorage.setItem('gemini_api_key', val); };
+            const toggleThemeSelection = (id) => {
+                setSelThemes(p => p.includes(id) ? (p.length > 1 ? p.filter(t => t !== id) : p) : [...p, id]);
+            };
 
             return (
-                <div className="app-container border-x border-slate-100 overflow-hidden">
-                    {/* Header */}
-                    <header className="p-8 pt-12 flex justify-between items-center bg-white sticky top-0 z-50 border-b border-slate-100 shadow-sm">
-                        <div className="flex items-center gap-4 cursor-pointer" onClick={() => setTab('home')}>
-                            <div className="bg-blue-600 p-3 rounded-2xl text-white shadow-xl"><LucideIcon name="GraduationCap" size={28}/></div>
-                            <div>
-                                <h1 className="font-extrabold text-slate-900 text-2xl tracking-tighter italic leading-none mb-1">IB BIO HUB</h1>
-                                <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest leading-none">2025 MASTER SUITE</p>
-                            </div>
+                <div className="app-container" style={{ fontSize: `${globalFontSize}px` }}>
+                    
+                    {/* Fixed Header */}
+                    <header className="p-8 pt-12 flex justify-center bg-white sticky top-0 z-50 border-b border-slate-100">
+                        <div className="flex flex-col items-center">
+                            <h1 className="font-extrabold text-slate-900 italic" style={{ fontSize: '26px' }}>IB BIO HUB</h1>
+                            <div className="text-blue-600 font-black uppercase tracking-widest" style={{ fontSize: '9px' }}>Learning Dashboard</div>
                         </div>
-                        <button onClick={() => setTab('settings')} className={`p-4 rounded-2xl border transition-all ${tab === 'settings' ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-500'}`}>
-                            <LucideIcon name="Settings" size={24}/>
-                        </button>
                     </header>
 
-                    <main className="flex-1 p-8 overflow-y-auto hide-scrollbar pb-48">
+                    <main className="flex-1 p-8 overflow-y-auto hide-scrollbar pb-32">
+                        
                         {tab === 'home' && (
-                            <div className="space-y-10 animate-in fade-in duration-500">
-                                <div className="bg-slate-900 rounded-[3.5rem] p-12 text-white shadow-2xl relative overflow-hidden group">
-                                    <div className="absolute -top-16 -right-16 opacity-10 group-hover:scale-110 transition-transform duration-1000"><LucideIcon name="Sparkles" size={300}/></div>
+                            <div className="space-y-8 animate-in fade-in">
+                                <div className="bg-slate-900 rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden">
+                                    <div className="absolute -top-16 -right-16 opacity-10"><LucideIcon name="Sparkles" size={300}/></div>
                                     <div className="relative z-10">
-                                        <div className="bg-blue-600/30 border border-blue-500/50 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest inline-block mb-8 tracking-widest">Continuous Stream Engine</div>
-                                        <h2 className="text-5xl font-black italic mb-6 leading-tight uppercase tracking-tighter">Syllabus<br/>Station</h2>
-                                        <p className="text-slate-400 text-xl mb-12 font-medium leading-relaxed max-w-sm">Infinite practice flow. The system background-refills question buffers as you study.</p>
-                                        <button onClick={() => setTab('quiz')} className="bg-blue-600 text-white px-12 py-5 rounded-[2.5rem] font-black shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 text-xl uppercase tracking-widest italic">Start Exam <LucideIcon name="Target" size={24}/></button>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-8">
-                                    <div onClick={() => setTab('quiz')} className="bg-white p-10 rounded-[3rem] border-2 border-slate-50 shadow-sm flex flex-col items-center gap-8 active:scale-95 transition-all">
-                                        <div className="p-8 bg-blue-50 rounded-3xl text-blue-500"><LucideIcon name="BookOpen" size={40}/></div>
-                                        <span className="font-extrabold text-slate-800 text-sm uppercase tracking-widest leading-none">Training</span>
-                                    </div>
-                                    <div onClick={() => setTab('settings')} className="bg-white p-10 rounded-[3rem] border-2 border-slate-50 shadow-sm flex flex-col items-center gap-8 active:scale-95 transition-all">
-                                        <div className="p-8 bg-slate-50 rounded-3xl text-slate-500"><LucideIcon name="Shield" size={40}/></div>
-                                        <span className="font-extrabold text-slate-800 text-sm uppercase tracking-widest leading-none">Config</span>
+                                        <h2 className="font-black italic mb-4" style={{ fontSize: '36px' }}>Your Statistics</h2>
+                                        <div className="grid grid-cols-2 gap-4 mb-10">
+                                            <div className="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
+                                                <p className="text-blue-400 font-black" style={{ fontSize: '32px' }}>{stats.answered}</p>
+                                                <p className="text-[10px] font-black uppercase text-slate-500">Total Items</p>
+                                            </div>
+                                            <div className="bg-white/5 p-6 rounded-3xl border border-white/10 text-center">
+                                                <p className="text-green-400 font-black" style={{ fontSize: '32px' }}>{stats.mcqCorrect}</p>
+                                                <p className="text-[10px] font-black uppercase text-slate-500">MCQ Success</p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            {THEMES.map(t => (
+                                                <div key={t.id} className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/10">
+                                                    <span className="font-bold text-slate-300 text-sm">{t.name}</span>
+                                                    <span className="text-[10px] font-black bg-blue-600 px-3 py-1 rounded-full uppercase italic">Activity: {stats.themes[t.id]}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         )}
 
                         {tab === 'quiz' && (
-                            <div className="space-y-10 pb-10">
+                            <div className="space-y-10">
                                 {quizStep === 'setup' && (
-                                    <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-12 animate-in fade-in">
-                                        <div className="flex items-center gap-6 uppercase"><div className="p-5 bg-blue-50 text-blue-600 rounded-[2rem] shadow-sm"><LucideIcon name="Compass" size={40} /></div><h2 className="text-3xl font-black italic tracking-tighter leading-none">Assessment Prep</h2></div>
-                                        <div className="space-y-8">
-                                            <label className="text-sm font-black uppercase text-slate-400 tracking-[0.3em] ml-6">Multi-Select Theme Areas</label>
-                                            <div className="grid grid-cols-1 gap-6">
+                                    <div className="space-y-10 animate-in slide-in-from-bottom-4">
+                                        <div className="space-y-6 text-center">
+                                            <p className="text-xs font-black uppercase text-slate-400 tracking-widest">Select Target Syllabus Themes</p>
+                                            <div className="grid grid-cols-2 gap-4">
                                                 {THEMES.map(t => (
-                                                    <button key={t.id} onClick={() => toggleTheme(t.id)} className={`p-8 rounded-[2.5rem] text-left border-2 flex items-center gap-8 transition-all ${selThemes.includes(t.id) ? 'border-blue-600 bg-blue-50 shadow-xl scale-[1.02]' : 'border-slate-50 bg-slate-50 text-slate-400'}`}>
-                                                        <div className={`p-5 rounded-3xl ${selThemes.includes(t.id) ? 'bg-blue-600 text-white' : 'bg-slate-200'}`}><LucideIcon name={t.icon} size={32} /></div>
-                                                        <div className="flex-1"><div className={`font-black text-2xl mb-1 ${selThemes.includes(t.id) ? 'text-slate-900' : 'text-slate-400'}`}>{t.id}. {t.name}</div><div className="text-xs font-bold opacity-70 uppercase tracking-widest">{t.desc}</div></div>
-                                                        {selThemes.includes(t.id) && <LucideIcon name="CheckCircle" size={32} className="text-blue-600" />}
+                                                    <button key={t.id} onClick={() => toggleThemeSelection(t.id)} className={`p-6 rounded-[2.5rem] text-left border-2 flex flex-col gap-4 transition-all ${selThemes.includes(t.id) ? 'border-blue-600 bg-blue-50' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
+                                                        <LucideIcon name={t.icon} size={32} className={selThemes.includes(t.id) ? 'text-blue-600' : 'text-slate-300'} />
+                                                        <span className="font-black text-lg">{t.name}</span>
                                                     </button>
                                                 ))}
                                             </div>
                                         </div>
-                                        <div className="space-y-8">
-                                            <label className="text-sm font-black uppercase text-slate-400 tracking-[0.4em] ml-6">Exam Format</label>
-                                            <div className="flex gap-6">
-                                                {['MCQ', 'ERQ'].map(type => (
-                                                    <button key={type} onClick={() => setSelType(type)} className={`flex-1 py-7 rounded-[2rem] font-black text-lg border-2 transition-all uppercase tracking-widest ${selType === type ? 'border-blue-600 bg-blue-600 text-white shadow-lg' : 'border-slate-50 bg-slate-50 text-slate-400'}`}>{type === 'MCQ' ? 'MCQ Choice' : 'ERQ Essay'}</button>
-                                                ))}
-                                            </div>
+                                        <div className="flex gap-4">
+                                            {['MCQ', 'ERQ'].map(type => (
+                                                <button key={type} onClick={() => setSelType(type)} className={`flex-1 py-5 rounded-2xl font-black border-2 transition-all ${selType === type ? 'border-blue-600 bg-blue-600 text-white shadow-lg' : 'bg-slate-50 text-slate-400'}`}>{type}</button>
+                                            ))}
                                         </div>
-                                        <button onClick={startAssessment} className="w-full bg-slate-900 text-white py-8 rounded-[3.5rem] font-black shadow-xl active:scale-95 transition-all flex items-center justify-center gap-6 text-2xl uppercase italic">Launch Session <LucideIcon name="Play" size={32}/></button>
-                                    </div>
-                                )}
-
-                                {quizStep === 'loading' && (
-                                    <div className="flex flex-col items-center justify-center py-40 bg-white rounded-[4rem] border border-slate-50 shadow-sm animate-pulse">
-                                        <div className="bg-blue-50 p-24 rounded-full"><LucideIcon name="RefreshCw" size={120} className="text-blue-600 animate-spin" /></div>
-                                        <p className="font-black text-slate-900 text-center text-3xl italic uppercase mt-10">Refilling Stream...</p>
+                                        <button onClick={startAssessment} className="w-full bg-slate-900 text-white py-8 rounded-[3rem] font-black text-2xl uppercase italic shadow-xl">Launch Session</button>
                                     </div>
                                 )}
 
                                 {quizStep === 'asking' && (
-                                    <div className="space-y-10 animate-in slide-in-from-bottom-6">
-                                        <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm relative overflow-hidden">
-                                            <div className="bg-blue-600 text-white px-8 py-3 rounded-full text-[10px] font-black absolute top-8 right-10 shadow-lg tracking-widest uppercase italic">Active Paper</div>
-                                            <div className="text-slate-900 font-extrabold text-3xl leading-relaxed mb-12 pt-20 border-l-[12px] border-blue-600 pl-12 pr-4 italic">
-                                                {currentQuestion?.question}
+                                    <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-xl relative animate-in zoom-in-95">
+                                        <div className="bg-blue-600 text-white px-8 py-3 rounded-full text-[10px] font-black absolute top-8 right-10 uppercase italic shadow-lg">Candidate active</div>
+                                        <div className="text-slate-900 font-extrabold leading-relaxed mb-12 pt-20 border-l-[12px] border-blue-600 pl-12 pr-4 italic dynamic-text" style={{ fontSize: `${globalFontSize + 4}px` }}>{currentQuestion?.question}</div>
+                                        {selType === 'MCQ' ? (
+                                            <div className="grid grid-cols-1 gap-6">
+                                                {Object.entries(currentQuestion?.options || {}).map(([key, val]) => (
+                                                    <button key={key} onClick={() => handleMcqSelect(key)} className="p-8 rounded-[2.5rem] font-bold border-4 text-left border-slate-50 bg-slate-50 text-slate-500 active:border-blue-600 active:bg-blue-50 active:text-blue-800 mcq-option">
+                                                        <span className="w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black bg-slate-200 text-slate-400 mr-6 inline-flex" style={{ fontSize: '16px' }}>{key}</span>
+                                                        <span className="flex-1">{val}</span>
+                                                    </button>
+                                                ))}
                                             </div>
-                                            <div className="space-y-8 mb-12">
-                                                <label className="text-sm font-black uppercase text-slate-400 tracking-[0.4em] flex items-center gap-4 ml-6"><LucideIcon name="PenTool" size={24} /> Candidate Response</label>
-                                                {selType === 'MCQ' ? (
-                                                    <div className="grid grid-cols-1 gap-6">
-                                                        {Object.entries(currentQuestion?.options || {}).map(([key, val]) => (
-                                                            <button key={key} onClick={() => handleMcqSelect(key)} className="p-10 rounded-[2.5rem] font-bold text-2xl border-4 transition-all flex items-start gap-8 text-left border-slate-50 bg-slate-50 text-slate-500 active:border-blue-600 active:bg-blue-50 active:text-blue-800">
-                                                                <span className="w-14 h-14 shrink-0 rounded-full flex items-center justify-center font-black bg-slate-200 text-slate-400">{key}</span>
-                                                                <span className="flex-1 pt-2 leading-snug">{val}</span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <textarea className="w-full p-10 bg-slate-50 rounded-[3rem] min-h-[400px] outline-none focus:ring-8 ring-blue-100 transition-all font-medium text-slate-700 shadow-inner resize-none text-2xl leading-loose" placeholder="Draft scientific argument..." value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} />
-                                                )}
+                                        ) : (
+                                            <div className="space-y-8">
+                                                <textarea className="w-full p-10 bg-slate-50 rounded-[3rem] min-h-[400px] outline-none focus:ring-8 ring-blue-100 font-medium text-slate-700 leading-loose" style={{ fontSize: `${globalFontSize}px` }} placeholder="Draft your detailed response..." value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} />
+                                                <div className="flex gap-4">
+                                                    <button onClick={() => setQuizStep('setup')} className="flex-1 bg-slate-50 text-slate-400 py-8 rounded-[2.5rem] font-black text-xl">Abort Session</button>
+                                                    <button onClick={submitErqAnswer} disabled={!userAnswer.trim()} className="flex-[2] bg-slate-900 text-white py-8 rounded-[2.5rem] font-black text-2xl shadow-2xl">Analyze Paper <LucideIcon name="Send" size={32}/></button>
+                                                </div>
                                             </div>
-                                            <div className="flex gap-8">
-                                                <button onClick={() => setQuizStep('setup')} className="flex-1 bg-slate-50 text-slate-400 py-8 rounded-[2.5rem] font-black border-2 border-slate-100 text-xl uppercase tracking-widest">Abort</button>
-                                                {selType === 'ERQ' && <button onClick={submitErqAnswer} disabled={!userAnswer.trim()} className="flex-[2] bg-slate-900 text-white py-8 rounded-[2.5rem] font-black shadow-2xl active:scale-95 disabled:opacity-50 transition-all flex items-center justify-center gap-6 text-2xl uppercase tracking-[0.2em] italic">Analyze Response <LucideIcon name="Send" size={32}/></button>}
-                                            </div>
-                                        </div>
+                                        )}
                                     </div>
                                 )}
 
                                 {quizStep === 'grading' && (
-                                    <div className="flex flex-col items-center justify-center py-40 bg-white rounded-[4rem] border border-slate-50 shadow-sm">
-                                        <div className="bg-rose-50 p-24 rounded-full animate-pulse shadow-inner"><LucideIcon name="ClipboardCheck" size={120} className="text-rose-500" /></div>
-                                        <p className="font-black text-slate-900 text-center text-3xl italic uppercase mt-10">Diagnostics Underway...</p>
-                                    </div>
+                                    <div className="py-40 flex flex-col items-center animate-pulse"><LucideIcon name="RefreshCw" size={120} className="text-blue-600 animate-spin" /><p className="font-black text-3xl mt-12 italic uppercase">Analyzing Submission...</p></div>
                                 )}
 
-                                {quizStep === 'mcq_feedback' && mcqResult && (
-                                    <div className="space-y-10 animate-in zoom-in-95 duration-500 pb-10">
-                                        <div className={`p-12 rounded-[4.5rem] border-4 shadow-2xl ${mcqResult.isCorrect ? 'bg-green-50 border-green-200' : 'bg-rose-50 border-rose-200'}`}>
-                                            <div className="flex items-center justify-between mb-10 pb-8 border-b-2 border-current/10">
-                                                <div className="flex items-center gap-6">
-                                                    <div className={`p-6 rounded-[2rem] ${mcqResult.isCorrect ? 'bg-green-600' : 'bg-rose-600'} text-white shadow-2xl`}><LucideIcon name={mcqResult.isCorrect ? "CheckCircle" : "XCircle"} size={48} /></div>
-                                                    <h3 className={`text-6xl font-black italic tracking-tighter ${mcqResult.isCorrect ? 'text-green-900' : 'text-rose-900'}`}>{mcqResult.isCorrect ? 'CORRECT' : 'INCORRECT'}</h3>
-                                                </div>
-                                                <div className="text-center"><p className="text-xs font-black opacity-50 uppercase tracking-[0.3em]">Key</p><p className={`text-7xl font-black ${mcqResult.isCorrect ? 'text-green-600' : 'text-rose-600'}`}>{mcqResult.correctAnswer}</p></div>
-                                            </div>
-                                            
-                                            <div className="flex justify-end gap-3 mb-6">
-                                                <button onClick={() => adjustFontSize(-2)} className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center font-black shadow-sm">A-</button>
-                                                <button onClick={() => adjustFontSize(2)} className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center font-black shadow-sm">A+</button>
-                                            </div>
+                                {(quizStep === 'mcq_feedback' || quizStep === 'erq_feedback') && (
+                                    <div className="space-y-8 animate-in zoom-in-95 pb-20">
+                                        <h3 className="font-black text-4xl italic uppercase px-4" style={{ fontSize: '30px' }}>Diagnostic Review</h3>
+                                        <div className="space-y-8">
+                                            {(aiFeedback || (mcqResult ? `### Evaluation: ${mcqResult.isCorrect ? 'CORRECT' : 'INCORRECT'}\n### Correct Key: ${mcqResult.correctAnswer}\n### Basic Explanation\n${mcqResult.explanation}\n${deepInsight ? '### Advanced Pedagogy\n' + deepInsight : ''}` : '')).split('###').filter(s => s.trim()).map((sec, idx) => {
+                                                const lines = sec.trim().split('\n');
+                                                const title = lines[0].trim();
+                                                const body = lines.slice(1).join('\n');
+                                                let style = "bg-slate-50 border-slate-200 text-slate-900";
+                                                if (title.toLowerCase().includes('marks') || title.toLowerCase().includes('evaluation') || title.toLowerCase().includes('key')) style = "bg-indigo-50 border-indigo-400 text-indigo-900";
+                                                if (title.toLowerCase().includes('points')) style = "bg-green-50 border-green-400 text-green-900";
+                                                if (title.toLowerCase().includes('diag') || title.toLowerCase().includes('critique')) style = "bg-orange-50 border-orange-400 text-orange-900";
+                                                if (title.toLowerCase().includes('model') || title.toLowerCase().includes('level 7') || title.toLowerCase().includes('pedagogy')) style = "model-answer-card border-blue-600 text-blue-900";
 
-                                            <div className="bg-white p-10 rounded-[3rem] text-slate-800 leading-loose font-medium shadow-sm border border-white" style={{ fontSize: `${reportFontSize}px` }}>
-                                                <p className="font-black mb-6 uppercase tracking-tighter text-slate-900 flex items-center justify-between">
-                                                    <span>Pedagogical Analysis:</span>
-                                                    {!deepInsight && <button onClick={requestDeepInsight} className="text-sm bg-blue-600 text-white px-6 py-2 rounded-full font-black animate-pulse">Deep Dive +</button>}
-                                                </p>
-                                                <div className="whitespace-pre-wrap opacity-95">{mcqResult.explanation}</div>
-                                                {deepInsight && <div className="mt-10 p-8 bg-blue-50 rounded-3xl border-l-[10px] border-blue-400 animate-in slide-in-from-top-4"><div className="text-blue-800 font-bold">{deepInsight}</div></div>}
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-8">
-                                            <button onClick={exportReport} className="flex-1 bg-slate-100 text-slate-600 py-8 rounded-[3rem] font-black active:scale-95 transition-all text-2xl flex items-center justify-center gap-5 uppercase shadow-xl"><LucideIcon name="Download" size={32}/> Export</button>
-                                            <button onClick={handleNext} className="flex-[2] bg-slate-900 text-white py-8 rounded-[3rem] font-black shadow-2xl active:scale-95 transition-all text-2xl uppercase italic flex items-center justify-center gap-6">Next Round <LucideIcon name="ChevronRight" size={40}/></button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {quizStep === 'erq_feedback' && aiFeedback && (
-                                    <div className="space-y-10 animate-in zoom-in-95 duration-500 pb-10">
-                                        <div className="bg-white p-12 rounded-[4.5rem] border-2 border-blue-100 shadow-2xl relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 p-16 opacity-5"><LucideIcon name="Award" size={400} /></div>
-                                            <div className="flex items-center justify-between mb-12 border-b-4 border-slate-50 pb-10 relative z-10">
-                                                <h3 className="flex items-center gap-6 font-black text-slate-900 text-5xl italic uppercase tracking-tighter leading-none"><LucideIcon name="LineChart" size={56} className="text-blue-600"/> Session Report</h3>
-                                                <div className="flex gap-3">
-                                                    <button onClick={() => adjustFontSize(-2)} className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center font-black">A-</button>
-                                                    <button onClick={() => adjustFontSize(2)} className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center font-black">A+</button>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="space-y-12 relative z-10">
-                                                {aiFeedback.split('###').filter(s => s.trim()).map((section, idx) => {
-                                                    const lines = section.trim().split('\n');
-                                                    const title = lines[0].trim();
-                                                    const body = lines.slice(1).join('\n');
-                                                    let color = "bg-slate-50 border-slate-200 text-slate-900"; let icon = "Info";
-                                                    if (title.toLowerCase().includes('marks')) { color = "bg-indigo-50 border-indigo-400 text-indigo-900"; icon = "BarChart"; }
-                                                    if (title.toLowerCase().includes('points')) { color = "bg-green-50 border-green-400 text-green-900"; icon = "CheckCircle"; }
-                                                    if (title.toLowerCase().includes('critique')) { color = "bg-orange-50 border-orange-400 text-orange-900"; icon = "AlertCircle"; }
-                                                    if (title.toLowerCase().includes('advice')) { color = "bg-blue-50 border-blue-400 text-blue-900"; icon = "Sparkles"; }
-                                                    if (title.toLowerCase().includes('model') || title.toLowerCase().includes('example')) { color = "model-answer-card border-blue-600 text-blue-900"; icon = "Star"; }
-
-                                                    return (
-                                                        <div key={idx} className={`p-10 rounded-[3.5rem] border-l-[15px] diagnostic-card shadow-sm ${color} animate-in slide-in-from-right-4`}>
-                                                            <div className="flex items-center gap-6 font-black uppercase tracking-tighter italic mb-6" style={{ fontSize: `${reportFontSize + 8}px` }}>
-                                                                <LucideIcon name={icon} size={40} /> {title}
-                                                            </div>
-                                                            <div className="pl-4 pr-4 font-medium leading-loose whitespace-pre-wrap opacity-95" style={{ fontSize: `${reportFontSize}px` }}>
-                                                                {body.replace(/[*#]/g, '').trim()}
-                                                            </div>
+                                                return (
+                                                    <div key={idx} className={`p-10 rounded-[3.5rem] border-l-[15px] shadow-sm ${style}`}>
+                                                        <div className="flex justify-between items-start mb-4">
+                                                            <div className="font-black uppercase italic" style={{ fontSize: `${globalFontSize + 6}px` }}>{title}</div>
+                                                            {title.includes('Basic') && !deepInsight && (
+                                                                <button onClick={requestDeepInsight} className="bg-blue-600 text-white text-xs px-4 py-1.5 rounded-full font-black animate-pulse">Deep Dive Analysis +</button>
+                                                            )}
                                                         </div>
-                                                    );
-                                                })}
-                                            </div>
+                                                        <div className="font-medium leading-relaxed whitespace-pre-wrap opacity-90 dynamic-text" style={{ fontSize: `${globalFontSize}px` }}>{body.replace(/[*#]/g, '').trim()}</div>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                         <div className="flex gap-8">
-                                            <button onClick={exportReport} className="flex-1 bg-slate-100 text-slate-600 py-8 rounded-[3rem] font-black active:scale-95 transition-all text-2xl flex items-center justify-center gap-5 border-2 border-slate-200"><LucideIcon name="Download" size={32}/> Save Report</button>
-                                            <button onClick={handleNext} className="flex-[2] bg-slate-900 text-white py-8 rounded-[3rem] font-black shadow-2xl active:scale-95 transition-all text-2xl uppercase italic flex items-center justify-center gap-6">Continue <LucideIcon name="ChevronRight" size={40}/></button>
+                                            <button onClick={exportReport} className="flex-1 bg-slate-100 text-slate-600 py-8 rounded-[3rem] font-black text-2xl uppercase shadow-xl border-2 border-slate-200"><LucideIcon name="Download" size={32}/></button>
+                                            <button onClick={handleNext} className="flex-[2] bg-slate-900 text-white py-8 rounded-[3rem] font-black shadow-2xl text-2xl uppercase italic flex items-center justify-center gap-6">Next Paper <LucideIcon name="ChevronRight" size={40}/></button>
                                         </div>
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {tab === 'settings' && (
-                            <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-12 animate-in zoom-in-95">
-                                <div className="flex items-center gap-6 uppercase"><div className="p-4 bg-blue-50 text-blue-600 rounded-2xl shadow-sm"><LucideIcon name="Settings" size={48} /></div><h2 className="text-3xl font-black italic tracking-tighter uppercase leading-none">Configuration</h2></div>
-                                <div className="space-y-6">
-                                    <div className="flex items-center justify-between px-2"><label className="text-sm font-black uppercase text-slate-400 tracking-[0.4em]">Google Gemini Pro Key</label><span className={`text-[10px] font-black px-5 py-1.5 rounded-full ${apiKey ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600'}`}>{apiKey ? 'CONNECTED' : 'REQUIRED'}</span></div>
-                                    <input type="password" className="w-full p-10 bg-slate-50 border-4 border-slate-100 rounded-[2.5rem] outline-none focus:border-blue-600 transition-all font-bold text-slate-700 shadow-inner text-xl" placeholder="Paste AIza... Key" value={apiKey} onChange={(e) => handleSaveKey(e.target.value)} />
-                                    <div className="p-8 bg-blue-50/50 rounded-3xl border-2 border-blue-100/30 flex gap-6 items-start"><LucideIcon name="ShieldCheck" size={32} className="text-blue-600 mt-1" /><p className="text-base text-slate-500 font-medium leading-relaxed italic leading-snug tracking-tight">Security: Key is stored in your <strong className="text-slate-900 underline decoration-blue-500">Local Cache</strong>. Safe for GitHub.</p></div>
+                        {tab === 'atlas' && (
+                            <div className="space-y-10 animate-in slide-in-from-bottom-8">
+                                <div className="perspective h-[600px] w-full" onClick={() => setIsFlipped(!isFlipped)}>
+                                    <div className={`flip-inner w-full h-full ${isFlipped ? 'flipped' : ''}`}>
+                                        <div className="flip-front bg-white p-12 border border-slate-100 shadow-xl flex flex-col rounded-[3rem]">
+                                            <div className="flex-1 bg-slate-50 rounded-[2rem] flex items-center justify-center overflow-hidden">
+                                                <img src={ATLAS_DATA[atlasIdx].url} className="w-full h-full object-contain p-8 mix-blend-multiply" />
+                                            </div>
+                                            <div className="text-center pt-8">
+                                                <h3 className="text-3xl font-black italic">{ATLAS_DATA[atlasIdx].title}</h3>
+                                            </div>
+                                        </div>
+                                        <div className="flip-back p-16 flex flex-col justify-center rounded-[3rem]">
+                                            <h3 className="text-blue-400 font-black mb-8 uppercase text-sm border-b border-white/10 pb-4">Key Marking Points</h3>
+                                            <div className="space-y-6">
+                                                {ATLAS_DATA[atlasIdx].points.map((p, i) => (
+                                                    <div key={i} className="flex items-center gap-6 p-6 bg-white/5 rounded-[2rem]">
+                                                        <span className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center font-black" style={{ fontSize: '18px' }}>{i+1}</span>
+                                                        <span className="text-2xl font-semibold" style={{ fontSize: '24px' }}>{p}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <button onClick={() => setTab('home')} className="w-full bg-slate-900 text-white py-8 rounded-[3rem] font-black shadow-xl active:scale-95 text-2xl tracking-widest uppercase italic">Save & Return</button>
+                                <div className="flex gap-8">
+                                    <button onClick={() => setAtlasIdx((atlasIdx - 1 + ATLAS_DATA.length) % ATLAS_DATA.length)} className="flex-1 py-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-xl flex justify-center"><LucideIcon name="ChevronLeft" size={40}/></button>
+                                    <button onClick={() => setAtlasIdx((atlasIdx + 1) % ATLAS_DATA.length)} className="flex-1 py-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-xl flex justify-center"><LucideIcon name="ChevronRight" size={40}/></button>
+                                </div>
                             </div>
                         )}
+
+                        {tab === 'config' && (
+                            <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-12 animate-in zoom-in-95">
+                                <h2 className="text-3xl font-black italic uppercase text-center" style={{ fontSize: '32px' }}>Configuration</h2>
+                                
+                                <div className="space-y-8 p-10 bg-slate-50 rounded-[3rem] border border-slate-200">
+                                    <p className="text-sm font-black uppercase text-slate-400 tracking-[0.4em] mb-4">Reading Environment</p>
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-bold text-xl">App Font Size: {globalFontSize}px</span>
+                                        <div className="flex gap-4">
+                                            <button onClick={() => setGlobalFontSize(v => Math.max(14, v - 2))} className="w-16 h-16 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center text-2xl font-black active:bg-blue-600 active:text-white shadow-sm transition-all">A-</button>
+                                            <button onClick={() => setGlobalFontSize(v => Math.min(32, v + 2))} className="w-16 h-16 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center text-2xl font-black active:bg-blue-600 active:text-white shadow-sm transition-all">A+</button>
+                                        </div>
+                                    </div>
+                                    <p className="text-slate-400 text-xs italic mt-4">Settings are saved automatically to your device.</p>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <label className="text-sm font-black uppercase text-slate-400 tracking-[0.4em] ml-4">Google API Credentials</label>
+                                    <input type="password" className="w-full p-10 bg-slate-50 border-4 border-slate-100 rounded-[2.5rem] font-bold text-2xl shadow-inner outline-none focus:border-blue-600" value={apiKey} onChange={(e) => { setApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value); }} />
+                                    <div className="p-8 bg-blue-50/50 rounded-3xl border-2 border-blue-100/30 flex gap-6 items-start"><LucideIcon name="ShieldCheck" size={32} className="text-blue-600 mt-1" /><p className="text-base text-slate-500 font-medium leading-relaxed italic leading-snug tracking-tight">Encryption: Your key remains in <strong className="text-slate-900 underline decoration-blue-500">Local Browser Storage</strong>. Safe for GitHub.</p></div>
+                                </div>
+                                <button onClick={() => setTab('home')} className="w-full bg-slate-900 text-white py-8 rounded-[3rem] font-black shadow-xl text-2xl uppercase italic tracking-widest">Apply & Exit</button>
+                            </div>
+                        )}
+
                     </main>
 
-                    <nav className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[92%] max-w-[550px] glass-nav rounded-[4.5rem] p-5 flex justify-around shadow-2xl z-50 border border-white/50">
+                    <nav className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[94%] max-w-[650px] glass-nav rounded-[4rem] p-4 flex justify-around shadow-2xl z-50">
                         {[
                             { id: 'home', icon: 'Home', label: 'Home' },
-                            { id: 'quiz', icon: 'Target', label: 'Exam' }
+                            { id: 'quiz', icon: 'BrainCircuit', label: 'Exam' },
+                            { id: 'atlas', icon: 'BookOpen', label: 'Atlas' },
+                            { id: 'config', icon: 'Sliders', label: 'Config' }
                         ].map(item => (
-                            <button key={item.id} onClick={() => setTab(item.id)} className={`flex flex-col items-center justify-center gap-2 px-14 py-4 rounded-[2.5rem] transition-all duration-300 ${tab === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-400/50 scale-105' : 'text-slate-400 hover:text-slate-900'}`}>
-                                <LucideIcon name={item.icon} size={36} className={tab === item.id ? 'scale-110 drop-shadow-sm' : ''} />
-                                <span className="text-[10px] font-black tracking-widest uppercase">{item.label}</span>
+                            <button 
+                                key={item.id} 
+                                onClick={() => handleTabChange(item.id)} 
+                                className={`flex flex-col items-center justify-center gap-2 px-10 py-4 rounded-[3rem] transition-all duration-300 ${tab === item.id ? 'nav-active shadow-inner' : 'text-slate-400 hover:text-slate-900'}`}
+                            >
+                                <LucideIcon name={item.icon} size={32} />
+                                <span className="text-[10px] font-black uppercase tracking-widest leading-none">{item.label}</span>
                             </button>
                         ))}
                     </nav>
