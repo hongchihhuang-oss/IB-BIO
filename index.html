@@ -33,7 +33,7 @@
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #2563eb; }
         
-        /* 報告與卡片質感優化 */
+        /* 報告質感優化 */
         .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: white; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .card-blue { border-color: #2563eb; background: #f0f7ff; }
         .card-rose { border-color: #e11d48; background: #fff1f2; }
@@ -41,10 +41,10 @@
         .card-emerald { border-color: #10b981; background: #ecfdf5; }
         .card-slate { border-color: #64748b; background: #f8fafc; }
 
-        .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 8px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; background: #1e293b; color: white; }
+        .badge-mini { font-size: 0.6rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 8px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; background: #1e293b; color: white; }
         
-        .math-container { line-height: 1.75; word-break: break-word; margin-bottom: 0.8rem; }
-        .indent-content { padding-left: 1.25rem; border-left: 3px solid rgba(0,0,0,0.05); margin-top: 0.75rem; color: #334155; }
+        .math-container { line-height: 1.7; word-break: break-word; margin-bottom: 0.8rem; }
+        .indent-content { padding-left: 1.2rem; border-left: 2px solid rgba(0,0,0,0.04); margin-top: 0.75rem; color: #334155; }
 
         .animate-up { animation: slideUp 0.35s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -52,21 +52,24 @@
         .btn-action { padding: 12px 20px; border-radius: 14px; font-weight: 800; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-size: 0.9rem; }
         .toast-msg { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 24px; border-radius: 999px; font-weight: 700; font-size: 0.8rem; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
 
-        /* MCQ 標籤設計 */
+        /* MCQ 選項對比 */
         .option-label { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; background: #f1f5f9; color: #1e293b; border: 2.5px solid #cbd5e1; transition: 0.2s; flex-shrink: 0; }
         .selected-label { background: #1e293b; color: white; border-color: #1e293b; }
 
-        /* 測驗控制項 (彩色且放大) */
+        /* 彩色大圖標 */
         .font-cycle-btn { background: #eff6ff; padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #2563eb; border: 2px solid #dbeafe; transition: 0.2s; box-shadow: 0 2px 5px rgba(37, 99, 235, 0.1); }
         .back-nav-btn { color: #2563eb; padding: 10px; border-radius: 14px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; }
-        .mastery-toggle-btn { padding: 8px 14px; border-radius: 12px; font-weight: 900; font-size: 12px; transition: 0.2s; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        
+        /* 熟悉度按鈕版面調整 */
+        .mastery-container { display: flex; align-items: center; gap: 10px; }
+        .mastery-label-text { font-size: 11px; font-weight: 700; color: #94a3b8; }
+        .mastery-toggle-btn { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
         /* 表格樣式 */
         .bio-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85em; background: white; border-radius: 12px; overflow: hidden; }
         .bio-table th { background: #f8fafc; padding: 10px; text-align: left; font-weight: 800; border-bottom: 2px solid #e2e8f0; color: #64748b; }
         .bio-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; color: #334155; }
-
-        /* PDF 輸出 */
+        
         .pdf-mode { font-size: 11px !important; line-height: 1.25 !important; }
         .pdf-mode .themed-card { margin-bottom: 0.4rem !important; padding: 0.8rem 1rem !important; border-width: 1px !important; border-left-width: 6px !important; box-shadow: none !important; break-inside: avoid; }
     </style>
@@ -103,8 +106,8 @@
         const bioCompiler = (input) => {
             let text = String(input || "").trim();
             if (!text || text === "undefined") return "";
-            // 強力清除所有 Markdown 格式符號，回歸純淨文本
-            text = text.replace(/[\*#_~]/g, "").replace(/Supplement for:.*?\n/gi, "").replace(/---/g, "");
+            // 強力掃除所有 Markdown 符號
+            text = text.replace(/(\*\*|__|\*|_|#+|~+)/g, "").replace(/Supplement for:.*?\n/gi, "").replace(/---/g, "");
             
             const chemPattern = /\b(Na\+|K\+|H\+|Ca2\+|Mg2\+|Cl-|NO2-|NO3-|NH4\+|CO2|H2O|O2|C6H12O6|ATP|ADP|NAD\+|NADH|RuBP|Rubisco|q2|p2|2pq)\b/g;
             text = text.replace(chemPattern, (match) => `$\\text{${match}}$`);
@@ -159,11 +162,11 @@
 
             const reportRef = useRef(null);
 
-            // --- 啟動驗證：若無 Key 則鎖定設定頁 ---
+            // --- 啟動與權限鎖定 ---
             useEffect(() => {
                 if (!userApiKey && tab !== 'config') {
                     setTab('config');
-                    showToast("請先輸入 AI Key 以啟用核心功能");
+                    showToast("請先輸入 AI Key 以啟用功能");
                 }
             }, [userApiKey, tab]);
 
@@ -239,13 +242,14 @@
 
             const directImport = () => {
                 try {
+                    // 超強力提取 JSON
                     const match = generatedJson.match(/\{[\s\S]*\}/);
                     if (match) {
                         importToBank(JSON.parse(match[0]));
                         setGeneratedJson("");
-                        showToast("同步成功！Dashboard 已更新");
+                        showToast("同步成功！庫存已更新");
                     } else throw new Error();
-                } catch(e) { showToast("解析失敗，請檢查網路回傳內容"); }
+                } catch(e) { showToast("解析失敗"); }
             };
 
             const startPractice = () => {
@@ -253,7 +257,7 @@
                 if (pool.length) {
                     setQueue([...pool].sort(() => Math.random() - 0.5));
                     setCurrentIndex(0); setQuizStep('practice'); setSessionResults({}); setTempAnswer('');
-                } else showToast("目前無未掌握的題目");
+                } else showToast("無題目可用");
             };
 
             const toggleMastery = (qId) => {
@@ -263,7 +267,6 @@
                     localStorage.setItem('mastered_ids', JSON.stringify(Array.from(next)));
                     return next;
                 });
-                showToast("已更新熟悉度，該題將在下次練習中移除");
             };
 
             const handleNext = () => {
@@ -272,18 +275,31 @@
                 const res = sessionResults[curQ.id];
                 const isMastered = masteredIds.has(curQ.id);
 
-                // Spaced Repetition: 若未熟悉且(答錯或正確)，將該題加到隊列末端
-                if (res && (!isMastered)) {
-                    setQueue(prev => [...prev, curQ]);
+                // 熟悉度邏輯：若標記為熟悉，從隊列移除。
+                if (isMastered) {
+                    setQueue(prev => prev.filter(q => q.id !== curQ.id));
+                    // 由於過濾後 next 題目會移上來，所以 index 不必增加
+                    if (currentIndex >= queue.length - 1 && queue.length > 1) {
+                         setCurrentIndex(0);
+                    }
+                } else if (res) {
+                    // 若僅是答對但未設熟悉：移至末端 (Spaced Repetition)
+                    setQueue(prev => {
+                        const next = [...prev];
+                        const target = next.splice(currentIndex, 1)[0];
+                        next.push(target);
+                        return next;
+                    });
+                } else {
+                    // 普通切換
+                    setCurrentIndex(p => (p + 1) % queue.length);
                 }
 
-                if (currentIndex === queue.length - 1) {
-                    showToast("本練習單元已結束");
+                if (queue.length <= 1 && isMastered) {
+                    showToast("全部題目已掌握！");
                     setQuizStep('setup');
                 } else {
-                    const nextIdx = currentIndex + 1;
-                    setCurrentIndex(nextIdx);
-                    setTempAnswer(sessionResults[queue[nextIdx].id]?.answer || '');
+                    setTempAnswer('');
                 }
             };
 
@@ -299,9 +315,7 @@
                 const sys = "Senior IB Bio Moderator. Use EXACT plain headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Detailed content with examples. NO markdown symbols.";
                 const usr = `Question: "${queue[currentIndex].question}"\nStudent Answer: "${tempAnswer}"\nGrade with headers.`;
                 const fb = await askAI(usr, sys);
-                if (fb) {
-                    setSessionResults(prev => ({ ...prev, [queue[currentIndex].id]: { answer: tempAnswer, feedback: fb } }));
-                }
+                if (fb) setSessionResults(prev => ({ ...prev, [queue[currentIndex].id]: { answer: tempAnswer, feedback: fb } }));
                 setLoading(false);
             };
 
@@ -339,7 +353,7 @@
                 found.sort((a,b) => a.index - b.index);
 
                 let cards = [];
-                if (isErq && original) cards.push(<div key="user" className="themed-card card-slate"><span className="badge-mini bg-slate-500 text-white">Your Response</span><div className="font-semibold text-slate-600 italic leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(original) }} /></div>);
+                if (isErq && original) cards.push(<div key="user" className="themed-card card-slate"><span className="badge-mini bg-slate-500 text-white">Original Response</span><div className="font-semibold text-slate-600 italic leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(original) }} /></div>);
                 if (!isErq && expl) cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini bg-emerald-600 text-white">Knowledge Briefing</span><div className="font-semibold text-emerald-800" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
 
                 found.forEach((p, i) => {
@@ -386,8 +400,8 @@
                                 <div className="space-y-4 animate-up">
                                     <div className="bg-slate-900 rounded-3xl p-6 text-white text-center shadow-lg">
                                         <div className="grid grid-cols-2 gap-3 mb-6">
-                                            <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-blue-400">{Object.values(masterBank).flat().length}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Questions</p></div>
-                                            <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-emerald-400">{masteredIds.size}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Mastered</p></div>
+                                            <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-blue-400">{Object.values(masterBank).flat().length}</p><p className="text-[9px] opacity-40 uppercase font-black">Stock</p></div>
+                                            <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-emerald-400">{masteredIds.size}</p><p className="text-[9px] opacity-40 uppercase font-black">Mastered</p></div>
                                         </div>
                                         <div className="grid grid-cols-4 gap-2">
                                             {THEMES.map(t => (
@@ -406,9 +420,9 @@
                                                 {THEMES.map(t=>(<button key={t.id} onClick={()=>setBuildTheme(t.id)} className={`flex-1 py-1.5 rounded-lg font-black text-xs transition-all ${buildTheme===t.id ? 'bg-white shadow-md' : 'text-slate-400'}`} style={{ color: buildTheme===t.id ? t.color : 'inherit' }}>{t.id}</button>))}
                                             </div>
                                             <div className="flex gap-1">
-                                                {[{id:'mixed',n:'綜合'}, {id:'mcq',n:'選擇'}, {id:'erq',n:'論述'}].map(m=>(<button key={m.id} onClick={()=>setBuildRatio(m.id)} className={`flex-1 py-1.5 rounded-lg font-black text-[10px] border transition-all ${buildRatio===m.id ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-400 border-slate-100'}`}>{m.n}</button>))}
+                                                {[{id:'mixed',n:'綜合'}, {id:'mcq',n:'選擇'}, {id:'erq',n:'論述'}].map(m=>(<button key={m.id} onClick={()=>setBuildRatio(m.id)} className={`flex-1 py-1.5 rounded-lg font-black text-[10px] border transition-all ${buildRatio===m.id ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-400 border-slate-100'}`}>{m.n}</button>))}
                                             </div>
-                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 ${buildRatio} questions for Unit ${buildTheme}. Format JSON: { "${buildTheme}": [...] }. Use unique IDs. MCQ MUST have "explanation" and "prefetchedInsight".`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] italic shadow-md active:scale-95">{loading ? 'Constructing...' : 'Generate New Questions'}</button>
+                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 ${buildRatio} questions for Theme ${buildTheme}. Output a JSON object { "${buildTheme}": [ ... questions ... ] }. MCQ MUST have detailed "explanation" and "prefetchedInsight".`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] italic shadow-md active:scale-95">{loading ? 'AI Constructing...' : 'Generate New Set'}</button>
                                         </div>
                                         {generatedJson && (
                                             <div className="mt-4 pt-4 border-t space-y-2">
@@ -436,10 +450,12 @@
                                         <div className="space-y-4 animate-up">
                                             <div className="flex justify-between items-center px-1">
                                                 <div className="status-pill text-[9px] uppercase font-black tracking-tighter">Question {currentIndex + 1} / {queue.length}</div>
-                                                <button onClick={() => toggleMastery(cur.id)} className={`mastery-btn shadow-sm active:scale-95 transition-colors ${masteredIds.has(cur.id) ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                                                    <AppIcon name="Star" size={14} fill={masteredIds.has(cur.id) ? "white" : "none"} />
-                                                    {masteredIds.has(cur.id) ? "熟悉" : "設為熟悉"}
-                                                </button>
+                                                <div className="mastery-container">
+                                                    <span className="mastery-label-text">{masteredIds.has(cur.id) ? "熟悉" : ""}</span>
+                                                    <button onClick={() => toggleMastery(cur.id)} className={`mastery-toggle-btn shadow-sm active:scale-95 transition-colors ${masteredIds.has(cur.id) ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                                        <AppIcon name="Star" size={18} fill={masteredIds.has(cur.id) ? "white" : "none"} />
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             <div style={{ fontSize: `${contentFontSize}px` }}>
