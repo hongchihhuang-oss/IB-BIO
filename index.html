@@ -3,130 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master Suite | AI Visual Hub</title>
+    <title>IB Bio Master Suite | Secure Deployment Edition</title>
+    <!-- React & Tailwind -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- KaTeX for Scientific Notation -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         :root { --primary: #2563eb; --bg: #f8fafc; }
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: var(--bg); 
-            color: #1e293b; 
-            overscroll-behavior: none;
-        }
-        .app-container {
-            min-height: 100vh;
-            width: 100%;
-            max-width: 900px; 
-            margin: 0 auto;
-            background: white;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            box-shadow: 0 0 100px rgba(0,0,0,0.08);
-        }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .glass-nav { 
-            background: rgba(255, 255, 255, 0.96); 
-            backdrop-filter: blur(20px); 
-            -webkit-backdrop-filter: blur(20px); 
-            border-top: 1px solid rgba(0,0,0,0.08);
-        }
-        .diagnostic-card { border-left-width: 12px; }
-        .model-answer-card { background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%); border: 1px solid #bae6fd; }
-        .nav-active { color: #2563eb; background: #eff6ff; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; color: #1e293b; margin: 0; overflow: hidden; height: 100vh; width: 100vw; }
+        .app-container { height: 100vh; width: 100%; max-width: 820px; margin: 0 auto; background: white; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.05); }
+        .header-fixed { border-bottom: 1px solid #f1f5f9; flex-shrink: 0; background: white; padding: 12px 0; }
+        .main-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 1.25rem; }
+        .content-buffer { padding-bottom: 110px; width: 100%; }
+
+        .glass-nav { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-top: 1px solid #f1f5f9; height: 80px; flex-shrink: 0; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-weight: 800; font-size: 0.65rem; transition: 0.2s; }
+        .nav-active { color: #2563eb; }
         
-        button:active { transform: scale(0.97); transition: 0.1s; }
-        .mcq-option { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .math-container { word-break: break-word; line-height: 1.85; }
         
-        /* Fixed UI labels that don't scale aggressively */
-        .ui-label { font-size: 0.7rem !important; font-weight: 800; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; line-height: 1.2 !important; }
-        .content-area { line-height: 1.6; }
-        .faded-q { opacity: 0.4; filter: grayscale(1); }
+        /* 專業卡片與間距 */
+        .themed-card { border-left-width: 6px; padding: 1.5rem; border-radius: 1.5rem; background: white; margin-bottom: 1.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+        .card-blue { border-color: #2563eb; background: #f0f7ff; }
+        .card-rose { border-color: #e11d48; background: #fff1f2; }
+        .card-amber { border-color: #f59e0b; background: #fffbeb; }
+        .card-emerald { border-color: #10b981; background: #ecfdf5; }
+
+        /* 核心排版：每項資訊大點之間留一行空白 */
+        .info-segment { margin-bottom: 1.8rem; display: block; font-weight: 600; color: #334155; }
+        .info-segment:last-child { margin-bottom: 0; }
+
+        /* 專業表格渲染 */
+        .bio-table-wrapper { width: 100%; overflow-x: auto; margin: 1.5rem 0; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .bio-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; background: white; }
+        .bio-table th { background: #f8fafc; padding: 12px 10px; text-align: left; font-weight: 800; color: #475569; border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0; }
+        .bio-table td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; vertical-align: top; }
+        .bio-table th:last-child, .bio-table td:last-child { border-right: none; }
+        .bio-table tr:nth-child(even) { background: #fafafa; }
+
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; background: #10b981; }
+        .badge-pill { display: inline-block; font-size: 0.62rem; font-weight: 900; padding: 2px 10px; border-radius: 999px; margin-bottom: 10px; background: #2563eb; color: white; text-transform: uppercase; }
         
-        .stat-card { background: white; border: 1px solid #f1f5f9; border-radius: 2rem; padding: 1.5rem; }
+        .bg-refill-tag { position: fixed; top: 12px; right: 12px; font-size: 10px; background: rgba(255,255,255,0.95); padding: 4px 12px; border-radius: 20px; font-weight: 900; color: #2563eb; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 6px; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, ReactFragment } = React;
-
-        /**
-         * Robust BioIcon Component
-         * Uses inline SVG fragments to guarantee stability in the Canvas environment.
-         */
-        const BioIcon = ({ name, size = 24, className = "" }) => {
-            const icons = {
-                Home: <React.Fragment><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></React.Fragment>,
-                Exam: <React.Fragment><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></React.Fragment>,
-                Config: <React.Fragment><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1V13a2 2 0 0 1-2-2 2 2 0 0 1 2-2v-.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></React.Fragment>,
-                Check: <polyline points="20 6 9 17 4 12" />,
-                X: <React.Fragment><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></React.Fragment>,
-                Dna: <React.Fragment><path d="m8 8 8 8"/><path d="m8 16 8-8"/><circle cx="8" cy="8" r="2"/><circle cx="16" cy="16" r="2"/><circle cx="8" cy="16" r="2"/><circle cx="16" cy="8" r="2"/></React.Fragment>,
-                Layers: <React.Fragment><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></React.Fragment>,
-                Zap: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />,
-                Refresh: <React.Fragment><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></React.Fragment>
-            };
-            return (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    {icons[name] || icons.Home}
-                </svg>
-            );
-        };
+        const { useState, useEffect, Fragment, useCallback, useRef } = React;
 
         const THEMES = [
-            { id: "A", name: "Unity & Diversity", icon: "Dna" },
-            { id: "B", name: "Form & Function", icon: "Layers" },
-            { id: "C", name: "Interaction", icon: "Zap" },
-            { id: "D", name: "Continuity & Change", icon: "Refresh" }
+            { id: "A", name: "Unity & Molecules", color: "#2563eb" }, 
+            { id: "B", name: "Function & Cells", color: "#10b981" }, 
+            { id: "C", name: "Interaction", color: "#8b5cf6" }, 
+            { id: "D", name: "Evolution", color: "#f59e0b" }
         ];
 
         const INITIAL_POOL = {
-            A: [{ id: "A1", theme: "A", type: 'MCQ', question: "Which property of water allows organisms to maintain stable body temperatures through evaporation?", options: { A: "Specific heat capacity", B: "Latent heat of vaporization", C: "Cohesion", D: "Density" }, answer: "B", explanation: "Large amounts of energy are required to break the hydrogen bonds in water for it to change from liquid to gas." }],
-            B: [{ id: "B1", theme: "B", type: 'ERQ', question: "Explain how the structure of the villus is adapted for efficient absorption of nutrients. (6 marks)" }],
-            C: [{ id: "C1", theme: "C", type: 'MCQ', question: "How does a non-competitive inhibitor affect the Vmax of an enzyme-catalyzed reaction?", options: { A: "Increases Vmax", B: "Decreases Vmax", C: "No effect on Vmax", D: "Shifts Km only" }, answer: "B", explanation: "Non-competitive inhibitors change the enzyme's shape, reducing its overall catalytic capacity regardless of substrate concentration." }],
-            D: [{ id: "D1", theme: "D", type: 'ERQ', question: "Describe the role of natural selection as a mechanism for evolution. (7 marks)" }]
+            A: [{ id: "A1", theme: "A", type: 'MCQ', question: "Which feature differentiates viruses from bacteria?", options: { A: "Cell wall", B: "Non-cellular structure", C: "Proteins", D: "Genetic material" }, answer: "B", explanation: "Viruses lack a cellular organization and metabolic machinery, existing as obligate parasites." }],
+            B: [{ id: "B1", theme: "B", type: 'ERQ', question: "Explain the role of integral proteins in the cell membrane. (6 marks)" }],
+            C: [{ id: "C1", theme: "C", type: 'MCQ', question: "What is the net gain of ATP per glucose in anaerobic respiration in humans?", options: { A: "2 ATP", B: "36 ATP", C: "4 ATP", D: "32 ATP" }, answer: "A", explanation: "Lactic acid fermentation in humans yields a net gain of 2 ATP per glucose molecule." }],
+            D: [{ id: "D1", theme: "D", type: 'ERQ', question: "Outline how crossing over leads to genetic variation. (6 marks)" }]
         };
 
         const App = () => {
             const [tab, setTab] = useState('home');
-            const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
-            const [globalFontSize, setGlobalFontSize] = useState(Number(localStorage.getItem('app_font_size')) || 18);
-
-            // Statistics management
-            const [stats, setStats] = useState(() => {
-                const saved = localStorage.getItem('app_stats_v9');
-                const def = { total: 0, mcqCorrect: 0, mcqTotal: 0, erqTotal: 0, themes: { A: 0, B: 0, C: 0, D: 0 } };
-                if (!saved) return def;
-                try { return { ...def, ...JSON.parse(saved) }; } catch(e) { return def; }
-            });
-
-            // Quiz engine states
-            const [quizStep, setQuizStep] = useState('setup'); 
-            const [selThemes, setSelThemes] = useState(['A']); 
-            const [selType, setSelType] = useState('MCQ'); 
+            const [globalFontSize, setGlobalFontSize] = useState(Number(localStorage.getItem('fontSize')) || 17);
+            const [userApiKey, setUserApiKey] = useState(localStorage.getItem('gemini_api_key') || "");
+            const [stats, setStats] = useState({ total: 0, mcqCorrect: 0, mcqTotal: 0, themes: { A: 0, B: 0, C: 0, D: 0 } });
             const [localPool, setLocalPool] = useState(INITIAL_POOL);
+            const [quizStep, setQuizStep] = useState('setup');
             const [currentQuestion, setCurrentQuestion] = useState(null);
+            const [selThemes, setSelThemes] = useState(['A']);
+            const [selType, setSelType] = useState('MCQ');
             const [userAnswer, setUserAnswer] = useState('');
             const [aiFeedback, setAiFeedback] = useState('');
-            const [mcqResult, setMcqResult] = useState(null);
             const [deepInsight, setDeepInsight] = useState('');
             const [loading, setLoading] = useState(false);
+            const [bgRefilling, setBgRefilling] = useState(false);
+            const [insightLoading, setInsightLoading] = useState(false);
 
-            useEffect(() => { localStorage.setItem('app_font_size', globalFontSize.toString()); }, [globalFontSize]);
-            useEffect(() => { localStorage.setItem('app_stats_v9', JSON.stringify(stats)); }, [stats]);
+            const pending = useRef(new Set());
+
+            useEffect(() => { 
+                localStorage.setItem('fontSize', globalFontSize);
+                localStorage.setItem('gemini_api_key', userApiKey);
+            }, [globalFontSize, userApiKey]);
+
+            // 高效編譯引擎：將 Markdown 原始碼轉化為 HTML，落實空白行排版
+            const bioCompiler = useCallback((input, contextQ = "") => {
+                let text = String(input || "").trim();
+                if (!text || text === "undefined") return "";
+
+                // 1. 移除技術雜訊
+                text = text.replace(/Supplement for:.*?\n/gi, "").replace(/#+\s?.*?\n/gi, "").replace(/---/g, "");
+                
+                // 2. 移除原始碼符號 (**粗體**, *列表)
+                text = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                text = text.replace(/^[\*\-\u2022]\s+/gm, "");
+
+                if (contextQ) {
+                    const qStrip = contextQ.replace(/[?\.!:]/g, "").trim().toLowerCase();
+                    if (text.toLowerCase().startsWith(qStrip)) text = text.substring(qStrip.length).replace(/^[:\s\-\#\.]*/, "");
+                }
+
+                // 3. LaTeX 指令轉換
+                text = text.replace(/\\textbf\{([^\}]*)\}/g, '<b>$1</b>').replace(/\\textit\{([^\}]*)\}/g, '<i>$1</i>');
+                text = text.replace(/\\begin\{itemize\}/g, '').replace(/\\end\{itemize\}/g, '').replace(/\\item\s*/g, '');
+
+                // 4. 專業表格轉譯器
+                const lines = text.split('\n');
+                let resultHTML = [];
+                let tableBuffer = [];
+                let inTable = false;
+
+                lines.forEach((line) => {
+                    const trimLine = line.trim();
+                    if (trimLine.startsWith('|')) {
+                        if (!inTable) { inTable = true; tableBuffer = []; }
+                        if (trimLine.includes(':---')) return;
+                        const cells = trimLine.split('|').filter((c, i, a) => i > 0 && i < a.length - 1).map(c => c.trim());
+                        tableBuffer.push(cells);
+                    } else {
+                        if (inTable) {
+                            const tableStr = `
+                                <div class="bio-table-wrapper">
+                                    <table class="bio-table">
+                                        <thead><tr>${tableBuffer[0].map(c => `<th>${c}</th>`).join('')}</tr></thead>
+                                        <tbody>${tableBuffer.slice(1).map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+                                    </table>
+                                </div>`;
+                            resultHTML.push(tableStr);
+                            inTable = false; tableBuffer = [];
+                        }
+                        if (trimLine) resultHTML.push(`<div class="info-segment">${trimLine}</div>`);
+                    }
+                });
+                if (inTable) {
+                    const tableStr = `<div class="bio-table-wrapper"><table class="bio-table"><thead><tr>${tableBuffer[0].map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${tableBuffer.slice(1).map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+                    resultHTML.push(tableStr);
+                }
+
+                return resultHTML.join('');
+            }, []);
+
+            const renderThemedCards = useCallback((text, isErq = false) => {
+                if (!text) return null;
+                const markers = isErq 
+                    ? ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar"] 
+                    : ["Key Concept", "Pitfall", "Syllabus Link", "Fact"];
+                
+                let parts = []; let temp = text;
+                markers.forEach(m => {
+                    const idx = temp.toLowerCase().indexOf(m.toLowerCase());
+                    if (idx > -1) { parts.push(temp.substring(0, idx)); temp = temp.substring(idx); }
+                });
+                parts.push(temp);
+
+                return parts.filter(p => p.trim().length > 5).map((sec, idx) => {
+                    const cs = sec.trim();
+                    let color = "card-blue", label = "Concept";
+                    if (/Mark Scheme|Key Concept/i.test(cs)) { label = isErq ? "Analysis" : "Concept"; color = "card-blue"; }
+                    else if (/Gaps|Pitfall/i.test(cs)) { label = isErq ? "Gaps" : "Pitfall"; color = "card-rose"; }
+                    else if (/Pathway|Syllabus/i.test(cs)) { label = isErq ? "Pathway" : "Link"; color = "card-amber"; }
+                    else if (/Model Exemplar|Fact/i.test(cs)) { label = isErq ? "Exemplar" : "Summary"; color = "card-emerald"; }
+
+                    let body = cs;
+                    markers.forEach(h => { if (body.toLowerCase().startsWith(h.toLowerCase())) body = body.substring(h.length).replace(/^[:\s]*/, ""); });
+
+                    return (
+                        <div key={idx} className={`themed-card ${color} animate-in fade-in`}>
+                            <span className="badge-pill bg-slate-800 opacity-80">{label}</span>
+                            <div className="font-semibold text-slate-700 leading-relaxed text-[1.02rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(body, currentQuestion?.question) }} />
+                        </div>
+                    );
+                });
+            }, [currentQuestion, bioCompiler]);
 
             const askAI = async (prompt, system, isJson = false) => {
-                if (!apiKey) return "ERROR: API Key missing.";
-                const model = "gemini-2.5-flash-preview-09-2025";
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                const finalKey = userApiKey || ""; 
                 try {
-                    const response = await fetch(url, {
+                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${finalKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -135,299 +201,231 @@
                             generationConfig: isJson ? { responseMimeType: "application/json" } : {}
                         })
                     });
-                    const data = await response.json();
-                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "AI error.";
-                } catch (e) { return "System busy."; }
+                    const data = await res.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text;
+                } catch (e) { return null; }
             };
 
-            const refillPool = async (themeId, type) => {
-                const prompt = `Generate ONE advanced IB Bio 2025 question for Theme ${themeId}. JSON format: { "id": "${Date.now()}", "theme": "${themeId}", "type": "${type}", "question": "...", "options": {"A": "...", "B": "...", "C": "...", "D": "..."}, "answer": "A/B/C/D", "explanation": "..." }`;
-                try {
-                    const res = await askAI(prompt, "IB Bio Q-Bank. JSON only.", true);
-                    const parsed = JSON.parse(res);
-                    setLocalPool(prev => {
-                        const next = { ...prev };
-                        next[themeId] = [...(next[themeId] || []), parsed];
-                        return next;
-                    });
-                } catch (e) {}
-            };
-
-            const handleTabChange = (newTab) => {
-                if (newTab === 'quiz') {
-                    setQuizStep('setup');
-                    setUserAnswer(''); setAiFeedback(''); setMcqResult(null); setDeepInsight('');
+            const ensureStock = useCallback(async (theme, type) => {
+                if (!userApiKey) return;
+                const key = `${theme}_${type}`;
+                if ((localPool[theme] || []).filter(q => q.type === type).length >= 2 || pending.current.has(key)) return;
+                pending.current.add(key); setBgRefilling(true);
+                const res = await askAI(`Generate ONE IB Bio question for Theme ${theme}. JSON ONLY. explanation: CONCISE ONE SENTENCE.`, "Senior IB Examiner", true);
+                if (res) {
+                    try {
+                        const m = res.match(/\{[\s\S]*\}/);
+                        if (m) {
+                            const p = JSON.parse(m[0]);
+                            const safe = { id: Date.now()+Math.random(), theme, type, ...p, options: p.options ? Object.keys(p.options).reduce((a,k)=>({...a,[k]:String(p.options[k])}),{}) : {} };
+                            setLocalPool(prev => ({ ...prev, [theme]: [...(prev[theme] || []), safe] }));
+                        }
+                    } catch(e) {}
                 }
-                setTab(newTab);
-            };
+                pending.current.delete(key); setBgRefilling(pending.current.size > 0);
+            }, [localPool, userApiKey]);
+
+            useEffect(() => { if(userApiKey) ['A','B','C','D'].forEach(t => { ensureStock(t, 'MCQ'); ensureStock(t, 'ERQ'); }); }, [userApiKey]);
 
             const startAssessment = () => {
+                if (!selThemes.length) return;
                 const combined = selThemes.flatMap(t => localPool[t] || []).filter(q => q.type === selType);
                 if (combined.length > 0) {
-                    const picked = combined[Math.floor(Math.random() * combined.length)];
-                    setCurrentQuestion(picked);
-                    setUserAnswer(''); setAiFeedback(''); setMcqResult(null); setDeepInsight('');
-                    setQuizStep('asking');
+                    setCurrentQuestion(combined[0]); setUserAnswer(''); setAiFeedback(''); setDeepInsight(''); setQuizStep('asking');
+                    setTimeout(() => ensureStock(combined[0].theme, selType), 200);
                 } else {
-                    setQuizStep('loading');
-                    refillPool(selThemes[0], selType).then(() => setQuizStep('setup'));
+                    setLoading(true); ensureStock(selThemes[0], selType).then(() => setLoading(false));
                 }
-            };
-
-            const handleMcqSelect = (choice) => {
-                const isCorrect = choice === currentQuestion.answer;
-                setUserAnswer(choice);
-                setMcqResult({ isCorrect, correctAnswer: currentQuestion.answer, explanation: currentQuestion.explanation });
-                setQuizStep('mcq_feedback');
-                
-                setStats(prev => ({
-                    ...prev,
-                    total: prev.total + 1,
-                    mcqTotal: prev.mcqTotal + 1,
-                    mcqCorrect: isCorrect ? prev.mcqCorrect + 1 : prev.mcqCorrect,
-                    themes: { ...prev.themes, [currentQuestion.theme]: (prev.themes[currentQuestion.theme] || 0) + 1 }
-                }));
-                refillPool(currentQuestion.theme, 'MCQ');
-            };
-
-            const submitErqAnswer = async () => {
-                setLoading(true); setQuizStep('grading');
-                const prompt = `Question: "${currentQuestion.question}"\nStudent Answer: "${userAnswer}"\n\nGrade for IB 2025 HL. Structure with: ### Final Marks, ### Marking Points Met, ### Critical Diagnostic, ### Level 7 Advice, ### Level 7 Model Answer Example. Professional academic English.`;
-                const fb = await askAI(prompt, "Chief IB Moderator.");
-                setAiFeedback(fb); setQuizStep('erq_feedback');
-                setLoading(false);
-                
-                setStats(prev => ({
-                    ...prev,
-                    total: prev.total + 1,
-                    erqTotal: prev.erqTotal + 1,
-                    themes: { ...prev.themes, [currentQuestion.theme]: (prev.themes[currentQuestion.theme] || 0) + 1 }
-                }));
-                refillPool(currentQuestion.theme, 'ERQ');
-            };
-
-            const requestDeepInsight = async () => {
-                setLoading(true);
-                const prompt = `Topic: "${currentQuestion.question}". Answer: ${currentQuestion.answer}. Provide pedagogical biology breakdown for 2025 syllabus.`;
-                const res = await askAI(prompt, "Senior IB Specialist.");
-                setDeepInsight(res);
-                setLoading(false);
             };
 
             const handleNext = () => {
-                setLocalPool(prev => {
-                    const next = { ...prev };
-                    if (currentQuestion) next[currentQuestion.theme] = next[currentQuestion.theme].filter(q => q.id !== currentQuestion.id);
-                    return next;
-                });
+                if (currentQuestion) setLocalPool(prev => ({ ...prev, [currentQuestion.theme]: prev[currentQuestion.theme].filter(q => q.id !== currentQuestion.id) }));
                 startAssessment();
             };
 
-            const toggleTheme = (id) => setSelThemes(p => p.includes(id) ? (p.length > 1 ? p.filter(v => v !== id) : p) : [...p, id]);
+            const requestDeepInsight = async () => {
+                if (!currentQuestion) return;
+                setInsightLoading(true);
+                const res = await askAI(`Provide 3-4 CONCISE bullet points or a Table for: "${currentQuestion.question}". Use LaTeX. START IMMEDIATELY.`, "Expert IB Tutor");
+                if (res) setDeepInsight(res);
+                setInsightLoading(false);
+            };
+
+            const submitErq = async () => {
+                if (!userAnswer.trim()) return;
+                setLoading(true); setQuizStep('grading');
+                const fb = await askAI(`Grade answer for: "${currentQuestion.question}". Student: "${userAnswer}". Headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar.`, "Chief Moderator.");
+                if (fb) { setAiFeedback(fb); setQuizStep('erq_feedback'); setStats(p => ({ ...p, total: p.total+1, themes: {...p.themes, [currentQuestion.theme]: (p.themes[currentQuestion.theme] || 0) + 1} })); ensureStock(currentQuestion.theme, 'ERQ'); }
+                setLoading(false);
+            };
+
+            useEffect(() => {
+                if (window.renderMathInElement) renderMathInElement(document.body, { delimiters: [{left:'$$', right:'$$', display:true}, {left:'$', right:'$', display:false}], throwOnError: false });
+            }, [quizStep, deepInsight, currentQuestion, tab]);
 
             return (
                 <div className="app-container" style={{ fontSize: `${globalFontSize}px` }}>
-                    
-                    <header className="p-8 pt-12 flex justify-center bg-white sticky top-0 z-50 border-b border-slate-100">
-                        <div className="flex flex-col items-center">
-                            <h1 className="font-extrabold text-slate-900 italic" style={{ fontSize: '26px' }}>IB BIO HUB</h1>
-                            <div className="text-blue-600 font-black uppercase tracking-widest" style={{ fontSize: '9px' }}>AI Analytics Dashboard</div>
-                        </div>
+                    {bgRefilling && <div className="bg-refill-tag animate-in slide-in-from-top-2"><div className="w-2 h-2 bg-blue-500 rounded-full animate-ping mr-2"></div>STOCKING</div>}
+                    <header className="header-fixed flex flex-col items-center py-4 bg-white border-b border-slate-50">
+                        <h1 className="font-extrabold text-slate-900 italic text-xl uppercase tracking-tighter">IB Bio Master</h1>
+                        <div className="flex items-center text-[10px] font-bold text-emerald-500 mt-1"><span className="status-dot online"></span>Ready</div>
                     </header>
 
-                    <main className="flex-1 p-8 overflow-y-auto hide-scrollbar pb-32 content-area">
-                        
-                        {tab === 'home' && (
-                            <div className="space-y-10 animate-in fade-in">
-                                <div className="bg-slate-900 rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden">
-                                    <div className="absolute -top-16 -right-16 opacity-5 bg-white w-64 h-64 rounded-full blur-3xl"></div>
-                                    <div className="relative z-10">
-                                        <h2 className="font-black italic mb-4" style={{ fontSize: '36px' }}>Learning Record</h2>
-                                        <div className="grid grid-cols-2 gap-4 mb-8 text-center">
-                                            <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
-                                                <p className="text-blue-400 font-black" style={{ fontSize: '28px' }}>{stats.total}</p>
-                                                <p className="ui-label">Completed</p>
-                                            </div>
-                                            <div className="bg-white/5 p-6 rounded-3xl border border-white/10">
-                                                <p className="text-green-400 font-black" style={{ fontSize: '28px' }}>{stats.mcqTotal > 0 ? Math.round((stats.mcqCorrect / stats.mcqTotal) * 100) : 0}%</p>
-                                                <p className="ui-label">Accuracy</p>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-3">
-                                            {THEMES.map(t => (
-                                                <div key={t.id} className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/10">
-                                                    <div className="flex items-center gap-3">
-                                                        <BioIcon name={t.icon} size={20} className="text-blue-400" />
-                                                        <span className="font-bold text-slate-300 text-sm">{t.name}</span>
-                                                    </div>
-                                                    <span className="text-[10px] font-black text-blue-400 bg-blue-400/10 px-3 py-1 rounded-full">Count: {stats.themes[t.id] || 0}</span>
-                                                </div>
-                                            ))}
+                    <main className="main-scroll">
+                        <div className="content-buffer">
+                            {tab === 'home' && (
+                                <div className="space-y-6 animate-in fade-in">
+                                    <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white text-center shadow-xl">
+                                        <h2 className="text-xl font-black mb-4 uppercase italic tracking-widest">Dashboard</h2>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-white/10 p-4 rounded-2xl border border-white/5"><p className="text-2xl font-black text-blue-400">{stats.total}</p><p className="text-[10px] opacity-40 uppercase font-black">Total</p></div>
+                                            <div className="bg-white/10 p-4 rounded-2xl border border-white/5"><p className="text-2xl font-black text-emerald-400">{stats.mcqTotal > 0 ? Math.round((stats.mcqCorrect/stats.mcqTotal)*100) : 0}%</p><p className="text-[10px] opacity-40 uppercase font-black">Score</p></div>
                                         </div>
                                     </div>
+                                    {!userApiKey && <div className="p-6 bg-amber-50 border-2 border-amber-200 rounded-3xl text-amber-900 font-bold text-sm text-center">Please set your Gemini API Key in the <button onClick={()=>setTab('config')} className="underline">Config</button> tab to start.</div>}
+                                    <div className="space-y-4 px-2">
+                                        {THEMES.map(t => (
+                                            <div key={t.id} className="bg-white p-5 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
+                                                <div><p className="text-[10px] font-black opacity-30">Theme {t.id}</p><p className="font-bold text-sm text-slate-700">{t.name}</p></div>
+                                                <div className="flex items-center gap-2"><span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase">Stock: {(localPool[t.id] || []).filter(q => q.type === selType).length}</span><span className="text-xl font-black text-slate-800">{stats.themes[t.id] || 0}</span></div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {tab === 'quiz' && (
-                            <div className="space-y-10 animate-in fade-in">
-                                {quizStep === 'setup' && (
-                                    <div className="space-y-10 animate-in slide-in-from-bottom-4">
-                                        <div className="space-y-6">
-                                            <p className="ui-label text-center">Configuration</p>
-                                            <div className="grid grid-cols-2 gap-4">
+                            {tab === 'quiz' && (
+                                <div className="space-y-4">
+                                    {quizStep === 'setup' && (
+                                        <div className="space-y-6 animate-in slide-in-from-bottom-4">
+                                            <div className="grid grid-cols-2 gap-3">
                                                 {THEMES.map(t => (
-                                                    <button key={t.id} onClick={() => toggleTheme(t.id)} className={`p-6 rounded-[2.5rem] text-left border-2 flex flex-col gap-4 transition-all ${selThemes.includes(t.id) ? 'border-blue-600 bg-blue-50' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
-                                                        <span className="font-black text-lg">{t.name}</span>
+                                                    <button key={t.id} onClick={() => setSelThemes([t.id])} className={`p-5 rounded-2xl text-left border-2 transition-all ${selThemes.includes(t.id) ? 'border-blue-600 bg-blue-50 shadow-md' : 'border-slate-100 bg-slate-50 opacity-60'}`}>
+                                                        <span className="font-black text-xs text-blue-600">{t.id}</span><br/><span className="font-bold text-[11px] text-slate-700 leading-tight">{t.name}</span>
                                                     </button>
                                                 ))}
                                             </div>
+                                            <div className="flex gap-4">
+                                                {['MCQ', 'ERQ'].map(type => (
+                                                    <button key={type} onClick={() => setSelType(type)} className={`flex-1 py-4 rounded-xl font-black border-2 transition-all ${selType === type ? 'border-blue-600 bg-blue-600 text-white shadow-lg' : 'bg-slate-50 border-slate-100 text-slate-400'}`}>{type}</button>
+                                                ))}
+                                            </div>
+                                            <button onClick={startAssessment} disabled={loading || !userApiKey} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase shadow-2xl active:scale-95 transition-all italic">Launch Assessment</button>
                                         </div>
-                                        <div className="flex gap-4">
-                                            {['MCQ', 'ERQ'].map(type => (
-                                                <button key={type} onClick={() => setSelType(type)} className={`flex-1 py-5 rounded-2xl font-black border-2 transition-all ${selType === type ? 'border-blue-600 bg-blue-600 text-white shadow-lg' : 'bg-slate-50 text-slate-400'}`}>{type}</button>
-                                            ))}
-                                        </div>
-                                        <button onClick={startAssessment} className="w-full bg-slate-900 text-white py-8 rounded-[3rem] font-black text-2xl uppercase italic shadow-xl">Launch Session</button>
-                                    </div>
-                                )}
+                                    )}
 
-                                {quizStep === 'asking' && (
-                                    <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-xl relative animate-in zoom-in-95">
-                                        <div className="bg-blue-600 text-white px-8 py-3 rounded-full text-[10px] font-black absolute top-8 right-10 uppercase italic">Active Stream</div>
-                                        <div className="text-slate-900 font-extrabold leading-relaxed mb-12 pt-20 border-l-[12px] border-blue-600 pl-12 pr-4 italic" style={{ fontSize: `${globalFontSize + 4}px` }}>{currentQuestion?.question}</div>
-                                        {selType === 'MCQ' ? (
-                                            <div className="grid grid-cols-1 gap-6">
-                                                {Object.entries(currentQuestion?.options || {}).map(([key, val]) => (
-                                                    <button key={key} onClick={() => handleMcqSelect(key)} className="p-10 rounded-[2.5rem] font-bold border-4 text-left border-slate-50 bg-slate-50 text-slate-500 active:border-blue-600 active:bg-blue-50 mcq-option" style={{ fontSize: `${globalFontSize}px` }}>
-                                                        <span className="w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-black bg-slate-200 text-slate-400 mr-6 inline-flex" style={{ fontSize: '16px' }}>{key}</span>
-                                                        <span className="flex-1">{val}</span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-8">
-                                                <textarea className="w-full p-10 bg-slate-50 rounded-[3rem] min-h-[400px] outline-none focus:ring-8 ring-blue-100 font-medium text-slate-700 leading-loose" style={{ fontSize: `${globalFontSize}px` }} placeholder="Draft scientific argument..." value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} />
-                                                <div className="flex gap-4">
-                                                    <button onClick={() => setQuizStep('setup')} className="flex-1 bg-slate-50 text-slate-400 py-8 rounded-[2.5rem] font-black text-lg">Abort</button>
-                                                    <button onClick={submitErqAnswer} disabled={!userAnswer.trim()} className="flex-[2] bg-slate-900 text-white py-8 rounded-[2.5rem] font-black text-2xl shadow-2xl">Analyze Submission</button>
+                                    {quizStep === 'asking' && currentQuestion && (
+                                        <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-50 space-y-8 animate-in zoom-in-95">
+                                            <div className="text-slate-900 font-extrabold italic leading-tight text-xl border-l-8 border-blue-600 pl-5">{currentQuestion.question}</div>
+                                            {selType === 'MCQ' ? (
+                                                <div className="grid grid-cols-1 gap-3">
+                                                    {Object.entries(currentQuestion?.options || {}).map(([k, v]) => (
+                                                        <button key={k} onClick={() => {
+                                                            const correct = k === currentQuestion.answer;
+                                                            setUserAnswer(k); setQuizStep('mcq_feedback');
+                                                            setStats(p => ({ ...p, total: p.total+1, mcqTotal: p.mcqTotal+1, mcqCorrect: correct ? p.mcqCorrect+1 : p.mcqCorrect, themes: {...p.themes, [currentQuestion.theme]: (p.themes[currentQuestion.theme] || 0) + 1} }));
+                                                            ensureStock(currentQuestion.theme, selType);
+                                                        }} className="w-full p-5 rounded-2xl border-2 border-slate-100 text-left font-bold text-slate-700 hover:border-blue-300 transition-all flex items-center gap-4">
+                                                            <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-black text-slate-400">{k}</span>
+                                                            <span className="flex-1">{v}</span>
+                                                        </button>
+                                                    ))}
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    <textarea className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl min-h-[300px] outline-none font-medium text-slate-700 shadow-inner" placeholder="Compose answer..." value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} />
+                                                    <button onClick={submitErq} disabled={!userAnswer.trim() || loading} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase shadow-xl italic active:scale-95 transition-all">Submit Response</button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
 
-                                {quizStep === 'grading' && (
-                                    <div className="py-40 flex flex-col items-center animate-pulse"><p className="font-black text-4xl italic uppercase">Analyzing Submission...</p></div>
-                                )}
+                                    {quizStep === 'grading' && (
+                                        <div className="py-24 flex flex-col items-center animate-pulse">
+                                            <div className="w-20 h-20 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-6"></div>
+                                            <p className="font-black text-xl italic text-slate-400 uppercase">Moderating...</p>
+                                        </div>
+                                    )}
 
-                                {quizStep === 'mcq_feedback' && (
-                                    <div className="space-y-10 animate-in zoom-in-95 pb-20">
-                                        <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-xl relative overflow-hidden">
-                                            <div className="text-slate-900 font-extrabold leading-relaxed mb-12 pt-10 border-l-[12px] border-slate-200 pl-12 pr-4 italic faded-q" style={{ fontSize: `${globalFontSize}px` }}>{currentQuestion?.question}</div>
-                                            
-                                            <div className="grid grid-cols-1 gap-6 mb-12">
-                                                {Object.entries(currentQuestion?.options || {}).map(([key, val]) => {
-                                                    const isCorrect = key === currentQuestion.answer;
-                                                    const isUserChoice = key === userAnswer;
-                                                    let colorStyle = "border-slate-50 bg-slate-50 text-slate-400 opacity-60";
-                                                    if (isCorrect) colorStyle = "border-green-500 bg-green-50 text-green-900 shadow-md scale-[1.01]";
-                                                    else if (isUserChoice) colorStyle = "border-red-500 bg-red-50 text-red-900 shadow-md";
-
-                                                    return (
-                                                        <div key={key} className={`p-8 rounded-[2.5rem] font-bold border-4 flex items-center gap-6 ${colorStyle}`} style={{ fontSize: `${globalFontSize}px` }}>
-                                                            <span className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-black ${isCorrect ? 'bg-green-600 text-white' : (isUserChoice ? 'bg-red-600 text-white' : 'bg-slate-200')}`} style={{ fontSize: '14px' }}>{key}</span>
-                                                            <span className="flex-1">{val}</span>
-                                                            {isCorrect && <BioIcon name="Check" size={20} className="text-green-600" />}
-                                                            {isUserChoice && !isCorrect && <BioIcon name="X" size={20} className="text-red-600" />}
+                                    {(quizStep === 'mcq_feedback' || quizStep === 'erq_feedback') && currentQuestion && (
+                                        <div className="space-y-4 animate-in fade-in">
+                                            <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl math-container overflow-hidden">
+                                                {quizStep === 'mcq_feedback' && (
+                                                    <Fragment>
+                                                        <div className="text-slate-900 font-bold mb-8 italic opacity-40 px-2 text-base">{currentQuestion.question}</div>
+                                                        <div className="grid grid-cols-1 gap-3 mb-10">
+                                                            {Object.entries(currentQuestion?.options || {}).map(([k, v]) => {
+                                                                const isCorrect = k === currentQuestion.answer, isUser = k === userAnswer;
+                                                                let st = "border-slate-50 bg-slate-50 text-slate-400 opacity-60";
+                                                                if (isCorrect) st = "border-green-500 bg-green-50 text-green-900 shadow-sm scale-[1.02]";
+                                                                else if (isUser) st = "border-red-500 bg-red-50 text-red-900";
+                                                                return (<div key={k} className={`p-5 rounded-2xl font-bold border-2 flex items-center gap-4 ${st}`}><span className={`w-8 h-8 rounded-full flex items-center justify-center font-black ${isCorrect ? 'bg-green-600 text-white' : (isUser ? 'bg-red-600 text-white' : 'bg-slate-200')}`} style={{ fontSize: '10px' }}>{k}</span><span className="flex-1">{v}</span>{isCorrect && <AppIcon name="Check" size={16} />}</div>);
+                                                            })}
                                                         </div>
-                                                    );
-                                                })}
-                                            </div>
-
-                                            <div className="p-10 rounded-[3.5rem] border-l-[15px] shadow-sm bg-indigo-50 border-indigo-400 text-indigo-900 mb-6">
-                                                <div className="flex justify-between items-center mb-6">
-                                                    <div className="font-black uppercase italic" style={{ fontSize: `${globalFontSize + 4}px` }}>Expert Explanation</div>
-                                                    {!deepInsight && <button onClick={requestDeepInsight} className="bg-blue-600 text-white text-xs px-5 py-2 rounded-full font-black animate-pulse">Deep Analysis +</button>}
+                                                    </Fragment>
+                                                )}
+                                                <div className="p-8 rounded-[2.5rem] bg-slate-50 border border-slate-200">
+                                                    <div className="flex justify-between items-center mb-6"><span className="ui-label tracking-widest font-black text-slate-400">Analysis</span>{!deepInsight && (<button onClick={requestDeepInsight} disabled={insightLoading} className="text-blue-600 text-[10px] font-black uppercase tracking-widest">{insightLoading ? 'Analysing...' : 'Deep Insight +'}</button>)}</div>
+                                                    {!deepInsight && quizStep === 'mcq_feedback' && <div className="font-bold text-slate-700 leading-relaxed mb-2" dangerouslySetInnerHTML={{ __html: bioCompiler(currentQuestion?.explanation) }} />}
+                                                    {insightLoading && <div className="mt-8 pt-8 border-t border-slate-200 space-y-4 animate-pulse"><div className="h-4 bg-slate-200 rounded w-3/4"></div><div className="h-4 bg-slate-200 rounded w-1/2"></div></div>}
+                                                    {deepInsight && <div className="mt-4">{renderThemedCards(deepInsight)}</div>}
+                                                    {quizStep === 'erq_feedback' && !deepInsight && <div className="space-y-4">{renderThemedCards(aiFeedback, true)}</div>}
                                                 </div>
-                                                <div className="font-medium opacity-95 content-area" style={{ fontSize: `${globalFontSize}px` }}>{currentQuestion.explanation}</div>
-                                                {deepInsight && <div className="mt-8 pt-8 border-t border-indigo-200 text-indigo-800 font-bold content-area">{deepInsight}</div>}
+                                            </div>
+                                            <button onClick={handleNext} className="w-full bg-slate-900 text-white py-6 rounded-2xl font-black uppercase shadow-xl italic active:scale-95 transition-all">Next Challenge</button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {tab === 'config' && (
+                                <div className="space-y-6 animate-in zoom-in-95">
+                                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+                                        <p className="ui-label tracking-widest font-black">App Settings</p>
+                                        
+                                        {/* 安全 API Key 管理 */}
+                                        <div className="p-6 bg-slate-900 rounded-3xl text-white space-y-4">
+                                            <p className="text-xs font-black uppercase text-blue-400 tracking-tighter">Security: Gemini API Key</p>
+                                            <input 
+                                                type="password" 
+                                                className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none text-sm placeholder-white/20" 
+                                                placeholder="Paste your API Key here..." 
+                                                value={userApiKey} 
+                                                onChange={(e) => setUserApiKey(e.target.value)} 
+                                            />
+                                            <p className="text-[9px] opacity-40 leading-relaxed">Your key is stored locally in this browser and never sent to GitHub. It's required for AI analysis.</p>
+                                        </div>
+
+                                        <div className="p-6 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-between">
+                                            <div><span className="font-bold text-sm text-slate-600">Font Size</span><p className="text-[10px] text-slate-400 font-bold">{globalFontSize}px</p></div>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => setGlobalFontSize(v => Math.max(14, v-1))} className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black shadow-sm">-</button>
+                                                <button onClick={() => setGlobalFontSize(v => Math.min(30, v+1))} className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black shadow-sm">+</button>
                                             </div>
                                         </div>
-                                        <button onClick={handleNext} className="w-full bg-slate-900 text-white py-8 rounded-[3rem] font-black text-2xl uppercase shadow-2xl flex items-center justify-center gap-6 italic tracking-widest">Continue Practice <BioIcon name="Check" size={32}/></button>
                                     </div>
-                                )}
-
-                                {quizStep === 'erq_feedback' && (
-                                    <div className="space-y-8 animate-in zoom-in-95 pb-20">
-                                        <div className="space-y-8">
-                                            {String(aiFeedback).split('###').filter(s => s.trim()).map((sec, idx) => {
-                                                const lines = sec.trim().split('\n');
-                                                const title = lines[0].trim();
-                                                const body = lines.slice(1).join('\n');
-                                                let style = "bg-slate-50 border-slate-200 text-slate-900";
-                                                if (title.toLowerCase().includes('marks')) style = "bg-indigo-50 border-indigo-400 text-indigo-900";
-                                                if (title.toLowerCase().includes('points')) style = "bg-green-50 border-green-400 text-green-900";
-                                                if (title.toLowerCase().includes('diag') || title.toLowerCase().includes('critique')) style = "bg-orange-50 border-orange-400 text-orange-900";
-                                                if (title.toLowerCase().includes('model') || title.toLowerCase().includes('level 7')) style = "model-answer-card border-blue-600 text-blue-900 shadow-xl";
-
-                                                return (
-                                                    <div key={idx} className={`p-10 rounded-[3.5rem] border-l-[15px] shadow-sm ${style}`}>
-                                                        <div className="font-black uppercase italic mb-6" style={{ fontSize: `${globalFontSize + 6}px` }}>{title}</div>
-                                                        <div className="font-medium whitespace-pre-wrap opacity-90 content-area" style={{ fontSize: `${globalFontSize}px` }}>{body.replace(/[*#]/g, '').trim()}</div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                        <button onClick={handleNext} className="w-full bg-slate-900 text-white py-8 rounded-[3rem] font-black text-2xl uppercase shadow-2xl flex items-center justify-center gap-6 italic tracking-widest">Next Paper</button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {tab === 'config' && (
-                            <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-sm space-y-12 animate-in zoom-in-95">
-                                <h2 className="text-3xl font-black italic uppercase text-center" style={{ fontSize: '32px' }}>Settings</h2>
-                                
-                                <div className="space-y-8 p-10 bg-slate-50 rounded-[3rem] border border-slate-200">
-                                    <p className="ui-label mb-4">Reading Environment</p>
-                                    <div className="flex items-center justify-between">
-                                        <span className="font-bold text-xl">App Font Size: {globalFontSize}px</span>
-                                        <div className="flex gap-4">
-                                            <button onClick={() => setGlobalFontSize(v => Math.max(14, v - 2))} className="w-16 h-16 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center text-2xl font-black active:bg-blue-600 active:text-white transition-all shadow-sm">A-</button>
-                                            <button onClick={() => setGlobalFontSize(v => Math.min(32, v + 2))} className="w-16 h-16 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center text-2xl font-black active:bg-blue-600 active:text-white transition-all shadow-sm">A+</button>
-                                        </div>
-                                    </div>
-                                    <p className="text-slate-400 text-[10px] mt-4 italic leading-relaxed">Adjust font size for your study comfort. Settings persist across sessions.</p>
                                 </div>
-
-                                <div className="space-y-6">
-                                    <label className="ui-label ml-4">Gemini Pro API Key</label>
-                                    <input type="password" className="w-full p-10 bg-slate-50 border-4 border-slate-100 rounded-[2.5rem] font-bold text-2xl shadow-inner outline-none focus:border-blue-600" value={apiKey} onChange={(e) => { setApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value); }} />
-                                    <div className="p-8 bg-blue-50/50 rounded-3xl border-2 border-blue-100/30 flex gap-6 items-start"><p className="text-sm text-slate-500 italic leading-snug tracking-tight">Security: Your key is stored in your <strong className="text-slate-900 underline decoration-blue-500">Local Browser Storage</strong>. Never uploaded to servers.</p></div>
-                                </div>
-                            </div>
-                        )}
-
+                            )}
+                        </div>
                     </main>
 
-                    {/* Navigation */}
-                    <nav className="fixed bottom-10 left-1/2 -translate-x-1/2 w-[94%] max-w-[650px] glass-nav rounded-[4rem] p-4 flex justify-around shadow-2xl z-50 border border-white/50">
-                        <button onClick={() => handleTabChange('home')} className={`flex flex-col items-center justify-center gap-2 px-10 py-4 rounded-[3rem] transition-all duration-300 ${tab === 'home' ? 'nav-active shadow-inner' : 'text-slate-400'}`}>
-                            <BioIcon name="Home" size={28} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Dashboard</span>
-                        </button>
-                        <button onClick={() => handleTabChange('quiz')} className={`flex flex-col items-center justify-center gap-2 px-10 py-4 rounded-[3rem] transition-all duration-300 ${tab === 'quiz' ? 'nav-active shadow-inner' : 'text-slate-400'}`}>
-                            <BioIcon name="Exam" size={28} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Practice</span>
-                        </button>
-                        <button onClick={() => handleTabChange('config')} className={`flex flex-col items-center justify-center gap-2 px-10 py-4 rounded-[3rem] transition-all duration-300 ${tab === 'config' ? 'nav-active shadow-inner' : 'text-slate-400'}`}>
-                            <BioIcon name="Config" size={28} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Settings</span>
-                        </button>
+                    <nav className="glass-nav">
+                        <button onClick={() => {setTab('home'); if(quizStep!=='setup')setQuizStep('setup');}} className={`nav-item ${tab === 'home' ? 'nav-active' : ''}`}><AppIcon name="Home" />DASHBOARD</button>
+                        <button onClick={() => setTab('quiz')} className={`nav-item ${tab === 'quiz' ? 'nav-active' : ''}`}><AppIcon name="Brain" />ASSESSMENT</button>
+                        <button onClick={() => setTab('config')} className={`nav-item ${tab === 'config' ? 'nav-active' : ''}`}><AppIcon name="Config" />CONFIG</button>
                     </nav>
                 </div>
             );
+        };
+
+        const AppIcon = ({ name, size = 22, color = "currentColor" }) => {
+            const icons = {
+                Home: <svg className="mb-1" width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
+                Brain: <svg className="mb-1" width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>,
+                Config: <svg className="mb-1" width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>,
+                Check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+            };
+            return icons[name] || null;
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
