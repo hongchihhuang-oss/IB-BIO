@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master | 專業連續練習系統</title>
+    <title>IB Bio Master | 專業報告與 PDF 輸出系統</title>
     <!-- React & Tailwind -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -14,6 +14,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <!-- html2pdf for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -30,13 +33,14 @@
         
         .math-container { word-break: break-word; line-height: 1.85; }
         
-        .themed-card { border-left-width: 6px; padding: 1.5rem; border-radius: 1.5rem; background: white; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+        .themed-card { border-left-width: 6px; padding: 1.5rem; border-radius: 1.5rem; background: white; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: 0.3s; }
         .card-blue { border-color: #2563eb; background: #f0f7ff; }
         .card-rose { border-color: #e11d48; background: #fff1f2; }
         .card-amber { border-color: #f59e0b; background: #fffbeb; }
         .card-emerald { border-color: #10b981; background: #ecfdf5; }
+        .card-slate { border-color: #64748b; background: #f8fafc; }
 
-        /* 資訊大點間隔：1.8rem 空白行 */
+        /* 核心排版間距 */
         .info-segment { margin-bottom: 1.8rem; display: block; font-weight: 500; color: #334155; }
         .info-segment:last-child { margin-bottom: 0; }
         .segment-header { font-weight: 800; color: #1e293b; display: block; margin-bottom: 0.4rem; font-size: 1.05rem; }
@@ -44,10 +48,17 @@
         .badge-pill { display: inline-block; font-size: 0.65rem; font-weight: 900; padding: 3px 12px; border-radius: 999px; margin-bottom: 10px; background: #2563eb; color: white; text-transform: uppercase; }
         .status-pill { background: #f1f5f9; padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; color: #64748b; }
         
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .animate-card { animation: slideUp 0.4s ease-out forwards; }
 
-        .btn-action { padding: 14px 20px; border-radius: 14px; font-weight: 800; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-action { padding: 14px 20px; border-radius: 14px; font-weight: 800; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+        .hidden-file-input { display: none; }
+        .toast-msg { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 999px; font-weight: 700; font-size: 0.8rem; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out; }
+
+        /* PDF 專用樣式調整 */
+        @media print {
+            .themed-card { page-break-inside: avoid; }
+        }
     </style>
 </head>
 <body>
@@ -56,7 +67,6 @@
     <script type="text/babel">
         const { useState, useEffect, Fragment, useCallback, useRef, useMemo } = React;
 
-        // --- 1. 全域處理與配置 ---
         const THEMES = [
             { id: "A", name: "Unity & Molecules", color: "#2563eb" }, 
             { id: "B", name: "Function & Cells", color: "#10b981" }, 
@@ -67,16 +77,10 @@
         const bioCompiler = (input) => {
             let text = String(input || "").trim();
             if (!text || text === "undefined") return "";
-
-            // 清理標籤
-            text = text.replace(/^(Assuming\sthat|Based\son|Since|Note\sthat|Explanation|Analysis|Insight):?\s*/gi, "");
+            text = text.replace(/^(Assuming\sthat|Based\son|Since|Note\sthat|Explanation|Analysis|Insight|Answer):?\s*/gi, "");
             text = text.replace(/Supplement for:.*?\n/gi, "").replace(/#+\s?.*?\n/gi, "").replace(/---/g, "");
-            
-            // 自動偵測化學符號模式並包裹 LaTeX
             const chemPattern = /\b(Na\+|K\+|H\+|Ca2\+|Mg2\+|Cl-|NO2-|NO3-|NH4\+|extNa\+|extK\+|CO2|H2O|O2|C6H12O6|Cu2\+|ATP|ADP|NAD\+|NADH|RuBP|Rubisco|q2|p2|2pq)\b/g;
             text = text.replace(chemPattern, (match) => `$\\text{${match}}$`);
-
-            // 轉譯 Markdown 粗體
             text = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 
             const lines = text.split('\n');
@@ -112,32 +116,34 @@
             return finalHTML.join('');
         };
 
-        // --- 2. React App 主要組件 ---
-
         const App = () => {
             const [tab, setTab] = useState('home');
             const [globalFontSize, setGlobalFontSize] = useState(Number(localStorage.getItem('fontSize')) || 17);
             const [userApiKey, setUserApiKey] = useState(localStorage.getItem('gemini_api_key') || "");
             
-            // 題庫管理
             const [masterBank, setMasterBank] = useState({ A:[], B:[], C:[], D:[] });
             const [masteredIds, setMasteredIds] = useState(new Set(JSON.parse(localStorage.getItem('mastered_ids') || '[]')));
             const [isLoaded, setIsLoaded] = useState(false);
+            const [statusMsg, setStatusMsg] = useState("");
 
-            // 測驗流程狀態
-            const [quizStep, setQuizStep] = useState('setup'); // setup, practice
-            const [queue, setQueue] = useState([]); // 題目的隊列
+            const [quizStep, setQuizStep] = useState('setup');
+            const [queue, setQueue] = useState([]);
             const [currentIndex, setCurrentIndex] = useState(0);
-            
-            // 答題紀錄 (Session 持久化)
-            const [sessionResults, setSessionResults] = useState({}); // { [qId]: { answer, feedback, isCorrect } }
+            const [sessionResults, setSessionResults] = useState({});
             
             const [selThemes, setSelThemes] = useState(['A']); 
             const [selType, setSelType] = useState('MCQ');
-            const [tempAnswer, setTempAnswer] = useState(''); // 暫存正在輸入的文字
+            const [tempAnswer, setTempAnswer] = useState('');
             const [loading, setLoading] = useState(false);
 
-            // 自動載入題庫
+            const [buildTheme, setBuildTheme] = useState('A');
+            const [buildCount, setBuildCount] = useState(10);
+            const [buildRatio, setBuildRatio] = useState('mixed'); 
+            const [generatedJson, setGeneratedJson] = useState('');
+
+            const fileInputRef = useRef(null);
+            const reportRef = useRef(null);
+
             useEffect(() => {
                 const fetchAll = async () => {
                     const tempPool = { A:[], B:[], C:[], D:[] };
@@ -156,20 +162,44 @@
                 fetchAll();
             }, []);
 
-            // KaTeX 渲染
             useEffect(() => {
                 const render = () => { if (window.renderMathInElement) renderMathInElement(document.body, { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}], throwOnError: false }); };
                 render();
-                const timer = setTimeout(render, 250);
+                const timer = setTimeout(render, 300);
                 return () => clearTimeout(timer);
-            }, [quizStep, currentIndex, sessionResults, tab]);
+            }, [quizStep, currentIndex, sessionResults, tab, generatedJson]);
 
-            // 保存熟悉標記
-            useEffect(() => {
-                localStorage.setItem('mastered_ids', JSON.stringify(Array.from(masteredIds)));
-            }, [masteredIds]);
+            const showToast = (msg) => {
+                setStatusMsg(msg);
+                setTimeout(() => setStatusMsg(""), 3000);
+            };
 
-            const askAI = async (prompt, system) => {
+            const handleFileImport = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const json = JSON.parse(event.target.result);
+                        setMasterBank(prev => {
+                            const next = { ...prev };
+                            Object.keys(json).forEach(unit => {
+                                if (next[unit]) {
+                                    const existingIds = new Set(next[unit].map(q => q.id));
+                                    const newQuestions = json[unit].filter(q => !existingIds.has(q.id));
+                                    next[unit] = [...next[unit], ...newQuestions];
+                                }
+                            });
+                            return next;
+                        });
+                        showToast(`成功導入題庫！`);
+                    } catch (err) { showToast("檔案格式錯誤。"); }
+                };
+                reader.readAsText(file);
+                e.target.value = "";
+            };
+
+            const askAI = async (prompt, system, isJson = false) => {
                 const finalKey = userApiKey || ""; 
                 if (!finalKey) return null;
                 try {
@@ -178,7 +208,8 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             contents: [{ parts: [{ text: prompt }] }],
-                            systemInstruction: { parts: [{ text: system }] }
+                            systemInstruction: { parts: [{ text: system }] },
+                            generationConfig: isJson ? { responseMimeType: "application/json" } : {}
                         })
                     });
                     const data = await res.json();
@@ -188,29 +219,18 @@
 
             const startPractice = () => {
                 if (!selThemes.length) return;
-                // 過濾熟悉題目
                 const pool = selThemes.flatMap(t => masterBank[t] || []).filter(q => q.type === selType && !masteredIds.has(q.id));
-                
                 if (pool.length > 0) {
-                    const shuffled = [...pool].sort(() => Math.random() - 0.5);
-                    setQueue(shuffled);
-                    setCurrentIndex(0);
-                    setQuizStep('practice');
-                    setSessionResults({});
-                    setTempAnswer('');
-                } else {
-                    alert("目前選擇的類別已無剩餘題目 (皆已標記為熟悉)。");
-                }
+                    setQueue([...pool].sort(() => Math.random() - 0.5));
+                    setCurrentIndex(0); setQuizStep('practice'); setSessionResults({}); setTempAnswer('');
+                } else { showToast("目前無剩餘題目。"); }
             };
 
             const handleMcqSubmit = (qId, choice, answer) => {
                 const correct = choice === answer;
                 setSessionResults(prev => ({ ...prev, [qId]: { answer: choice, isCorrect: correct } }));
-                
-                // 如果答錯，將本題加入隊列最後面
                 if (!correct) {
-                    const currentQ = queue[currentIndex];
-                    setQueue(prev => [...prev, currentQ]);
+                    setQueue(prev => [...prev, queue[currentIndex]]);
                 }
             };
 
@@ -218,41 +238,62 @@
                 if (!tempAnswer.trim()) return;
                 setLoading(true);
                 const currentQ = queue[currentIndex];
-                const sys = "You are a Senior IB Biology Chief Moderator. You MUST perform a keyword audit. If the student uses a technical term or describes a relevant concept correctly, you MUST acknowledge it. Grade strictly against 2025 Mark Scheme.";
-                const usr = `Question: "${currentQ.question}"\n\nStudent Response: "${tempAnswer}"\n\nOUTPUT HEADERS:\n1. Mark Scheme Analysis\n2. Knowledge Gaps\n3. Pathway to Level 7\n4. Model Exemplar\n\nUse LaTeX for symbols.`;
-
+                const sys = "Senior IB Bio Moderator. Perform technical keyword audit. Grade strictly against 2025 Mark Scheme.";
+                const usr = `Question: "${currentQ.question}"\n\nStudent Response: "${tempAnswer}"\n\nHEADERS:\n1. Mark Scheme Analysis\n2. Knowledge Gaps\n3. Pathway to Level 7\n4. Model Exemplar\n\nUse LaTeX.`;
                 const fb = await askAI(usr, sys);
-                if (fb) {
-                    setSessionResults(prev => ({ ...prev, [qId]: { answer: tempAnswer, feedback: fb } }));
-                } else {
-                    alert("AI 評分失敗，請檢查 API Key 設置。");
-                }
+                if (fb) setSessionResults(prev => ({ ...prev, [qId]: { answer: tempAnswer, feedback: fb } }));
                 setLoading(false);
             };
 
             const toggleMastery = (qId) => {
                 setMasteredIds(prev => {
                     const next = new Set(prev);
-                    if (next.has(qId)) next.delete(qId);
-                    else next.add(qId);
+                    if (next.has(qId)) next.delete(qId); else next.add(qId);
+                    localStorage.setItem('mastered_ids', JSON.stringify(Array.from(next)));
                     return next;
                 });
+            };
+
+            const handleBuildBank = async () => {
+                if (!userApiKey) { showToast("請先設置 API Key"); return; }
+                setLoading(true);
+                let mcqNum = buildCount, erqNum = 0;
+                if (buildRatio === 'erq') { mcqNum = 0; erqNum = buildCount; }
+                else if (buildRatio === 'mixed') { mcqNum = Math.floor(buildCount * 0.8); erqNum = buildCount - mcqNum; }
+
+                const sys = `Expert IB Biology Teacher. Generate HIGH-QUALITY AO2/AO3 level questions for 2025 syllabus. Format strictly JSON.`;
+                const usr = `Generate ${mcqNum} MCQ and ${erqNum} ERQ for Unit ${buildTheme}. Use LaTeX for icons/formulas. Format: { "${buildTheme}": [...] }. Use unique IDs.`;
+                const res = await askAI(usr, sys, true);
+                if (res) setGeneratedJson(res); else showToast("產題失敗。");
+                setLoading(false);
             };
 
             const navigate = (dir) => {
                 const nextIdx = currentIndex + dir;
                 if (nextIdx >= 0 && nextIdx < queue.length) {
                     setCurrentIndex(nextIdx);
-                    // 切換題目時，讀取已存在的答案或清空
-                    const nextQ = queue[nextIdx];
-                    setTempAnswer(sessionResults[nextQ.id]?.answer || '');
+                    setTempAnswer(sessionResults[queue[nextIdx].id]?.answer || '');
                 }
+            };
+
+            const exportPDF = () => {
+                if (!reportRef.current) return;
+                const element = reportRef.current;
+                const opt = {
+                    margin: 10,
+                    filename: `IB_Bio_Report_${queue[currentIndex].id}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+                html2pdf().set(opt).from(element).save();
+                showToast("PDF 報告下載中...");
             };
 
             const currentQ = queue[currentIndex];
             const currentRes = currentQ ? sessionResults[currentQ.id] : null;
 
-            const renderFeedbackCards = useCallback((text, isErq = false) => {
+            const renderFeedbackCards = useCallback((text, isErq = false, originalAnswer = "") => {
                 if (!text) return null;
                 const markers = isErq 
                     ? ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar"] 
@@ -271,7 +312,8 @@
                 parts.push(temp);
 
                 const validParts = parts.filter(p => p.trim().length > 5);
-                return validParts.map((sec, idx) => {
+                
+                const cards = validParts.map((sec, idx) => {
                     const cs = sec.trim();
                     let color = "card-blue", label = "Insight";
                     if (isErq) {
@@ -284,19 +326,34 @@
                         else if (/Pitfall/i.test(cs)) { label = "Pitfall"; color = "card-rose"; }
                         else if (/Fact|Analysis|Calculation/i.test(cs)) { label = "Fact"; color = "card-emerald"; }
                     }
-                    let body = cs;
-                    markers.forEach(h => { body = body.replace(new RegExp('^' + h + ':?', 'i'), "").trim(); });
+                    const markerFound = markers.find(m => cs.toLowerCase().startsWith(m.toLowerCase()));
+                    let body = markerFound ? cs.replace(new RegExp('^' + markerFound + ':?', 'i'), "").trim() : cs;
+                    
                     return <div key={idx} className={`themed-card ${color} animate-card`}><span className="badge-pill bg-slate-800 opacity-80 uppercase">{label}</span><div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(body) }} /></div>;
                 });
+
+                // 如果是申論題，在最上方插入使用者答案
+                if (isErq && originalAnswer) {
+                    cards.unshift(
+                        <div key="user-ans" className="themed-card card-slate animate-card">
+                            <span className="badge-pill bg-slate-600 text-white uppercase">Your Response</span>
+                            <div className="font-semibold text-slate-600 italic leading-relaxed text-[0.95rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(originalAnswer) }} />
+                        </div>
+                    );
+                }
+
+                return cards;
             }, []);
 
             return (
                 <div className="app-container" style={{ fontSize: `${globalFontSize}px` }}>
+                    {statusMsg && <div className="toast-msg">{statusMsg}</div>}
+                    
                     <header className="header-fixed flex flex-col items-center py-4 bg-white border-b border-slate-100">
                         <h1 className="font-extrabold text-slate-900 italic text-xl uppercase tracking-tighter">IB Bio Master Pro</h1>
                         {quizStep === 'practice' && currentQ && (
                             <div className="flex gap-4 mt-1 items-center">
-                                <span className="status-pill uppercase tracking-widest">Q {currentIndex + 1} / {queue.length}</span>
+                                <span className="status-pill uppercase tracking-widest text-[9px]">Q {currentIndex + 1} {" / "} {queue.length}</span>
                                 <button onClick={() => toggleMastery(currentQ.id)} className={`flex items-center gap-1 text-[10px] font-black transition-colors ${masteredIds.has(currentQ.id) ? 'text-amber-500' : 'text-slate-300'}`}>
                                     <AppIcon name="Star" size={14} fill={masteredIds.has(currentQ.id) ? "currentColor" : "none"} />熟悉
                                 </button>
@@ -309,13 +366,15 @@
                             {tab === 'home' && (
                                 <div className="space-y-6 animate-in fade-in">
                                     <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white text-center shadow-xl">
-                                        <h2 className="text-xl font-black mb-4 uppercase italic">學習狀況</h2>
-                                        {!isLoaded ? <div className="animate-pulse">正在加載 GitHub 題庫...</div> : (
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-blue-400">{Object.values(masterBank).flat().length}</p><p className="text-[10px] opacity-40 uppercase font-black">總題數</p></div>
-                                                <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-amber-400">{masteredIds.size}</p><p className="text-[10px] opacity-40 uppercase font-black">熟悉題目</p></div>
-                                            </div>
-                                        )}
+                                        <h2 className="text-xl font-black mb-6 uppercase italic">題庫管理中心</h2>
+                                        <div className="grid grid-cols-2 gap-4 mb-8">
+                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-blue-400">{Object.values(masterBank).flat().length}</p><p className="text-[10px] opacity-40 uppercase font-black tracking-widest">庫存</p></div>
+                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-amber-400">{masteredIds.size}</p><p className="text-[10px] opacity-40 uppercase font-black tracking-widest">熟悉</p></div>
+                                        </div>
+                                        <button onClick={() => fileInputRef.current.click()} className="btn-action w-full bg-blue-600 text-white shadow-lg py-5 mb-2 font-black italic">
+                                            <AppIcon name="Next" size={20} /> 直接載入 JSON 檔案
+                                        </button>
+                                        <input type="file" accept=".json" className="hidden-file-input" ref={fileInputRef} onChange={handleFileImport} />
                                     </div>
                                     <div className="grid grid-cols-1 gap-4 px-2">
                                         {THEMES.map(t => (
@@ -328,14 +387,47 @@
                                 </div>
                             )}
 
+                            {tab === 'builder' && (
+                                <div className="space-y-6 animate-in fade-in">
+                                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+                                        <h2 className="font-black text-xl italic uppercase">Bank Builder 工具</h2>
+                                        <div className="space-y-4">
+                                            <p className="text-[11px] font-black text-slate-400 uppercase">1. 選擇主題</p>
+                                            <div className="flex gap-2">
+                                                {['A', 'B', 'C', 'D'].map(t => (
+                                                    <button key={t} onClick={() => setBuildTheme(t)} className={`flex-1 py-3 rounded-xl font-black ${buildTheme === t ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-400'}`}>{t}</button>
+                                                ))}
+                                            </div>
+                                            <p className="text-[11px] font-black text-slate-400 uppercase">2. 題型比例</p>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {['mcq', 'erq', 'mixed'].map(r => (
+                                                    <button key={r} onClick={() => setBuildRatio(r)} className={`py-3 rounded-xl text-[10px] font-black uppercase ${buildRatio === r ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-400'}`}>{r === 'mixed' ? '混合 (8:2)' : (r === 'mcq' ? '純選擇' : '純申論')}</button>
+                                                ))}
+                                            </div>
+                                            <p className="text-[11px] font-black text-slate-400 uppercase">3. 設定數量</p>
+                                            <input type="number" className="w-full p-4 bg-slate-50 rounded-xl font-black" value={buildCount} onChange={e => setBuildCount(e.target.value)} />
+                                            <button onClick={handleBuildBank} disabled={loading} className="w-full bg-slate-900 text-white py-5 rounded-xl font-black uppercase italic active:scale-95 transition-all">
+                                                {loading ? 'AI 正構建高難度題目...' : '批量產題並複製'}
+                                            </button>
+                                        </div>
+                                        {generatedJson && (
+                                            <div className="space-y-4">
+                                                <textarea readOnly className="w-full h-64 p-4 bg-slate-900 text-blue-300 text-[10px] font-mono rounded-xl border-none outline-none" value={generatedJson} />
+                                                <button onClick={() => { navigator.clipboard.writeText(generatedJson); showToast('代碼已複製！'); }} className="w-full bg-blue-100 text-blue-600 py-4 rounded-xl font-black italic">一鍵複製產題結果</button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
                             {tab === 'quiz' && (
                                 <div className="space-y-4">
                                     {quizStep === 'setup' && (
                                         <div className="space-y-6 animate-in slide-in-from-bottom-4">
                                             <div className="grid grid-cols-2 gap-3">
                                                 {THEMES.map(t => (
-                                                    <button key={t.id} onClick={() => setSelThemes(p => p.includes(t.id) ? (p.length > 1 ? p.filter(id => id !== t.id) : p) : [...p, t.id])} className={`p-5 rounded-2xl text-left border-2 transition-all ${selThemes.includes(t.id) ? 'border-blue-600 bg-blue-50 scale-[1.02]' : 'border-slate-100 opacity-60'}`}>
-                                                        <span className="font-black text-xs text-blue-600 uppercase">Unit {t.id}</span><br/><span className="font-bold text-[11px] text-slate-700 leading-tight">{t.name}</span>
+                                                    <button key={t.id} onClick={() => setSelThemes(p => p.includes(t.id) ? (p.length > 1 ? p.filter(id => id !== t.id) : p) : [...p, t.id])} className={`p-5 rounded-2xl text-left border-2 transition-all ${selThemes.includes(t.id) ? 'border-blue-600 bg-blue-50 scale-[1.02] shadow-sm' : 'border-slate-100 opacity-60'}`}>
+                                                        <span className="font-black text-xs text-blue-600 uppercase">Unit {t.id}</span><br/><span className="font-bold text-[11px] text-slate-700">{t.name}</span>
                                                     </button>
                                                 ))}
                                             </div>
@@ -352,7 +444,6 @@
                                         <div className="space-y-8 animate-in zoom-in-95">
                                             <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-50 space-y-6">
                                                 <div className="text-slate-900 font-extrabold italic leading-tight text-xl border-l-8 border-blue-600 pl-5">{currentQ.question}</div>
-                                                
                                                 {currentQ.type === 'MCQ' ? (
                                                     <div className="grid grid-cols-1 gap-3">
                                                         {Object.entries(currentQ.options).map(([k, v]) => {
@@ -372,7 +463,7 @@
                                                     </div>
                                                 ) : (
                                                     <div className="space-y-4">
-                                                        <textarea disabled={!!currentRes} className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl min-h-[300px] outline-none font-medium text-slate-700 shadow-inner" placeholder="在此輸入您的專業論述..." value={tempAnswer} onChange={(e) => setTempAnswer(e.target.value)} />
+                                                        <textarea disabled={!!currentRes} className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl min-h-[300px] outline-none font-medium text-slate-700 shadow-inner" placeholder="在此輸入您的分析答案..." value={tempAnswer} onChange={(e) => setTempAnswer(e.target.value)} />
                                                         {!currentRes && (
                                                             <button onClick={() => submitErq(currentQ.id)} disabled={!tempAnswer.trim() || loading} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase shadow-xl italic active:scale-95 transition-all">Submit Evaluation</button>
                                                         )}
@@ -380,21 +471,27 @@
                                                 )}
                                             </div>
 
-                                            {loading && <div className="py-24 flex flex-col items-center animate-pulse"><div className="w-20 h-20 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-6"></div><p className="font-black text-xl italic text-slate-400 uppercase tracking-tighter">AI Moderation...</p></div>}
+                                            {loading && <div className="py-24 flex flex-col items-center animate-pulse"><div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-6"></div><p className="font-black text-xl italic text-slate-400 uppercase tracking-tighter">AI Moderation...</p></div>}
 
                                             {currentRes && (
-                                                <div className="space-y-6">
+                                                <div id="report-content" ref={reportRef} className="space-y-6">
                                                     <div className="p-8 rounded-[2.5rem] bg-slate-100 border border-slate-200">
-                                                        <div className="flex justify-between items-center mb-6 uppercase tracking-widest font-black text-slate-400 text-xs">評核結果</div>
-                                                        {currentQ.type === 'MCQ' ? renderFeedbackCards(currentQ.prefetchedInsight) : renderFeedbackCards(currentRes.feedback, true)}
+                                                        <div className="flex justify-between items-center mb-6">
+                                                            <span className="ui-label tracking-widest font-black text-slate-400 text-[10px] uppercase">Moderator Report</span>
+                                                            <button onClick={exportPDF} className="text-[10px] font-black text-blue-600 uppercase flex items-center gap-1">
+                                                                <AppIcon name="Next" size={12} /> 輸出 PDF 報告
+                                                            </button>
+                                                        </div>
+                                                        {currentQ.type === 'MCQ' 
+                                                            ? renderFeedbackCards(currentQ.prefetchedInsight) 
+                                                            : renderFeedbackCards(currentRes.feedback, true, currentRes.answer)
+                                                        }
                                                     </div>
                                                 </div>
                                             )}
 
                                             <div className="flex gap-4">
-                                                {selType === 'ERQ' && (
-                                                    <button onClick={() => navigate(-1)} disabled={currentIndex === 0} className="btn-action bg-white border-2 border-slate-100 text-slate-400 flex-1 font-black"><AppIcon name="Prev" /> PREV</button>
-                                                )}
+                                                <button onClick={() => navigate(-1)} disabled={currentIndex === 0} className="btn-action bg-white border-2 border-slate-100 text-slate-400 flex-1 font-black"><AppIcon name="Prev" /> PREV</button>
                                                 <button onClick={() => { if (currentIndex === queue.length - 1) setQuizStep('setup'); else navigate(1); }} className="btn-action bg-slate-900 text-white flex-1 font-black">NEXT {currentIndex === queue.length - 1 ? '(FINISH)' : ''} <AppIcon name="Next" /></button>
                                             </div>
                                         </div>
@@ -408,11 +505,10 @@
                                         <p className="ui-label tracking-widest font-black text-slate-400 text-xs uppercase">Settings</p>
                                         <div className="p-6 bg-slate-900 rounded-3xl text-white space-y-4">
                                             <p className="text-xs font-black uppercase text-blue-400 tracking-widest">Gemini API Key</p>
-                                            <input type="password" className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none text-sm placeholder-white/20" placeholder="貼上您的 API Key..." value={userApiKey} onChange={(e) => {setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} />
-                                            <p className="text-[9px] opacity-40 italic">Key 將安全地儲存在此瀏覽器中。標記熟悉的題目會自動過濾。答錯的題目會自動輪轉至隊列末端。</p>
+                                            <input type="password" placeholder="貼上 API Key 以啟用 AI 功能" className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none text-sm placeholder-white/20" value={userApiKey} onChange={(e) => {setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} />
                                         </div>
                                         <div className="p-6 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-between">
-                                            <div><span className="font-bold text-sm text-slate-600">Interface Scale</span><p className="text-[10px] text-slate-400 font-bold">{globalFontSize}px</p></div>
+                                            <div><span className="font-bold text-sm text-slate-600">介面縮放</span><p className="text-[10px] text-slate-400 font-bold">{globalFontSize}px</p></div>
                                             <div className="flex gap-2">
                                                 <button onClick={() => setGlobalFontSize(v => Math.max(14, v-1))} className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black shadow-sm">-</button>
                                                 <button onClick={() => setGlobalFontSize(v => Math.min(30, v+1))} className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black shadow-sm">+</button>
@@ -425,9 +521,10 @@
                     </main>
 
                     <nav className="glass-nav">
-                        <button onClick={() => {setTab('home'); setQuizStep('setup');}} className={`nav-item ${tab === 'home' ? 'nav-active' : ''}`}><AppIcon name="Home" />DASHBOARD</button>
-                        <button onClick={() => {setTab('quiz'); setQuizStep('setup');}} className={`nav-item ${tab === 'quiz' ? 'nav-active' : ''}`}><AppIcon name="Brain" />ASSESSMENT</button>
-                        <button onClick={() => setTab('config')} className={`nav-item ${tab === 'config' ? 'nav-active' : ''}`}><AppIcon name="Config" />CONFIG</button>
+                        <button onClick={() => {setTab('home'); setQuizStep('setup');}} className={`nav-item ${tab === 'home' ? 'nav-active' : ''}`}><AppIcon name="Home" />首頁</button>
+                        <button onClick={() => setTab('builder')} className={`nav-item ${tab === 'builder' ? 'nav-active' : ''}`}><AppIcon name="Next" />產題</button>
+                        <button onClick={() => {setTab('quiz'); setQuizStep('setup');}} className={`nav-item ${tab === 'quiz' ? 'nav-active' : ''}`}><AppIcon name="Brain" />測驗</button>
+                        <button onClick={() => setTab('config')} className={`nav-item ${tab === 'config' ? 'nav-active' : ''}`}><AppIcon name="Config" />設定</button>
                     </nav>
                 </div>
             );
@@ -448,6 +545,7 @@
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
+
     </script>
 </body>
 </html>
