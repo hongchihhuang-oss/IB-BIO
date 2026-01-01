@@ -34,7 +34,7 @@
         
         .math-container { word-break: break-word; line-height: 1.85; }
         
-        .themed-card { border-left-width: 6px; padding: 1.5rem; border-radius: 1.5rem; background: white; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+        .themed-card { border-left-width: 6px; padding: 1.5rem; border-radius: 1.5rem; background: white; margin-bottom: 2.2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: 0.3s; }
         .card-blue { border-color: #2563eb; background: #f0f7ff; }
         .card-rose { border-color: #e11d48; background: #fff1f2; }
         .card-amber { border-color: #f59e0b; background: #fffbeb; }
@@ -43,7 +43,7 @@
 
         .info-segment { margin-bottom: 1.8rem; display: block; font-weight: 500; color: #334155; }
         .info-segment:last-child { margin-bottom: 0; }
-        .segment-header { font-weight: 800; color: #1e293b; display: block; margin-bottom: 0.4rem; font-size: 1.05rem; }
+        .segment-header { font-weight: 800; color: #1e293b; display: block; margin-bottom: 0.5rem; font-size: 1.05rem; }
 
         .badge-pill { display: inline-block; font-size: 0.65rem; font-weight: 900; padding: 4px 14px; border-radius: 999px; margin-bottom: 12px; background: #1e293b; color: white; text-transform: uppercase; letter-spacing: 0.5px; }
         .status-pill { background: #f1f5f9; padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; color: #64748b; }
@@ -55,7 +55,7 @@
         .hidden-file-input { display: none; }
         .toast-msg { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 999px; font-weight: 700; font-size: 0.8rem; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out; }
 
-        /* PDF 輸出專用：解決灰色背景 */
+        /* PDF 輸出專用樣式 */
         .no-animation, .no-animation * { 
             animation: none !important; 
             opacity: 1 !important; 
@@ -72,7 +72,7 @@
     <script type="text/babel">
         const { useState, useEffect, Fragment, useCallback, useRef, useMemo } = React;
 
-        // --- 全域常數與輔助工具 ---
+        // --- 全域常數 ---
         const THEMES = [
             { id: "A", name: "Unity & Molecules", color: "#2563eb" }, 
             { id: "B", name: "Function & Cells", color: "#10b981" }, 
@@ -161,6 +161,7 @@
 
             const loadAllBanks = useCallback(async () => {
                 const pool = { A:[], B:[], C:[], D:[] };
+                // 優先讀取外部檔案
                 try {
                     const resAll = await fetch(`./questions_bank.json`);
                     if (resAll.ok) {
@@ -184,6 +185,7 @@
                     } catch (e) {}
                 }
                 
+                // 合併本地存儲庫
                 const localBank = JSON.parse(localStorage.getItem('local_custom_bank') || '{}');
                 Object.keys(localBank).forEach(unit => {
                     const id = unit.toUpperCase().replace('THEME ', '').trim();
@@ -208,7 +210,7 @@
 
             const showToast = (msg) => { setStatusMsg(msg); setTimeout(() => setStatusMsg(""), 3000); };
 
-            // --- 核心更新：徹底修復匯入後不增加的問題 ---
+            // --- 強化版匯入引擎：徹底修復匯入不跳數字問題 ---
             const importToBank = (json) => {
                 if (!json || typeof json !== 'object') return;
                 const localCustom = JSON.parse(localStorage.getItem('local_custom_bank') || '{}');
@@ -220,7 +222,7 @@
                         if (['A','B','C','D'].includes(uKey)) {
                             const incoming = Array.isArray(json[unit]) ? json[unit] : [json[unit]];
                             
-                            // 數據歸一化 (選項強制為 Object)
+                            // 數據標準化
                             const normalized = incoming.map(q => {
                                 if (q.type === 'MCQ' && Array.isArray(q.options)) {
                                     const obj = {};
@@ -236,14 +238,14 @@
                             localCustom[uKey].forEach(q => { if(q && q.id) uniqueMap.set(q.id, q); });
                             localCustom[uKey] = Array.from(uniqueMap.values());
                             
-                            // 更新當前頁面 state，保證 Dashboard 即時跳動
-                            const existingInNextIds = new Set(next[uKey].map(q => q.id));
-                            const uniqueIncoming = normalized.filter(q => q && q.id && !existingInNextIds.has(q.id));
+                            // 強制更新當前 state 物件屬性
+                            const currentIds = new Set(next[uKey].map(q => q.id));
+                            const uniqueIncoming = normalized.filter(q => q && q.id && !currentIds.has(q.id));
                             next[uKey] = [...next[uKey], ...uniqueIncoming];
                         }
                     });
                     localStorage.setItem('local_custom_bank', JSON.stringify(localCustom));
-                    // 關鍵：回傳一個全新的物件參照，觸發 React 重新渲染
+                    // 關鍵：回傳一個全新的物件參照，確保 React 偵測到變化
                     return JSON.parse(JSON.stringify(next)); 
                 });
             };
@@ -254,7 +256,7 @@
                     const json = JSON.parse(cleanJsonStr);
                     importToBank(json);
                     setGeneratedJson("");
-                    showToast("一鍵匯入成功！Dashboard 已更新。");
+                    showToast("一鍵匯入成功！數據已即時同步。");
                 } catch(e) { showToast("解析失敗，代碼格式可能有誤。"); }
             };
 
@@ -309,7 +311,7 @@
                 let mcqNum = buildCount, erqNum = 0;
                 if (buildRatio === 'erq') { mcqNum = 0; erqNum = buildCount; }
                 else if (buildRatio === 'mixed') { mcqNum = Math.floor(buildCount * 0.8); erqNum = buildCount - mcqNum; }
-                const usr = `Generate ${mcqNum} MCQ and ${erqNum} ERQ for Theme ${buildTheme}. Format JSON: { "${buildTheme}": [...] }. Use unique IDs starting with 'U_${Date.now()}_'. Options must be Object.`;
+                const usr = `Generate ${mcqNum} MCQ and ${erqNum} ERQ for Theme ${buildTheme}. Format JSON. Use unique IDs like 'U_${Date.now()}_'. Options must be Object. MCQ MUST have "explanation" and "prefetchedInsight".`;
                 const res = await askAI(usr, "Expert IB Teacher. JSON output only.", true);
                 if (res) setGeneratedJson(res); else showToast("產題失敗。");
                 setLoading(false);
@@ -348,21 +350,25 @@
                 }
             };
 
-            // --- 強化版切分器：支援 Badge 標籤並解決內容遺失 ---
+            // --- 強化版切分器：徹底解決 Badge 標籤遺失與內容截斷 ---
             const renderFeedbackCards = useCallback((text, isErq = false, originalAnswer = "", explanation = "") => {
                 if (!text && !explanation) return null;
+                
+                // 定義關鍵字
                 const markers = isErq 
                     ? ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar"] 
                     : ["Key Concept", "Pitfall", "Core Fact", "Deep Analysis", "Calculation"];
                 
-                let found = [];
+                let points = [];
                 markers.forEach(m => {
-                    // 使用 regex 兼容多種標題格式（加粗、冒號、換行）
-                    const regex = new RegExp(`(\\*\\*)?${m}(\\*\\*)?:?`, 'i');
-                    const match = text.match(regex);
-                    if (match) found.push({ name: m, index: match.index, raw: match[0] });
+                    // 正則偵測：支援 **標題**:, 標題:, 標題\n 等多種格式
+                    const regex = new RegExp(`(\\*\\*)?${m}(\\*\\*)?:?`, 'gi');
+                    let match;
+                    while ((match = regex.exec(text)) !== null) {
+                        points.push({ name: m, index: match.index, raw: match[0] });
+                    }
                 });
-                found.sort((a,b) => a.index - b.index);
+                points.sort((a,b) => a.index - b.index);
 
                 let cards = [];
                 if (isErq && originalAnswer) {
@@ -373,24 +379,26 @@
                     cards.push(<div key="expl" className="themed-card card-emerald no-animation"><span className="badge-pill bg-emerald-700 text-white">Explanation</span><div className="font-semibold text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: bioCompiler(explanation) }} /></div>);
                 }
 
-                found.forEach((m, i) => {
-                    const start = m.index + m.raw.length;
-                    const end = (i + 1 < found.length) ? found[i+1].index : text.length;
+                points.forEach((p, i) => {
+                    const start = p.index + p.raw.length;
+                    const end = (i + 1 < points.length) ? points[i+1].index : text.length;
                     const content = text.substring(start, end).trim();
-                    let color = "card-blue", label = m.name;
+                    let color = "card-blue", label = p.name;
+                    
                     if (isErq) {
-                        if (/Mark Scheme/i.test(m.name)) { label = "Analysis"; color = "card-blue"; }
-                        else if (/Gap/i.test(m.name)) { label = "Knowledge Gaps"; color = "card-rose"; }
-                        else if (/Pathway/i.test(m.name)) { label = "Pathway to L7"; color = "card-amber"; }
-                        else if (/Exemplar/i.test(m.name)) { label = "Model Exemplar"; color = "card-emerald"; }
+                        if (/Mark Scheme/i.test(p.name)) { label = "Analysis"; color = "card-blue"; }
+                        else if (/Gap/i.test(p.name)) { label = "Knowledge Gaps"; color = "card-rose"; }
+                        else if (/Pathway/i.test(p.name)) { label = "Pathway to L7"; color = "card-amber"; }
+                        else if (/Exemplar/i.test(p.name)) { label = "Model Exemplar"; color = "card-emerald"; }
                     } else {
-                        if (/Key Concept/i.test(m.name)) label = "Concept";
-                        else if (/Pitfall/i.test(m.name)) { label = "Pitfall"; color = "card-rose"; }
-                        else if (/Fact|Analysis|Calculation/i.test(m.name)) { label = "Analysis"; color = "card-emerald"; }
+                        if (/Key Concept/i.test(p.name)) label = "Concept";
+                        else if (/Pitfall/i.test(p.name)) { label = "Pitfall"; color = "card-rose"; }
+                        else if (/Fact|Analysis|Calculation/i.test(p.name)) { label = "Analysis"; color = "card-emerald"; }
                     }
+                    
                     if (content.length > 2) {
                         cards.push(
-                            <div key={m.name} className={`themed-card ${color} no-animation`}>
+                            <div key={p.name + i} className={`themed-card ${color} no-animation`}>
                                 <span className="badge-pill uppercase font-black">{label}</span>
                                 <div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} />
                             </div>
@@ -398,7 +406,7 @@
                     }
                 });
                 if (cards.length === 0 || (isErq && cards.length === 1)) {
-                    cards.push(<div key="f" className="themed-card card-blue no-animation"><span className="badge-pill bg-slate-800 opacity-80 uppercase">Moderator Report</span><div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(text) }} /></div>);
+                    cards.push(<div key="f" className="themed-card card-blue no-animation"><span className="badge-pill bg-slate-800 opacity-80 uppercase">AI Moderation</span><div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(text) }} /></div>);
                 }
                 return cards;
             }, []);
@@ -425,8 +433,8 @@
                                     <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white text-center shadow-xl">
                                         <h2 className="text-xl font-black mb-6 uppercase italic">題庫管理</h2>
                                         <div className="grid grid-cols-2 gap-4 mb-8">
-                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-blue-400">{Object.values(masterBank).flat().length}</p><p className="text-[10px] opacity-40 uppercase font-black">總題數</p></div>
-                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-amber-400">{masteredIds.size}</p><p className="text-[10px] opacity-40 uppercase font-black">已掌握</p></div>
+                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-blue-400 font-black">{Object.values(masterBank).flat().length}</p><p className="text-[10px] opacity-40 uppercase font-black">總題數</p></div>
+                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-amber-400 font-black">{masteredIds.size}</p><p className="text-[10px] opacity-40 uppercase font-black">已掌握</p></div>
                                         </div>
                                         <button onClick={() => fileInputRef.current.click()} className="btn-action w-full bg-blue-600 text-white shadow-lg py-5 mb-2 font-black italic"><AppIcon name="Next" size={20} /> 直接選擇 JSON 匯入</button>
                                         <input type="file" accept=".json" className="hidden-file-input" ref={fileInputRef} onChange={(e) => {
@@ -444,7 +452,7 @@
                                     <div className="grid grid-cols-1 gap-4 px-2">
                                         {THEMES.map(t => (
                                             <div key={t.id} className="bg-white p-5 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
-                                                <div className="flex items-center gap-3"><div className="w-2 h-8 rounded-full" style={{ backgroundColor: t.color }}></div><div><p className="text-[10px] font-black opacity-30 uppercase">Theme {t.id}</p><p className="font-bold text-sm text-slate-700 font-black">{t.name}</p></div></div>
+                                                <div className="flex items-center gap-3"><div className="w-2 h-8 rounded-full" style={{ backgroundColor: t.color }}></div><div><p className="text-[10px] font-black opacity-30 uppercase font-black tracking-widest font-black">Theme {t.id}</p><p className="font-bold text-sm text-slate-700 font-black">{t.name}</p></div></div>
                                                 <div className="text-xl font-black text-slate-800">{(masterBank[t.id] || []).filter(q => q && !masteredIds.has(q.id)).length}</div>
                                             </div>
                                         ))}
@@ -472,7 +480,7 @@
                                         </div>
                                         {generatedJson && (
                                             <div className="space-y-4 pt-4 border-t border-slate-100">
-                                                <button onClick={directImportBuilder} className="btn-action w-full bg-emerald-600 text-white shadow-md font-black italic"><AppIcon name="Check" size={18} /> 一鍵加入練習池</button>
+                                                <button onClick={directImportBuilder} className="btn-action w-full bg-emerald-600 text-white shadow-md font-black italic font-black"><AppIcon name="Check" size={18} /> 一鍵加入練習池</button>
                                                 <textarea readOnly className="w-full h-48 p-4 bg-slate-900 text-blue-300 text-[9px] font-mono rounded-xl border-none outline-none" value={generatedJson} />
                                             </div>
                                         )}
@@ -487,7 +495,7 @@
                                             <div className="grid grid-cols-2 gap-3">
                                                 {THEMES.map(t => (
                                                     <button key={t.id} onClick={() => setSelThemes(p => p.includes(t.id) ? (p.length > 1 ? p.filter(id => id !== t.id) : p) : [...p, t.id])} className={`p-5 rounded-2xl text-left border-2 transition-all ${selThemes.includes(t.id) ? 'border-blue-600 bg-blue-50 scale-[1.02] shadow-sm' : 'border-slate-100 opacity-60'}`}>
-                                                        <span className="font-black text-xs text-blue-600 uppercase font-black tracking-widest font-black">Unit {t.id}</span><br/><span className="font-bold text-[11px] text-slate-700 font-black leading-tight">{t.name}</span>
+                                                        <span className="font-black text-xs text-blue-600 uppercase font-black tracking-widest">Unit {t.id}</span><br/><span className="font-bold text-[11px] text-slate-700 font-black leading-tight">{t.name}</span>
                                                     </button>
                                                 ))}
                                             </div>
@@ -531,7 +539,7 @@
                                                     <div className="space-y-4">
                                                         <textarea disabled={!!sessionResults[currentQ.id]} className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl min-h-[300px] outline-none font-medium text-slate-700 shadow-inner" placeholder="在此輸入分析性學術回答..." value={tempAnswer} onChange={(e) => setTempAnswer(e.target.value)} />
                                                         {!sessionResults[currentQ.id] && (
-                                                            <button onClick={() => submitErq(currentQ.id)} disabled={!tempAnswer.trim() || loading} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase shadow-xl italic font-black">Submit for Grading</button>
+                                                            <button onClick={() => submitErq(currentQ.id)} disabled={!tempAnswer.trim() || loading} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase shadow-xl italic font-black">Submit for Evaluation</button>
                                                         )}
                                                     </div>
                                                 )}
@@ -555,7 +563,7 @@
                                             )}
 
                                             <div className="flex gap-4">
-                                                <button onClick={() => { const i = currentIndex-1; if(i>=0){setCurrentIndex(i); setTempAnswer(sessionResults[queue[i].id]?.answer || '');}}} disabled={currentIndex === 0} className="btn-action bg-white border-2 border-slate-100 text-slate-400 flex-1 font-black"><AppIcon name="Prev" /> PREV</button>
+                                                <button onClick={() => { const i = currentIndex-1; if(i>=0){setCurrentIndex(i); setTempAnswer(sessionResults[queue[i].id]?.answer || '');}}} disabled={currentIndex === 0} className="btn-action bg-white border-2 border-slate-100 text-slate-400 flex-1 font-black font-black uppercase"><AppIcon name="Prev" /> PREV</button>
                                                 <button onClick={() => { if (currentIndex === queue.length - 1) setQuizStep('setup'); else { setCurrentIndex(currentIndex+1); setTempAnswer(sessionResults[queue[currentIndex+1].id]?.answer || ''); } }} className="btn-action bg-slate-900 text-white flex-1 font-black font-black uppercase">NEXT {currentIndex === queue.length - 1 ? '(FINISH)' : ''} <AppIcon name="Next" /></button>
                                             </div>
                                         </div>
