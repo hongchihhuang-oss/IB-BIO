@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master | 專業 4 檔案同步系統</title>
-    <!-- React & Tailwind -->
+    <title>IB Bio Master | 專業同步與自動化建庫系統</title>
+    
+    <!-- 核心資源載入 (已修正連結格式) -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- KaTeX -->
+    <!-- KaTeX 科學符號 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
-    <!-- html2pdf -->
+    <!-- html2pdf 報告匯出 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -40,7 +41,6 @@
         .card-emerald { border-color: #10b981; background: #ecfdf5; }
         .card-slate { border-color: #64748b; background: #f8fafc; }
 
-        /* 呼吸感排版 - 1.8rem 間隔 */
         .info-segment { margin-bottom: 1.8rem; display: block; font-weight: 500; color: #334155; }
         .info-segment:last-child { margin-bottom: 0; }
         .segment-header { font-weight: 800; color: #1e293b; display: block; margin-bottom: 0.4rem; font-size: 1.05rem; }
@@ -55,8 +55,9 @@
         .hidden-file-input { display: none; }
         .toast-msg { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 999px; font-weight: 700; font-size: 0.8rem; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out; }
 
-        /* PDF 輸出專用 - 排除灰色遮罩 */
-        .no-animation { animation: none !important; opacity: 1 !important; transform: none !important; transition: none !important; background-color: #ffffff !important; box-shadow: none !important; border-left: 6px solid #2563eb; }
+        /* PDF 高清化輸出樣式 */
+        .no-animation { animation: none !important; opacity: 1 !important; transform: none !important; transition: none !important; background-color: #ffffff !important; box-shadow: none !important; border-left: 6px solid #2563eb !important; }
+        .pdf-area { background: white !important; }
     </style>
 </head>
 <body>
@@ -65,7 +66,14 @@
     <script type="text/babel">
         const { useState, useEffect, Fragment, useCallback, useRef, useMemo } = React;
 
-        // --- AppIcon 定義 ---
+        // --- 全域常數與輔助工具 ---
+        const THEMES = [
+            { id: "A", name: "Unity & Molecules", color: "#2563eb" }, 
+            { id: "B", name: "Function & Cells", color: "#10b981" }, 
+            { id: "C", name: "Interaction", color: "#8b5cf6" }, 
+            { id: "D", name: "Evolution", color: "#f59e0b" }
+        ];
+
         const AppIcon = ({ name, size = 22, color = "currentColor", fill = "none" }) => {
             const icons = {
                 Home: <svg className="mb-1" width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
@@ -78,13 +86,6 @@
             };
             return icons[name] || null;
         };
-
-        const THEMES = [
-            { id: "A", name: "Unity & Molecules", color: "#2563eb" }, 
-            { id: "B", name: "Function & Cells", color: "#10b981" }, 
-            { id: "C", name: "Interaction", color: "#8b5cf6" }, 
-            { id: "D", name: "Evolution", color: "#f59e0b" }
-        ];
 
         const bioCompiler = (input) => {
             let text = String(input || "").trim();
@@ -153,24 +154,35 @@
             const fileInputRef = useRef(null);
             const reportRef = useRef(null);
 
-            // --- 核心：從四個獨立檔案讀取 ---
             const loadAllBanks = async () => {
                 const pool = { A:[], B:[], C:[], D:[] };
-                
-                // 1. 抓取分開的 questions_bank_X.json
+                // 優先載入整併檔
+                try {
+                    const resAll = await fetch(`./questions_bank.json`);
+                    if (resAll.ok) {
+                        const data = await resAll.json();
+                        Object.keys(data).forEach(k => {
+                            const unit = k.toUpperCase();
+                            if (pool[unit]) pool[unit] = [...pool[unit], ...data[k]];
+                        });
+                    }
+                } catch(e){}
+
+                // 載入分開檔
                 for (const id of ['A', 'B', 'C', 'D']) {
                     try {
                         const res = await fetch(`./questions_bank_${id}.json`);
                         if (res.ok) {
                             const data = await res.json();
-                            // 支援 {"A": [...]} 或 直接陣列格式
                             const content = Array.isArray(data) ? data : (data[id] || data[id.toLowerCase()] || []);
-                            pool[id] = [...pool[id], ...content];
+                            const existingIds = new Set(pool[id].map(q => q.id));
+                            const unique = content.filter(q => q && !existingIds.has(q.id));
+                            pool[id] = [...pool[id], ...unique];
                         }
-                    } catch (e) { console.warn(`Bank ${id} not found.`); }
+                    } catch (e) {}
                 }
-
-                // 2. 合併本地存儲的自定義題庫 (Builder產出的)
+                
+                // 載入本地庫
                 const localBank = JSON.parse(localStorage.getItem('local_custom_bank') || '{}');
                 Object.keys(localBank).forEach(unit => {
                     const id = unit.toUpperCase();
@@ -180,12 +192,12 @@
                         pool[id] = [...pool[id], ...uniqueNew];
                     }
                 });
-
                 setMasterBank(pool);
                 setIsLoaded(true);
             };
 
             useEffect(() => { loadAllBanks(); }, []);
+            useEffect(() => { localStorage.setItem('fontSize', globalFontSize); }, [globalFontSize]);
 
             useEffect(() => {
                 const render = () => { if (window.renderMathInElement) renderMathInElement(document.body, { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}], throwOnError: false }); };
@@ -193,8 +205,6 @@
                 const timer = setTimeout(render, 400);
                 return () => clearTimeout(timer);
             }, [quizStep, currentIndex, sessionResults, tab, generatedJson]);
-
-            useEffect(() => { localStorage.setItem('fontSize', globalFontSize); }, [globalFontSize]);
 
             const showToast = (msg) => { setStatusMsg(msg); setTimeout(() => setStatusMsg(""), 3000); };
 
@@ -204,9 +214,9 @@
                     const uKey = unit.toUpperCase();
                     if (['A','B','C','D'].includes(uKey)) {
                         localCustom[uKey] = [...(localCustom[uKey] || []), ...json[unit]];
-                        const uniqueMap = new Map();
-                        localCustom[uKey].forEach(q => uniqueMap.set(q.id, q));
-                        localCustom[uKey] = Array.from(uniqueMap.values());
+                        const map = new Map();
+                        localCustom[uKey].forEach(q => { if(q) map.set(q.id, q); });
+                        localCustom[uKey] = Array.from(map.values());
                     }
                 });
                 localStorage.setItem('local_custom_bank', JSON.stringify(localCustom));
@@ -222,7 +232,7 @@
                         const json = JSON.parse(event.target.result);
                         importToBank(json);
                         showToast(`題庫匯入成功！`);
-                    } catch (err) { showToast("JSON 格式錯誤。"); }
+                    } catch (err) { showToast("JSON 解析失敗。"); }
                 };
                 reader.readAsText(file);
                 e.target.value = "";
@@ -247,15 +257,15 @@
 
             const startPractice = () => {
                 if (!selThemes.length) return;
-                const pool = selThemes.flatMap(t => masterBank[t] || []).filter(q => q.type === selType && !masteredIds.has(q.id));
+                const pool = selThemes.flatMap(t => masterBank[t] || []).filter(q => q && q.id && q.type === selType && !masteredIds.has(q.id));
                 if (pool.length > 0) {
                     setQueue([...pool].sort(() => Math.random() - 0.5));
                     setCurrentIndex(0); setQuizStep('practice'); setSessionResults({}); setTempAnswer('');
-                } else { showToast("所選類別目前無題目。"); }
+                } else { showToast("目前無可用題目。"); }
             };
 
             const handleMcqSubmit = (qId, choice, answer) => {
-                const correct = choice === answer;
+                const correct = String(choice).trim().toUpperCase() === String(answer).trim().toUpperCase();
                 setSessionResults(prev => ({ ...prev, [qId]: { answer: choice, isCorrect: correct } }));
                 if (!correct) setQueue(prev => [...prev, queue[currentIndex]]);
             };
@@ -264,11 +274,49 @@
                 if (!tempAnswer.trim()) return;
                 setLoading(true);
                 const currentQ = queue[currentIndex];
-                const sys = "Senior IB Bio Moderator. Perform technical keyword audit. Strictly use these 4 headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Provide detailed model examples.";
-                const usr = `Question: "${currentQ.question}"\nStudent Answer: "${tempAnswer}"\nGrade and output with the 4 headers. Use LaTeX.`;
+                const sys = "Senior IB Bio Moderator. Tech keyword audit. Use headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Detailed content required.";
+                const usr = `Question: "${currentQ.question}"\nStudent Answer: "${tempAnswer}"\nEvaluate using 4 headers. Use LaTeX.`;
                 const fb = await askAI(usr, sys);
                 if (fb) setSessionResults(prev => ({ ...prev, [qId]: { answer: tempAnswer, feedback: fb } }));
                 setLoading(false);
+            };
+
+            const handleBuildBank = async () => {
+                if (!userApiKey) { showToast("請先設置 API Key"); return; }
+                setLoading(true);
+                let mcqNum = buildCount, erqNum = 0;
+                if (buildRatio === 'erq') { mcqNum = 0; erqNum = buildCount; }
+                else if (buildRatio === 'mixed') { mcqNum = Math.floor(buildCount * 0.8); erqNum = buildCount - mcqNum; }
+                const usr = `Generate ${mcqNum} MCQ and ${erqNum} ERQ for Theme ${buildTheme}. Format JSON. Use unique IDs like 'U_${Date.now()}'. Options MUST be an Object {"A":"...", "B":"...", ...}.`;
+                const res = await askAI(usr, "Expert IB Teacher. JSON only.", true);
+                if (res) setGeneratedJson(res); else showToast("產題失敗。");
+                setLoading(false);
+            };
+
+            const directImportBuilder = () => {
+                try {
+                    const cleanJson = generatedJson.replace(/```json\n?|```/g, "").trim();
+                    const json = JSON.parse(cleanJson);
+                    importToBank(json);
+                    setGeneratedJson("");
+                    showToast("一鍵匯入成功！");
+                } catch(e) { showToast("解析失敗。"); }
+            };
+
+            const exportPDF = () => {
+                if (!reportRef.current) return;
+                const element = reportRef.current;
+                const cards = element.querySelectorAll('.themed-card');
+                cards.forEach(c => c.classList.add('no-animation'));
+                const opt = {
+                    margin: 10, filename: `IB_Bio_Report.pdf`,
+                    image: { type: 'jpeg', quality: 1.0 },
+                    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+                html2pdf().set(opt).from(element).save().then(() => {
+                    cards.forEach(c => c.classList.remove('no-animation'));
+                });
             };
 
             const toggleMastery = (qId) => {
@@ -278,50 +326,6 @@
                     localStorage.setItem('mastered_ids', JSON.stringify(Array.from(next)));
                     return next;
                 });
-            };
-
-            const handleBuildBank = async () => {
-                if (!userApiKey) { showToast("請先設置 API Key"); return; }
-                setLoading(true);
-                let mcqNum = buildCount, erqNum = 0;
-                if (buildRatio === 'erq') { mcqNum = 0; erqNum = buildCount; }
-                else if (buildRatio === 'mixed') { mcqNum = Math.floor(buildCount * 0.8); erqNum = buildCount - mcqNum; }
-
-                const sys = `Expert IB Biology Teacher. Generate HIGH-QUALITY AO2/AO3 level questions for 2025 syllabus. Format strictly JSON.`;
-                const usr = `Generate ${mcqNum} MCQ and ${erqNum} ERQ for Unit ${buildTheme}. Use LaTeX. Format: { "${buildTheme}": [ { "id": "U_${Date.now()}_[rand]", "theme": "${buildTheme}", "type": "MCQ/ERQ", ... } ] }. Ensure unique IDs.`;
-                const res = await askAI(usr, sys, true);
-                if (res) setGeneratedJson(res); else showToast("產題失敗。");
-                setLoading(false);
-            };
-
-            const directImportBuilder = () => {
-                try {
-                    const json = JSON.parse(generatedJson);
-                    importToBank(json);
-                    setGeneratedJson("");
-                    showToast("已成功合併並儲存至題庫！");
-                } catch(e) { showToast("解析產出代碼失敗。"); }
-            };
-
-            const exportPDF = () => {
-                if (!reportRef.current) return;
-                const element = reportRef.current;
-                
-                const cards = element.querySelectorAll('.themed-card');
-                cards.forEach(c => c.classList.add('no-animation'));
-
-                const opt = {
-                    margin: 10,
-                    filename: `IB_Bio_Report_${queue[currentIndex].id}.pdf`,
-                    image: { type: 'jpeg', quality: 1.0 },
-                    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-
-                html2pdf().set(opt).from(element).save().then(() => {
-                    cards.forEach(c => c.classList.remove('no-animation'));
-                });
-                showToast("高清 PDF 報告生成中...");
             };
 
             const navigate = (dir) => {
@@ -338,30 +342,25 @@
                     ? ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar"] 
                     : ["Key Concept", "Pitfall", "Core Fact", "Deep Analysis", "Calculation"];
                 
-                let foundMarkers = [];
+                let found = [];
                 markers.forEach(m => {
                     const idx = text.toLowerCase().indexOf(m.toLowerCase());
-                    if (idx !== -1) foundMarkers.push({ name: m, index: idx });
+                    if (idx !== -1) found.push({ name: m, index: idx });
                 });
-                foundMarkers.sort((a,b) => a.index - b.index);
+                found.sort((a,b) => a.index - b.index);
 
                 let cards = [];
                 if (isErq && originalAnswer) {
-                    cards.push(
-                        <div key="user-ans" className="themed-card card-slate animate-card no-animation">
-                            <span className="badge-pill bg-slate-600 text-white uppercase">Your Original Response</span>
-                            <div className="font-semibold text-slate-600 italic leading-relaxed text-[0.95rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(originalAnswer) }} />
-                        </div>
-                    );
+                    cards.push(<div key="u" className="themed-card card-slate no-animation"><span className="badge-pill bg-slate-600 text-white font-black">Your Response</span><div className="font-semibold text-slate-600 italic" dangerouslySetInnerHTML={{ __html: bioCompiler(originalAnswer) }} /></div>);
                 }
 
-                foundMarkers.forEach((m, i) => {
+                found.forEach((m, i) => {
                     const start = m.index;
-                    const end = (i + 1 < foundMarkers.length) ? foundMarkers[i+1].index : text.length;
-                    const content = text.substring(start, end).trim();
+                    const end = (i + 1 < found.length) ? found[i+1].index : text.length;
+                    const content = text.substring(start, end).replace(new RegExp('^' + m.name + ':?', 'i'), "").trim();
                     let color = "card-blue", label = m.name;
                     if (isErq) {
-                        if (/Mark Scheme/i.test(m.name)) { label = "Markscheme"; color = "card-blue"; }
+                        if (/Mark Scheme/i.test(m.name)) { label = "Analysis"; color = "card-blue"; }
                         else if (/Gap/i.test(m.name)) { label = "Gaps"; color = "card-rose"; }
                         else if (/Pathway/i.test(m.name)) { label = "Pathway"; color = "card-amber"; }
                         else if (/Exemplar/i.test(m.name)) { label = "Exemplar"; color = "card-emerald"; }
@@ -370,22 +369,15 @@
                         else if (/Pitfall/i.test(m.name)) { label = "Pitfall"; color = "card-rose"; }
                         else if (/Fact|Analysis|Calculation/i.test(m.name)) { label = "Fact"; color = "card-emerald"; }
                     }
-                    let body = content.replace(new RegExp('^' + m.name + ':?', 'i'), "").trim();
-                    if (body.length > 2) {
-                        cards.push(
-                            <div key={m.name} className={`themed-card ${color} animate-card no-animation`}>
-                                <span className="badge-pill bg-slate-800 opacity-80 uppercase">{label}</span>
-                                <div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(body) }} />
-                            </div>
-                        );
-                    }
+                    if (content.length > 2) cards.push(<div key={m.name} className={`themed-card ${color} no-animation`}><span className="badge-pill bg-slate-800 opacity-80 uppercase font-black">{label}</span><div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} /></div>);
                 });
-
                 if (cards.length === 0 || (isErq && cards.length === 1)) {
-                    cards.push(<div key="fb" className="themed-card card-blue animate-card no-animation"><span className="badge-pill bg-slate-800 opacity-80">AI Evaluation</span><div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(text) }} /></div>);
+                    cards.push(<div key="f" className="themed-card card-blue no-animation"><span className="badge-pill bg-slate-800 opacity-80">AI Moderator</span><div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(text) }} /></div>);
                 }
                 return cards;
             }, []);
+
+            const currentQ = queue[currentIndex];
 
             return (
                 <div className="app-container" style={{ fontSize: `${globalFontSize}px` }}>
@@ -394,10 +386,8 @@
                         <h1 className="font-extrabold text-slate-900 italic text-xl uppercase tracking-tighter">IB Bio Master Pro</h1>
                         {quizStep === 'practice' && currentQ && (
                             <div className="flex gap-4 mt-1 items-center">
-                                <span className="status-pill text-[9px] font-black uppercase tracking-widest font-black">Q {currentIndex + 1} / {queue.length}</span>
-                                <button onClick={() => toggleMastery(currentQ.id)} className={`flex items-center gap-1 text-[10px] font-black ${masteredIds.has(currentQ.id) ? 'text-amber-500' : 'text-slate-300'}`}>
-                                    <AppIcon name="Star" size={14} fill={masteredIds.has(currentQ.id) ? "currentColor" : "none"} />熟悉
-                                </button>
+                                <span className="status-pill font-black uppercase text-[9px]">Q {currentIndex + 1} / {queue.length}</span>
+                                <button onClick={() => toggleMastery(currentQ.id)} className={`flex items-center gap-1 text-[10px] font-black transition-colors ${masteredIds.has(currentQ.id) ? 'text-amber-500' : 'text-slate-300'}`}><AppIcon name="Star" size={14} fill={masteredIds.has(currentQ.id) ? "currentColor" : "none"} />熟悉</button>
                             </div>
                         )}
                     </header>
@@ -407,21 +397,19 @@
                             {tab === 'home' && (
                                 <div className="space-y-6 animate-in fade-in">
                                     <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white text-center shadow-xl">
-                                        <h2 className="text-xl font-black mb-6 uppercase italic tracking-widest font-black">題庫管理</h2>
+                                        <h2 className="text-xl font-black mb-6 uppercase italic font-black">題庫管理</h2>
                                         <div className="grid grid-cols-2 gap-4 mb-8">
-                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-blue-400 font-black">{Object.values(masterBank).flat().length}</p><p className="text-[10px] opacity-40 uppercase font-black tracking-widest">總題數</p></div>
-                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-amber-400 font-black">{masteredIds.size}</p><p className="text-[10px] opacity-40 uppercase font-black tracking-widest">熟悉</p></div>
+                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-blue-400">{Object.values(masterBank).flat().length}</p><p className="text-[10px] opacity-40 uppercase font-black">總題數</p></div>
+                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-amber-400">{masteredIds.size}</p><p className="text-[10px] opacity-40 uppercase font-black">已掌握</p></div>
                                         </div>
-                                        <button onClick={() => fileInputRef.current.click()} className="btn-action w-full bg-blue-600 text-white shadow-lg py-5 mb-2 font-black italic">
-                                            <AppIcon name="Next" size={20} /> 手動選擇 JSON 匯入
-                                        </button>
+                                        <button onClick={() => fileInputRef.current.click()} className="btn-action w-full bg-blue-600 text-white shadow-lg py-5 font-black italic"><AppIcon name="Next" size={20} /> 手動匯入 JSON</button>
                                         <input type="file" accept=".json" className="hidden-file-input" ref={fileInputRef} onChange={handleFileImport} />
                                     </div>
                                     <div className="grid grid-cols-1 gap-4 px-2">
                                         {THEMES.map(t => (
                                             <div key={t.id} className="bg-white p-5 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
-                                                <div className="flex items-center gap-3"><div className="w-2 h-8 rounded-full" style={{ backgroundColor: t.color }}></div><div><p className="text-[10px] font-black opacity-30 uppercase tracking-widest font-black">Theme {t.id}</p><p className="font-bold text-sm text-slate-700">{t.name}</p></div></div>
-                                                <div className="text-xl font-black text-slate-800">{(masterBank[t.id] || []).filter(q => !masteredIds.has(q.id)).length}</div>
+                                                <div className="flex items-center gap-3"><div className="w-2 h-8 rounded-full" style={{ backgroundColor: t.color }}></div><div><p className="text-[10px] font-black opacity-30 uppercase font-black">Theme {t.id}</p><p className="font-bold text-sm text-slate-700 font-black">{t.name}</p></div></div>
+                                                <div className="text-xl font-black text-slate-800">{(masterBank[t.id] || []).filter(q => q && !masteredIds.has(q.id)).length}</div>
                                             </div>
                                         ))}
                                     </div>
@@ -431,11 +419,11 @@
                             {tab === 'builder' && (
                                 <div className="space-y-6 animate-in fade-in">
                                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
-                                        <h2 className="font-black text-xl italic uppercase">產題建庫工具</h2>
+                                        <h2 className="font-black text-xl italic uppercase font-black">AI 題庫建構器</h2>
                                         <div className="space-y-4">
                                             <div className="flex gap-2">
-                                                {['A', 'B', 'C', 'D'].map(t => (
-                                                    <button key={t} onClick={() => setBuildTheme(t)} className={`flex-1 py-3 rounded-xl font-black ${buildTheme === t ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-400'}`}>{t}</button>
+                                                {THEMES.map(t => (
+                                                    <button key={t.id} onClick={() => setBuildTheme(t.id)} className={`flex-1 py-3 rounded-xl font-black ${buildTheme === t.id ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-400'}`}>{t.id}</button>
                                                 ))}
                                             </div>
                                             <div className="grid grid-cols-3 gap-2">
@@ -444,15 +432,11 @@
                                                 ))}
                                             </div>
                                             <input type="number" className="w-full p-4 bg-slate-50 rounded-xl font-black" value={buildCount} onChange={e => setBuildCount(e.target.value)} />
-                                            <button onClick={handleBuildBank} disabled={loading} className="w-full bg-slate-900 text-white py-5 rounded-xl font-black uppercase italic active:scale-95 transition-all">
-                                                {loading ? 'AI 正從雲端架構題目...' : '開始自動批量產題'}
-                                            </button>
+                                            <button onClick={handleBuildBank} disabled={loading} className="w-full bg-slate-900 text-white py-5 rounded-xl font-black uppercase italic active:scale-95 transition-all">{loading ? 'AI 正從雲端架構考題...' : '批量產題'}</button>
                                         </div>
                                         {generatedJson && (
                                             <div className="space-y-4 pt-4 border-t border-slate-100">
-                                                <button onClick={directImportBuilder} className="btn-action w-full bg-emerald-600 text-white shadow-md font-black italic">
-                                                    <AppIcon name="Check" size={18} /> 一鍵合併至主體庫
-                                                </button>
+                                                <button onClick={directImportBuilder} className="btn-action w-full bg-emerald-600 text-white shadow-md font-black italic"><AppIcon name="Check" size={18} /> 一鍵加入練習池</button>
                                                 <textarea readOnly className="w-full h-48 p-4 bg-slate-900 text-blue-300 text-[9px] font-mono rounded-xl border-none outline-none" value={generatedJson} />
                                             </div>
                                         )}
@@ -467,16 +451,16 @@
                                             <div className="grid grid-cols-2 gap-3">
                                                 {THEMES.map(t => (
                                                     <button key={t.id} onClick={() => setSelThemes(p => p.includes(t.id) ? (p.length > 1 ? p.filter(id => id !== t.id) : p) : [...p, t.id])} className={`p-5 rounded-2xl text-left border-2 transition-all ${selThemes.includes(t.id) ? 'border-blue-600 bg-blue-50 scale-[1.02] shadow-sm' : 'border-slate-100 opacity-60'}`}>
-                                                        <span className="font-black text-xs text-blue-600 uppercase">Unit {t.id}</span><br/><span className="font-bold text-[11px] text-slate-700 font-black">{t.name}</span>
+                                                        <span className="font-black text-xs text-blue-600 uppercase font-black tracking-widest">Unit {t.id}</span><br/><span className="font-bold text-[11px] text-slate-700 font-black">{t.name}</span>
                                                     </button>
                                                 ))}
                                             </div>
                                             <div className="flex gap-4">
                                                 {['MCQ', 'ERQ'].map(type => (
-                                                    <button key={type} onClick={() => setSelType(type)} className={`flex-1 py-4 rounded-xl font-black border-2 transition-all ${selType === type ? 'border-blue-600 bg-blue-600 text-white shadow-lg font-black' : 'text-slate-400 bg-slate-50'}`}>{type}</button>
+                                                    <button key={type} onClick={() => setSelType(type)} className={`flex-1 py-4 rounded-xl font-black border-2 transition-all ${selType === type ? 'border-blue-600 bg-blue-600 text-white shadow-lg font-black' : 'text-slate-400 bg-slate-50 font-black'}`}>{type}</button>
                                                 ))}
                                             </div>
-                                            <button onClick={startPractice} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase italic tracking-widest shadow-xl active:scale-95 transition-all font-black">Launch Assessment</button>
+                                            <button onClick={startPractice} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase italic shadow-xl active:scale-95 transition-all font-black">Launch Assessment</button>
                                         </div>
                                     )}
 
@@ -486,16 +470,23 @@
                                                 <div className="text-slate-900 font-extrabold italic leading-tight text-xl border-l-8 border-blue-600 pl-5 font-black">{currentQ.question}</div>
                                                 {currentQ.type === 'MCQ' ? (
                                                     <div className="grid grid-cols-1 gap-3">
-                                                        {Object.entries(currentQ.options).map(([k, v]) => {
+                                                        {Object.entries(currentQ.options).map(([k, v], idx) => {
+                                                            const res = sessionResults[currentQ.id];
+                                                            const label = ["A", "B", "C", "D"][idx] || k;
+                                                            
                                                             let style = "border-slate-100 bg-white text-slate-700";
-                                                            if (currentRes) {
-                                                                if (k === currentQ.answer) style = "border-green-500 bg-green-50 text-green-900 shadow-md scale-[1.02] z-10 font-black";
-                                                                else if (k === currentRes.answer) style = "border-red-500 bg-red-50 text-red-900 opacity-60";
-                                                                else style = "border-slate-100 opacity-30";
+                                                            if (res) {
+                                                                if (String(k).trim().toUpperCase() === String(currentQ.answer).trim().toUpperCase()) {
+                                                                    style = "border-green-500 bg-green-100 text-green-900 shadow-md scale-[1.02] z-10 border-4";
+                                                                } else if (String(k).trim().toUpperCase() === String(res.answer).trim().toUpperCase()) {
+                                                                    style = "border-red-500 bg-red-50 text-red-900 opacity-80 border-4";
+                                                                } else {
+                                                                    style = "border-slate-100 opacity-40";
+                                                                }
                                                             }
                                                             return (
-                                                                <button key={k} disabled={!!currentRes} onClick={() => handleMcqSubmit(currentQ.id, k, currentQ.answer)} className={`w-full p-5 rounded-2xl border-2 text-left font-bold transition-all flex items-center gap-4 ${style}`}>
-                                                                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-inner ${currentRes?.answer === k ? 'bg-slate-800 text-white font-black' : 'bg-slate-100 text-slate-400'}`}>{k}</span>
+                                                                <button key={k} disabled={!!res} onClick={() => handleMcqSubmit(currentQ.id, k, currentQ.answer)} className={`w-full p-5 rounded-2xl border-2 text-left font-bold transition-all flex items-center gap-4 ${style}`}>
+                                                                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-inner ${res?.answer === k ? 'bg-slate-800 text-white font-black' : 'bg-slate-100 text-slate-400'}`}>{label}</span>
                                                                     <span className="flex-1 text-sm font-bold">{v}</span>
                                                                 </button>
                                                             );
@@ -503,8 +494,8 @@
                                                     </div>
                                                 ) : (
                                                     <div className="space-y-4">
-                                                        <textarea disabled={!!currentRes} className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl min-h-[300px] outline-none font-medium text-slate-700 shadow-inner" placeholder="在此輸入分析性回答..." value={tempAnswer} onChange={(e) => setTempAnswer(e.target.value)} />
-                                                        {!currentRes && (
+                                                        <textarea disabled={!!sessionResults[currentQ.id]} className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl min-h-[300px] outline-none font-medium text-slate-700 shadow-inner" placeholder="在此輸入您的學術分析回答..." value={tempAnswer} onChange={(e) => setTempAnswer(e.target.value)} />
+                                                        {!sessionResults[currentQ.id] && (
                                                             <button onClick={() => submitErq(currentQ.id)} disabled={!tempAnswer.trim() || loading} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase shadow-xl italic active:scale-95 transition-all">Submit Evaluation</button>
                                                         )}
                                                     </div>
@@ -513,26 +504,24 @@
 
                                             {loading && <div className="py-24 flex flex-col items-center animate-pulse"><div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-6"></div><p className="font-black text-xl italic text-slate-400 uppercase tracking-tighter">AI Moderating...</p></div>}
 
-                                            {currentRes && (
-                                                <div id="report-content" ref={reportRef} className="space-y-6 bg-white rounded-[2rem]">
+                                            {sessionResults[currentQ.id] && (
+                                                <div id="report-content" ref={reportRef} className="space-y-6 bg-white rounded-[2rem] pdf-mode">
                                                     <div className="p-8 rounded-[2.5rem] bg-slate-100 border border-slate-200">
                                                         <div className="flex justify-between items-center mb-6">
-                                                            <span className="ui-label tracking-widest font-black text-slate-400 text-[10px] uppercase font-black italic">Assessment Report</span>
-                                                            <button onClick={exportPDF} className="text-[10px] font-black text-blue-600 uppercase flex items-center gap-1 hover:scale-105 transition-transform">
-                                                                <AppIcon name="Next" size={12} /> 輸出高清 PDF
-                                                            </button>
+                                                            <span className="ui-label font-black text-slate-400 text-[10px] uppercase font-black italic">Moderator Report</span>
+                                                            <button onClick={exportPDF} className="text-[10px] font-black text-blue-600 uppercase flex items-center gap-1 hover:scale-105 transition-transform"><AppIcon name="Next" size={12} /> 輸出高清 PDF</button>
                                                         </div>
                                                         {currentQ.type === 'MCQ' 
                                                             ? renderFeedbackCards(currentQ.prefetchedInsight) 
-                                                            : renderFeedbackCards(currentRes.feedback, true, currentRes.answer)
+                                                            : renderFeedbackCards(sessionResults[currentQ.id].feedback, true, sessionResults[currentQ.id].answer)
                                                         }
                                                     </div>
                                                 </div>
                                             )}
 
                                             <div className="flex gap-4">
-                                                <button onClick={() => navigate(-1)} disabled={currentIndex === 0} className="btn-action bg-white border-2 border-slate-100 text-slate-400 flex-1 font-black"><AppIcon name="Prev" /> PREV</button>
-                                                <button onClick={() => { if (currentIndex === queue.length - 1) setQuizStep('setup'); else navigate(1); }} className="btn-action bg-slate-900 text-white flex-1 font-black">NEXT {currentIndex === queue.length - 1 ? '(FINISH)' : ''} <AppIcon name="Next" /></button>
+                                                <button onClick={() => { const i = currentIndex-1; if(i>=0){setCurrentIndex(i); setTempAnswer(sessionResults[queue[i].id]?.answer || '');}}} disabled={currentIndex === 0} className="btn-action bg-white border-2 border-slate-100 text-slate-400 flex-1 font-black"><AppIcon name="Prev" /> PREV</button>
+                                                <button onClick={() => { if (currentIndex === queue.length - 1) setQuizStep('setup'); else { setCurrentIndex(currentIndex+1); setTempAnswer(sessionResults[queue[currentIndex+1].id]?.answer || ''); } }} className="btn-action bg-slate-900 text-white flex-1 font-black">NEXT {currentIndex === queue.length - 1 ? '(FINISH)' : ''} <AppIcon name="Next" /></button>
                                             </div>
                                         </div>
                                     )}
@@ -542,21 +531,19 @@
                             {tab === 'config' && (
                                 <div className="space-y-6 animate-in zoom-in-95">
                                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
-                                        <p className="ui-label tracking-widest font-black text-slate-400 text-xs uppercase font-black italic">Settings</p>
+                                        <p className="ui-label tracking-widest font-black text-slate-400 text-xs uppercase italic">Settings</p>
                                         <div className="p-6 bg-slate-900 rounded-3xl text-white space-y-4">
-                                            <p className="text-xs font-black uppercase text-blue-400 tracking-widest font-black">Gemini API Key</p>
-                                            <input type="password" placeholder="貼上 API Key 以啟用評分" className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none text-sm placeholder-white/20" value={userApiKey} onChange={(e) => {setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} />
+                                            <p className="text-xs font-black uppercase text-blue-400 font-black">Gemini API Key</p>
+                                            <input type="password" placeholder="貼上 API Key 以啟用功能" className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none text-sm placeholder-white/20" value={userApiKey} onChange={(e) => {setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} />
                                         </div>
                                         <div className="p-6 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-between">
-                                            <div><span className="font-bold text-sm text-slate-600 font-black">文字縮放 (已永久記住)</span><p className="text-[10px] text-slate-400 font-bold">{globalFontSize}px</p></div>
+                                            <div><span className="font-bold text-sm text-slate-600 font-black">文字縮放 (持久記憶)</span><p className="text-[10px] text-slate-400 font-bold">{globalFontSize}px</p></div>
                                             <div className="flex gap-2">
                                                 <button onClick={() => setGlobalFontSize(v => Math.max(12, v-1))} className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black shadow-sm">-</button>
                                                 <button onClick={() => setGlobalFontSize(v => Math.min(30, v+1))} className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black shadow-sm">+</button>
                                             </div>
                                         </div>
-                                        <button onClick={() => { if(confirm("確定要清空嗎？")) { localStorage.removeItem('local_custom_bank'); window.location.reload(); } }} className="w-full py-4 text-xs font-black text-rose-500 bg-rose-50 rounded-xl uppercase italic">
-                                            清空所有自定義導入的題目
-                                        </button>
+                                        <button onClick={() => { if(confirm("確定要清空嗎？")) { localStorage.removeItem('local_custom_bank'); window.location.reload(); } }} className="w-full py-4 text-xs font-black text-rose-500 bg-rose-50 rounded-xl uppercase italic">清空本地自定義題庫</button>
                                     </div>
                                 </div>
                             )}
