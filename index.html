@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master | 專業同步與自動化建庫系統</title>
+    <title>IB Bio Master | 極簡同步與列印優化系統</title>
     
     <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -21,58 +21,47 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        :root { --primary: #2563eb; --bg: #f8fafc; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; color: #1e293b; margin: 0; overflow: hidden; height: 100vh; width: 100vw; }
-        .app-container { height: 100vh; width: 100%; max-width: 820px; margin: 0 auto; background: white; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.05); }
+        :root { --primary: #2563eb; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; color: #1e293b; margin: 0; overflow: hidden; height: 100vh; }
+        
+        .app-container { height: 100vh; width: 100%; max-width: 780px; margin: 0 auto; background: white; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.03); }
         .header-fixed { border-bottom: 1px solid #f1f5f9; flex-shrink: 0; background: white; padding: 12px 0; }
-        .main-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 1.25rem; }
-        .content-buffer { padding-bottom: 110px; width: 100%; }
+        .main-scroll { flex: 1; overflow-y: auto; padding: 1rem; }
+        .content-buffer { padding-bottom: 90px; width: 100%; }
 
-        .glass-nav { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-top: 1px solid #f1f5f9; height: 80px; flex-shrink: 0; display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-weight: 800; font-size: 0.65rem; transition: 0.2s; cursor: pointer; }
+        .glass-nav { background: white; border-top: 1px solid #f1f5f9; height: 70px; flex-shrink: 0; display: flex; justify-content: space-around; align-items: center; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-weight: 800; font-size: 0.65rem; cursor: pointer; transition: 0.2s; }
         .nav-active { color: #2563eb; }
         
-        .math-container { word-break: break-word; line-height: 1.85; }
-        
-        .themed-card { border-left-width: 6px; padding: 1.5rem; border-radius: 1.5rem; background: white; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: 0.3s; }
+        .themed-card { border-left-width: 4px; padding: 0.85rem 1rem; border-radius: 1rem; background: white; margin-bottom: 0.75rem; box-shadow: 0 2px 6px rgba(0,0,0,0.01); }
         .card-blue { border-color: #2563eb; background: #f0f7ff; }
         .card-rose { border-color: #e11d48; background: #fff1f2; }
         .card-amber { border-color: #f59e0b; background: #fffbeb; }
         .card-emerald { border-color: #10b981; background: #ecfdf5; }
         .card-slate { border-color: #64748b; background: #f8fafc; }
 
-        .info-segment { margin-bottom: 1.8rem; display: block; font-weight: 500; color: #334155; }
-        .segment-header { font-weight: 800; color: #1e293b; display: block; margin-bottom: 0.5rem; font-size: 1.05rem; }
-
-        .badge-pill { display: inline-block; font-size: 0.65rem; font-weight: 900; padding: 4px 14px; border-radius: 999px; margin-bottom: 12px; background: #1e293b; color: white; text-transform: uppercase; letter-spacing: 0.5px; }
-        .status-pill { background: #f1f5f9; padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; color: #64748b; }
+        .badge-mini { font-size: 0.55rem; font-weight: 900; padding: 1px 6px; border-radius: 4px; margin-bottom: 4px; display: inline-block; text-transform: uppercase; letter-spacing: 0.3px; background: #1e293b; color: white; opacity: 0.8; }
         
-        .animate-card { animation: slideUp 0.4s ease-out forwards; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .math-container { line-height: 1.4; word-break: break-word; font-size: 0.9rem; }
+        .animate-up { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-        .btn-action { padding: 14px 20px; border-radius: 14px; font-weight: 800; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
-        .hidden-file-input { display: none; }
-        .toast-msg { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 999px; font-weight: 700; font-size: 0.8rem; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out; }
+        .btn-action { padding: 10px 16px; border-radius: 12px; font-weight: 800; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; font-size: 0.85rem; }
+        .toast-msg { position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 8px 16px; border-radius: 999px; font-weight: 700; font-size: 0.75rem; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
 
-        /* PDF 輸出專用 */
-        .pdf-export-mode { background-color: #ffffff !important; }
-        .no-animation, .no-animation * { 
-            animation: none !important; 
-            opacity: 1 !important; 
-            transform: none !important; 
-            transition: none !important; 
-            box-shadow: none !important;
-            background-color: transparent !important;
-        }
+        /* PDF 專用排版：適合列印、小字體 */
+        .pdf-mode { font-size: 11px !important; line-height: 1.2 !important; }
+        .pdf-mode .themed-card { margin-bottom: 0.3rem !important; padding: 0.5rem 0.7rem !important; border-width: 1px !important; border-left-width: 4px !important; box-shadow: none !important; break-inside: avoid; }
+        .pdf-mode .badge-mini { margin-bottom: 1px !important; font-size: 9px !important; }
+        .pdf-mode .math-container { font-size: 11px !important; margin-bottom: 2px !important; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, Fragment, useCallback, useRef, useMemo } = React;
+        const { useState, useEffect, Fragment, useCallback, useRef } = React;
 
-        // --- GLOBAL CONSTANTS & HELPERS ---
         const THEMES = [
             { id: "A", name: "Unity & Molecules", color: "#2563eb" }, 
             { id: "B", name: "Function & Cells", color: "#10b981" }, 
@@ -80,15 +69,15 @@
             { id: "D", name: "Evolution", color: "#f59e0b" }
         ];
 
-        const AppIcon = ({ name, size = 22, color = "currentColor", fill = "none" }) => {
+        const AppIcon = ({ name, size = 18, color = "currentColor", fill = "none" }) => {
             const icons = {
-                Home: <svg className="mb-1" width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
-                Brain: <svg className="mb-1" width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>,
-                Config: <svg className="mb-1" width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>,
+                Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
+                Brain: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>,
+                Config: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>,
                 Check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>,
-                Star: <svg width={size} height={size} fill={fill} stroke={color} strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,
                 Next: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>,
-                Prev: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+                Prev: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>,
+                Sparkles: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 3l.94 2.06L8 6l-2.06.94L5 9l-.94-2.06L2 6l2.06-.94L5 3zm14 15l.94 2.06L22 21l-2.06.94L19 24l-.94-2.06L16 21l2.06-.94L19 18zm4.5-10.5l1.09 2.41L27 11l-2.41 1.09L23.5 14.5l-1.09-2.41L20 11l2.41-1.09L23.5 7.5z"/></svg>
             };
             return icons[name] || null;
         };
@@ -96,37 +85,18 @@
         const bioCompiler = (input) => {
             let text = String(input || "").trim();
             if (!text || text === "undefined") return "";
-            text = text.replace(/Supplement for:.*?\n/gi, "").replace(/---/g, "");
-            const chemPattern = /\b(Na\+|K\+|H\+|Ca2\+|Mg2\+|Cl-|NO2-|NO3-|NH4\+|extNa\+|extK\+|CO2|H2O|O2|C6H12O6|Cu2\+|ATP|ADP|NAD\+|NADH|RuBP|Rubisco|q2|p2|2pq)\b/g;
+            // 移除 Markdown 符號與不必要的標籤
+            text = text.replace(/[\*#]/g, "").replace(/Supplement for:.*?\n/gi, "").replace(/---/g, "");
+            
+            const chemPattern = /\b(Na\+|K\+|H\+|Ca2\+|Mg2\+|Cl-|NO2-|NO3-|NH4\+|CO2|H2O|O2|C6H12O6|ATP|ADP|NAD\+|NADH|RuBP|Rubisco|q2|p2|2pq)\b/g;
             text = text.replace(chemPattern, (match) => `$\\text{${match}}$`);
-            text = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 
             const lines = text.split('\n');
             let finalHTML = [];
-            let inTable = false;
-            let tableData = [];
-
-            lines.forEach((line) => {
-                const l = line.trim();
-                if (l.startsWith('|')) {
-                    if (!inTable) { inTable = true; tableData = []; }
-                    if (l.includes(':---')) return;
-                    const cells = l.split('|').filter((c, i, a) => i > 0 && i < a.length - 1).map(c => c.trim());
-                    if (cells.length > 0) tableData.push(cells);
-                } else {
-                    if (inTable && tableData.length > 0) {
-                        finalHTML.push(`<div class="bio-table-wrapper my-4 overflow-x-auto"><table class="bio-table w-full border-collapse"><thead><tr class="bg-slate-50">${tableData[0].map(c => `<th class="p-3 text-left border-b font-black text-xs uppercase">${c}</th>`).join('')}</tr></thead><tbody>${tableData.slice(1).map(row => `<tr class="border-b">${row.map(c => `<td class="p-3 text-sm font-medium">${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
-                        inTable = false; tableData = [];
-                    }
-                    if (l) {
-                        const headerMatch = l.match(/^([A-Za-z\s0-9]{3,}):/);
-                        if (headerMatch && !l.includes('$')) {
-                            finalHTML.push(`<div class="info-segment"><span class="segment-header">${headerMatch[1]}:</span>${l.substring(headerMatch[0].length).replace(/^[:\s]*/, "")}</div>`);
-                        } else {
-                            finalHTML.push(`<div class="info-segment">${l}</div>`);
-                        }
-                    }
-                }
+            lines.forEach((l) => {
+                const line = l.trim();
+                if (!line) return;
+                finalHTML.push(`<div class="mb-0.5 math-container">${line}</div>`);
             });
             return finalHTML.join('');
         };
@@ -135,95 +105,78 @@
             const [tab, setTab] = useState('home');
             const [globalFontSize, setGlobalFontSize] = useState(Number(localStorage.getItem('fontSize')) || 15);
             const [userApiKey, setUserApiKey] = useState(localStorage.getItem('gemini_api_key') || "");
-            
             const [masterBank, setMasterBank] = useState({ A:[], B:[], C:[], D:[] });
             const [masteredIds, setMasteredIds] = useState(new Set(JSON.parse(localStorage.getItem('mastered_ids') || '[]')));
-            const [isLoaded, setIsLoaded] = useState(false);
-            const [statusMsg, setStatusMsg] = useState("");
-
             const [quizStep, setQuizStep] = useState('setup');
             const [queue, setQueue] = useState([]);
             const [currentIndex, setCurrentIndex] = useState(0);
             const [sessionResults, setSessionResults] = useState({});
-            
             const [selThemes, setSelThemes] = useState(['A']); 
             const [selType, setSelType] = useState('MCQ');
             const [tempAnswer, setTempAnswer] = useState('');
             const [loading, setLoading] = useState(false);
-
             const [generatedJson, setGeneratedJson] = useState('');
+            const [statusMsg, setStatusMsg] = useState("");
+            
             const [buildTheme, setBuildTheme] = useState('A');
+            const [buildRatio, setBuildRatio] = useState('mixed'); // mixed, mcq, erq
             const [buildCount, setBuildCount] = useState(10);
-            const [buildRatio, setBuildRatio] = useState('mixed');
 
-            const fileInputRef = useRef(null);
             const reportRef = useRef(null);
 
             const loadAllBanks = useCallback(async () => {
                 const pool = { A:[], B:[], C:[], D:[] };
-                // 1. 讀取內建 JSON
-                try {
-                    const resAll = await fetch(`./questions_bank.json`);
-                    if (resAll.ok) {
-                        const data = await resAll.json();
-                        Object.keys(data).forEach(k => {
-                            const unit = k.toUpperCase().replace('THEME ', '').trim();
-                            if (pool[unit]) pool[unit] = [...pool[unit], ...data[k]];
-                        });
-                    }
-                } catch(e){}
-
-                for (const id of ['A', 'B', 'C', 'D']) {
+                const targets = ['questions_bank.json', 'questions_bank_A.json', 'questions_bank_B.json', 'questions_bank_C.json', 'questions_bank_D.json'];
+                
+                for (const file of targets) {
                     try {
-                        const res = await fetch(`./questions_bank_${id}.json`);
+                        const res = await fetch(`./${file}`);
                         if (res.ok) {
                             const data = await res.json();
-                            const content = Array.isArray(data) ? data : (data[id] || data[id.toLowerCase()] || []);
-                            const existingIds = new Set(pool[id].map(q => q.id));
-                            pool[id] = [...pool[id], ...content.filter(q => q && q.id && !existingIds.has(q.id))];
+                            Object.keys(data).forEach(k => {
+                                const unit = k.toUpperCase().replace('THEME ', '').trim();
+                                if (pool[unit]) {
+                                    const existingIds = new Set(pool[unit].map(q => q.id));
+                                    pool[unit] = [...pool[unit], ...data[k].filter(q => q && q.id && !existingIds.has(q.id))];
+                                }
+                            });
                         }
                     } catch (e) {}
                 }
                 
-                // 2. 合併本地擴充題庫
-                const localBank = JSON.parse(localStorage.getItem('local_custom_bank') || '{}');
-                Object.keys(localBank).forEach(unit => {
+                const local = JSON.parse(localStorage.getItem('local_custom_bank') || '{}');
+                Object.keys(local).forEach(unit => {
                     const id = unit.toUpperCase().replace('THEME ', '').trim();
                     if (pool[id]) {
                         const existingIds = new Set(pool[id].map(q => q.id));
-                        pool[id] = [...pool[id], ...(localBank[unit] || []).filter(q => q && q.id && !existingIds.has(q.id))];
+                        pool[id] = [...pool[id], ...(local[unit] || []).filter(q => q && q.id && !existingIds.has(q.id))];
                     }
                 });
                 setMasterBank(pool);
-                setIsLoaded(true);
             }, []);
 
             useEffect(() => { loadAllBanks(); }, [loadAllBanks]);
             useEffect(() => { localStorage.setItem('fontSize', globalFontSize); }, [globalFontSize]);
-
             useEffect(() => {
                 const render = () => { if (window.renderMathInElement) renderMathInElement(document.body, { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}], throwOnError: false }); };
                 render();
-                const timer = setTimeout(render, 450);
+                const timer = setTimeout(render, 400);
                 return () => clearTimeout(timer);
-            }, [quizStep, currentIndex, sessionResults, tab]);
+            }, [quizStep, currentIndex, sessionResults, tab, generatedJson]);
 
             const showToast = (msg) => { setStatusMsg(msg); setTimeout(() => setStatusMsg(""), 3000); };
 
-            // --- 核心更新：徹底修復匯入與顯示問題 ---
+            // --- 核心匯入：深拷貝確保 Dashboard 數字即時跳動 ---
             const importToBank = (json) => {
-                if (!json || typeof json !== 'object') return;
-                const localCustom = JSON.parse(localStorage.getItem('local_custom_bank') || '{}');
+                if (!json) return;
+                const local = JSON.parse(localStorage.getItem('local_custom_bank') || '{}');
                 
                 setMasterBank(prev => {
-                    // 強制深拷貝參照
                     const next = JSON.parse(JSON.stringify(prev));
-                    
                     Object.keys(json).forEach(unit => {
                         let uKey = unit.toUpperCase().replace('THEME ', '').trim();
                         if (['A','B','C','D'].includes(uKey)) {
                             const incoming = Array.isArray(json[unit]) ? json[unit] : [json[unit]];
-                            
                             // 數據標準化
                             const normalized = incoming.map(q => {
                                 if (q.type === 'MCQ' && Array.isArray(q.options)) {
@@ -233,258 +186,163 @@
                                 }
                                 return q;
                             });
-
-                            // 更新持久化
-                            localCustom[uKey] = [...(localCustom[uKey] || []), ...normalized];
-                            const uniqueMap = new Map();
-                            localCustom[uKey].forEach(q => { if(q && q.id) uniqueMap.set(q.id, q); });
-                            localCustom[uKey] = Array.from(uniqueMap.values());
-                            
-                            // 立即同步更新 state pool
-                            const existingIds = new Set(next[uKey].map(q => q.id));
-                            const uniqueIncoming = normalized.filter(q => q && q.id && !existingIds.has(q.id));
-                            next[uKey] = [...next[uKey], ...uniqueIncoming];
+                            // 更新本地庫
+                            local[uKey] = [...(local[uKey] || []), ...normalized];
+                            const map = new Map();
+                            local[uKey].forEach(q => { if(q && q.id) map.set(q.id, q); });
+                            local[uKey] = Array.from(map.values());
+                            // 更新目前狀態
+                            const currentIds = new Set(next[uKey].map(q => q.id));
+                            next[uKey] = [...next[uKey], ...normalized.filter(q => q && q.id && !currentIds.has(q.id))];
                         }
                     });
-                    localStorage.setItem('local_custom_bank', JSON.stringify(localCustom));
+                    localStorage.setItem('local_custom_bank', JSON.stringify(local));
                     return next; 
                 });
             };
 
-            const directImportBuilder = () => {
+            const directImport = () => {
                 try {
-                    const cleanJsonStr = generatedJson.replace(/```json\n?|```/g, "").replace(/^JSON\n?/i, "").trim();
-                    const json = JSON.parse(cleanJsonStr);
-                    importToBank(json);
+                    const clean = generatedJson.replace(/```json\n?|```/g, "").replace(/^JSON\n?/i, "").trim();
+                    importToBank(JSON.parse(clean));
                     setGeneratedJson("");
-                    showToast("一鍵匯入成功！題數已即時更新。");
-                } catch(e) { showToast("解析失敗，代碼格式可能有誤。"); }
+                    showToast("一鍵匯入成功！Dashboard 已同步。");
+                } catch(e) { showToast("解析失敗。"); }
             };
 
-            const askAI = async (prompt, system, isJson = false) => {
+            const startPractice = () => {
+                const pool = selThemes.flatMap(t => masterBank[t] || []).filter(q => q && q.id && q.type === selType && !masteredIds.has(q.id));
+                if (pool.length) {
+                    setQueue([...pool].sort(() => Math.random() - 0.5));
+                    setCurrentIndex(0); setQuizStep('practice'); setSessionResults({}); setTempAnswer('');
+                } else showToast("無可用題目。");
+            };
+
+            const submitMcq = (k, ans) => {
+                const correct = String(k).toUpperCase() === String(ans).toUpperCase();
+                setSessionResults(prev => ({ ...prev, [queue[currentIndex].id]: { answer: k, isCorrect: correct } }));
+            };
+
+            const submitErq = async () => {
+                if (!tempAnswer.trim()) return;
+                setLoading(true);
+                const sys = "Senior IB Bio Moderator. Use EXACT plain headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Detailed content required. NO markdown symbols.";
+                const usr = `Question: "${queue[currentIndex].question}"\nStudent Answer: "${tempAnswer}"\nEvaluate with headers.`;
+                const fb = await askAI(usr, sys);
+                if (fb) setSessionResults(prev => ({ ...prev, [queue[currentIndex].id]: { answer: tempAnswer, feedback: fb } }));
+                setLoading(false);
+            };
+
+            const askAI = async (p, s) => {
                 if (!userApiKey) return null;
                 try {
                     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${userApiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }] }],
-                            systemInstruction: { parts: [{ text: system }] },
-                            generationConfig: isJson ? { responseMimeType: "application/json" } : {}
-                        })
+                        body: JSON.stringify({ contents: [{ parts: [{ text: p }] }], systemInstruction: { parts: [{ text: s }] } })
                     });
                     const data = await res.json();
                     return data.candidates?.[0]?.content?.parts?.[0]?.text;
                 } catch (e) { return null; }
             };
 
-            const startPractice = () => {
-                if (!selThemes.length) return;
-                const pool = selThemes.flatMap(t => masterBank[t] || []).filter(q => q && q.id && q.type === selType && !masteredIds.has(q.id));
-                if (pool.length > 0) {
-                    setQueue([...pool].sort(() => Math.random() - 0.5));
-                    setCurrentIndex(0); 
-                    setQuizStep('practice'); 
-                    setSessionResults({}); 
-                    setTempAnswer('');
-                } else { showToast("目前無可用題目。"); }
-            };
-
-            const handleMcqSubmit = (qId, choice, answer) => {
-                const correct = String(choice).trim().toUpperCase() === String(answer).trim().toUpperCase();
-                setSessionResults(prev => ({ ...prev, [qId]: { answer: choice, isCorrect: correct } }));
-                if (!correct) setQueue(prev => [...prev, queue[currentIndex]]);
-            };
-
-            const submitErq = async (qId) => {
-                if (!tempAnswer.trim()) return;
-                setLoading(true);
-                const currentQObj = queue[currentIndex];
-                const sys = "Senior IB Bio Moderator. Perform a deep technical audit. Strictly use EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Detailed content with specific examples required.";
-                const usr = `Question: "${currentQObj.question}"\nStudent Answer: "${tempAnswer}"\nEvaluate and use the 4 headers. Use LaTeX.`;
-                const fb = await askAI(usr, sys);
-                if (fb) {
-                    setSessionResults(prev => ({ ...prev, [qId]: { answer: tempAnswer, feedback: fb } }));
-                }
-                setLoading(false);
-            };
-
-            const handleBuildBank = async () => {
-                if (!userApiKey) { showToast("請先設置 API Key"); return; }
-                setLoading(true);
-                let mcqNum = buildCount, erqNum = 0;
-                if (buildRatio === 'erq') { mcqNum = 0; erqNum = buildCount; }
-                else if (buildRatio === 'mixed') { mcqNum = Math.floor(buildCount * 0.8); erqNum = buildCount - mcqNum; }
-                const usr = `Generate ${mcqNum} MCQ and ${erqNum} ERQ for Theme ${buildTheme}. Format JSON: { "${buildTheme}": [...] }. Use unique random IDs like 'U_${Date.now()}_'. Options must be an Object {"A":"...", "B":"...", ...}. MCQ MUST have "explanation" and "prefetchedInsight".`;
-                const res = await askAI(usr, "Expert IB Teacher. JSON output only.", true);
-                if (res) setGeneratedJson(res); else showToast("產題失敗，請檢查 Key。");
-                setLoading(false);
-            };
-
             const exportPDF = () => {
                 if (!reportRef.current) return;
                 const element = reportRef.current;
-                const cards = element.querySelectorAll('.themed-card');
-                
-                cards.forEach(c => c.classList.add('no-animation'));
-                element.classList.add('pdf-export-mode');
-
-                const opt = {
-                    margin: [10, 10],
-                    filename: `IB_Bio_Report.pdf`,
-                    image: { type: 'jpeg', quality: 1.0 },
-                    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-
-                html2pdf().set(opt).from(element).save().then(() => {
-                    cards.forEach(c => c.classList.remove('no-animation'));
-                    element.classList.remove('pdf-export-mode');
-                });
+                element.classList.add('pdf-mode');
+                const opt = { margin: 8, filename: 'IB_Bio_Assessment.pdf', image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } };
+                html2pdf().set(opt).from(element).save().then(() => element.classList.remove('pdf-mode'));
             };
 
-            const navigate = (dir) => {
-                const nextIdx = currentIndex + dir;
-                if (nextIdx >= 0 && nextIdx < queue.length) {
-                    setCurrentIndex(nextIdx);
-                    setTempAnswer(sessionResults[queue[nextIdx].id]?.answer || '');
-                }
-            };
-
-            // --- 強化版智能解析器：修復 Badge 標籤遺失 ---
-            const renderFeedbackCards = useCallback((text, isErq = false, originalAnswer = "", explanation = "") => {
-                if (!text && !explanation) return null;
+            const renderFeedback = useCallback((text, isErq, original, expl) => {
+                if (!text && !expl) return null;
+                const markers = isErq ? ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar"] 
+                                      : ["Key Concept", "Pitfall", "Core Fact", "Deep Analysis"];
                 
-                const markers = isErq 
-                    ? ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar"] 
-                    : ["Key Concept", "Pitfall", "Core Fact", "Deep Analysis", "Calculation"];
-                
-                let foundItems = [];
+                let found = [];
                 markers.forEach(m => {
-                    // 強力偵測各種標題變體
-                    const regex = new RegExp(`(\\*\\*)?${m}(\\*\\*)?:?`, 'gi');
+                    const reg = new RegExp(`(?:\\*\\*|#+\\s*)?${m}(?:\\*\\*|:)?`, 'gi');
                     let match;
-                    while ((match = regex.exec(text)) !== null) {
-                        foundItems.push({ name: m, index: match.index, raw: match[0] });
-                    }
+                    while ((match = reg.exec(text)) !== null) found.push({ name: m, index: match.index, rawLen: match[0].length });
                 });
-                foundItems.sort((a,b) => a.index - b.index);
+                found.sort((a,b) => a.index - b.index);
 
                 let cards = [];
-                if (isErq && originalAnswer) {
-                    cards.push(<div key="user" className="themed-card card-slate no-animation"><span className="badge-pill bg-slate-600 text-white">Your Response</span><div className="font-semibold text-slate-600 italic leading-relaxed" dangerouslySetInnerHTML={{ __html: bioCompiler(originalAnswer) }} /></div>);
-                }
+                if (isErq && original) cards.push(<div key="user" className="themed-card card-slate"><span className="badge-mini bg-slate-500">Your Response</span><div className="font-semibold text-slate-600 italic leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(original) }} /></div>);
+                
+                if (!isErq && expl) cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini bg-emerald-600">Explanation</span><div className="font-semibold text-emerald-800" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
 
-                // MCQ 雙重解說
-                if (!isErq && explanation) {
-                    cards.push(<div key="expl" className="themed-card card-emerald no-animation"><span className="badge-pill bg-emerald-700 text-white">Explanation (詳解)</span><div className="font-semibold text-slate-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: bioCompiler(explanation) }} /></div>);
-                }
-
-                foundItems.forEach((p, i) => {
-                    const start = p.index + p.raw.length;
-                    const end = (i + 1 < foundItems.length) ? foundItems[i+1].index : text.length;
-                    const content = text.substring(start, end).trim();
+                found.forEach((p, i) => {
+                    const content = text.substring(p.index + p.rawLen, (i + 1 < found.length) ? found[i+1].index : text.length).trim();
                     let color = "card-blue", label = p.name;
-                    
                     if (isErq) {
-                        if (/Mark Scheme/i.test(p.name)) { label = "Analysis"; color = "card-blue"; }
-                        else if (/Gap/i.test(p.name)) { label = "Knowledge Gaps"; color = "card-rose"; }
-                        else if (/Pathway/i.test(p.name)) { label = "Pathway to L7"; color = "card-amber"; }
-                        else if (/Exemplar/i.test(p.name)) { label = "Model Exemplar"; color = "card-emerald"; }
+                        if (/Mark/i.test(p.name)) { label="Analysis"; color="card-blue"; }
+                        else if (/Gap/i.test(p.name)) { label="Knowledge Gaps"; color="card-rose"; }
+                        else if (/Pathway/i.test(p.name)) { label="Pathway to L7"; color="card-amber"; }
+                        else if (/Exemplar/i.test(p.name)) { label="Model Exemplar"; color="card-emerald"; }
                     } else {
-                        if (/Key Concept/i.test(p.name)) label = "Concept";
-                        else if (/Pitfall/i.test(p.name)) { label = "Pitfall"; color = "card-rose"; }
-                        else if (/Fact|Analysis|Calculation/i.test(p.name)) { label = "Analysis"; color = "card-emerald"; }
+                        label = p.name.replace(" Analysis", "");
                     }
-                    
-                    if (content.length > 2) {
-                        cards.push(
-                            <div key={p.name + i} className={`themed-card ${color} no-animation`}>
-                                <span className="badge-pill uppercase font-black" style={{ backgroundColor: '#1e293b' }}>{label}</span>
-                                <div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} />
-                            </div>
-                        );
-                    }
+                    if (content.length > 2) cards.push(<div key={p.name+i} className={`themed-card ${color}`}><span className="badge-mini bg-slate-800">{label}</span><div className="font-medium text-slate-700" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} /></div>);
                 });
 
-                if (cards.length === 0 || (isErq && cards.length === 1)) {
-                    cards.push(<div key="f" className="themed-card card-blue no-animation"><span className="badge-pill bg-slate-800 opacity-80 uppercase">Moderator Commentary</span><div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(text) }} /></div>);
-                }
+                if (!cards.length) cards.push(<div key="fb" className="themed-card card-blue"><span className="badge-mini">AI Evaluation</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(text) }} /></div>);
                 return cards;
             }, []);
 
-            // 修復 ReferenceError: 定義 currentQ
-            const currentQ = queue[currentIndex];
+            const cur = queue[currentIndex];
 
             return (
                 <div className="app-container" style={{ fontSize: `${globalFontSize}px` }}>
-                    {statusMsg && <div className="toast-msg shadow-2xl">{statusMsg}</div>}
-                    <header className="header-fixed flex flex-col items-center py-4 bg-white border-b border-slate-100">
-                        <h1 className="font-extrabold text-slate-900 italic text-xl uppercase tracking-tighter">IB Bio Master Pro</h1>
-                        {quizStep === 'practice' && currentQ && (
-                            <div className="flex gap-4 mt-1 items-center">
-                                <span className="status-pill font-black uppercase text-[9px]">Q {currentIndex + 1} / {queue.length}</span>
-                                <button onClick={() => toggleMastery(currentQ.id)} className={`flex items-center gap-1 text-[10px] font-black transition-colors ${masteredIds.has(currentQ.id) ? 'text-amber-500' : 'text-slate-300'}`}><AppIcon name="Star" size={14} fill={masteredIds.has(currentQ.id) ? "currentColor" : "none"} />熟悉</button>
-                            </div>
-                        )}
+                    {statusMsg && <div className="toast-msg">{statusMsg}</div>}
+                    <header className="header-fixed flex flex-col items-center">
+                        <h1 className="font-black text-slate-900 italic text-base uppercase tracking-widest">IB Bio Master</h1>
+                        {quizStep === 'practice' && cur && <div className="status-pill text-[9px] mt-1 uppercase">Step {currentIndex + 1} / {queue.length}</div>}
                     </header>
 
                     <main className="main-scroll">
                         <div className="content-buffer">
                             {tab === 'home' && (
-                                <div className="space-y-6 animate-in fade-in">
-                                    <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white text-center shadow-xl">
-                                        <h2 className="text-xl font-black mb-6 uppercase italic font-black">題庫管理中心</h2>
-                                        <div className="grid grid-cols-2 gap-4 mb-8">
-                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-blue-400 font-black">{Object.values(masterBank).flat().length}</p><p className="text-[10px] opacity-40 uppercase font-black">庫存總數</p></div>
-                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-amber-400 font-black">{masteredIds.size}</p><p className="text-[10px] opacity-40 uppercase font-black">已掌握</p></div>
+                                <div className="space-y-4 animate-up">
+                                    {/* Dashboard Stat */}
+                                    <div className="bg-slate-900 rounded-3xl p-6 text-white text-center shadow-lg">
+                                        <div className="grid grid-cols-2 gap-3 mb-6">
+                                            <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-blue-400">{Object.values(masterBank).flat().length}</p><p className="text-[9px] opacity-40 uppercase font-black">Stock</p></div>
+                                            <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-emerald-400">{masteredIds.size}</p><p className="text-[9px] opacity-40 uppercase font-black">Mastered</p></div>
                                         </div>
-                                        <button onClick={() => fileInputRef.current.click()} className="btn-action w-full bg-blue-600 text-white shadow-lg py-5 mb-2 font-black italic"><AppIcon name="Next" size={20} /> 直接選擇 JSON 匯入</button>
-                                        <input type="file" accept=".json" className="hidden-file-input" ref={fileInputRef} onChange={(e) => {
-                                            const file = e.target.files[0];
-                                            if (!file) return;
-                                            const reader = new FileReader();
-                                            reader.onload = (ev) => {
-                                                try { importToBank(JSON.parse(ev.target.result)); showToast("匯入成功！"); }
-                                                catch (err) { showToast("解析失敗。"); }
-                                            };
-                                            reader.readAsText(file);
-                                            e.target.value = "";
-                                        }} />
+                                        <div className="grid grid-cols-4 gap-2">
+                                            {THEMES.map(t => (
+                                                <div key={t.id} className="text-center">
+                                                    <p className="text-[10px] font-black" style={{ color: t.color }}>{t.id}</p>
+                                                    <p className="text-sm font-black">{(masterBank[t.id] || []).filter(q => !masteredIds.has(q.id)).length}</p>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                    <div className="grid grid-cols-1 gap-4 px-2">
-                                        {THEMES.map(t => (
-                                            <div key={t.id} className="bg-white p-5 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
-                                                <div className="flex items-center gap-3"><div className="w-2 h-8 rounded-full" style={{ backgroundColor: t.color }}></div><div><p className="text-[10px] font-black opacity-30 uppercase font-black tracking-widest font-black">Theme {t.id}</p><p className="font-bold text-sm text-slate-700 font-black">{t.name}</p></div></div>
-                                                <div className="text-xl font-black text-slate-800">{(masterBank[t.id] || []).filter(q => q && !masteredIds.has(q.id)).length}</div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
 
-                            {tab === 'builder' && (
-                                <div className="space-y-6 animate-in fade-in">
-                                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
-                                        <h2 className="font-black text-xl italic uppercase font-black">AI 題庫建構器</h2>
-                                        <div className="space-y-4">
-                                            <div className="flex gap-2">
-                                                {THEMES.map(t => (
-                                                    <button key={t.id} onClick={() => setBuildTheme(t.id)} className={`flex-1 py-3 rounded-xl font-black ${buildTheme === t.id ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-400'}`}>{t.id}</button>
-                                                ))}
+                                    {/* Embedded AI Builder */}
+                                    <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+                                        <div className="flex justify-between items-center">
+                                            <h2 className="font-black text-sm uppercase italic text-slate-400 flex items-center gap-2"><AppIcon name="Sparkles" size={14} /> AI Bank Builder</h2>
+                                            <span className="text-[10px] font-bold text-slate-300">Unit-Based Generation</span>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <div className="flex gap-1 bg-slate-50 p-1 rounded-xl">
+                                                {['A','B','C','D'].map(t=>(<button key={t} onClick={()=>setBuildTheme(t)} className={`flex-1 py-2 rounded-lg font-black text-xs transition-all ${buildTheme===t ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'}`}>{t}</button>))}
                                             </div>
-                                            <div className="grid grid-cols-3 gap-2">
-                                                {['mcq', 'erq', 'mixed'].map(r => (
-                                                    <button key={r} onClick={() => setBuildRatio(r)} className={`py-3 rounded-xl text-[10px] font-black uppercase ${buildRatio === r ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-400'}`}>{r === 'mixed' ? '混合 8:2' : (r === 'mcq' ? '純選擇' : '純申論')}</button>
-                                                ))}
+                                            <div className="flex gap-1">
+                                                {[
+                                                    {id: 'mixed', n: '綜合'},
+                                                    {id: 'mcq', n: '全選擇'},
+                                                    {id: 'erq', n: '全申論'}
+                                                ].map(m=>(<button key={m.id} onClick={()=>setBuildRatio(m.id)} className={`flex-1 py-2 rounded-lg font-black text-[10px] border ${buildRatio===m.id ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-400 border-slate-100'}`}>{m.n}</button>))}
                                             </div>
-                                            <input type="number" className="w-full p-4 bg-slate-50 rounded-xl font-black" value={buildCount} onChange={e => setBuildCount(e.target.value)} />
-                                            <button onClick={handleBuildBank} disabled={loading} className="w-full bg-slate-900 text-white py-5 rounded-xl font-black uppercase italic active:scale-95 transition-all font-black">{loading ? 'AI 正從雲端架構考題...' : '批量產題'}</button>
+                                            <button onClick={async()=>{setLoading(true); const usr=`Generate ${buildCount} ${buildRatio} questions for Unit ${buildTheme}. Format JSON. MCQ MUST have explanation & prefetchedInsight. ERQ must follow technical syllabus.`; const r=await askAI(usr, "Expert IB Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs italic shadow-md active:scale-95 transition-all">{loading ? 'AI Working...' : 'Construct New Questions'}</button>
                                         </div>
                                         {generatedJson && (
-                                            <div className="space-y-4 pt-4 border-t border-slate-100">
-                                                <button onClick={directImportBuilder} className="btn-action w-full bg-emerald-600 text-white shadow-md font-black italic"><AppIcon name="Check" size={18} /> 一鍵加入練習池</button>
-                                                <textarea readOnly className="w-full h-48 p-4 bg-slate-900 text-blue-300 text-[9px] font-mono rounded-xl border-none outline-none" value={generatedJson} />
+                                            <div className="mt-4 pt-4 border-t space-y-2">
+                                                <button onClick={directImport} className="btn-action w-full bg-emerald-600 text-white font-black uppercase shadow-lg"><AppIcon name="Check" /> Add to Local Bank</button>
+                                                <textarea readOnly className="w-full h-32 p-3 bg-slate-900 text-blue-300 text-[8px] rounded-xl font-mono border-none outline-none" value={generatedJson} />
                                             </div>
                                         )}
                                     </div>
@@ -493,88 +351,66 @@
 
                             {tab === 'quiz' && (
                                 <div className="space-y-4">
-                                    {quizStep === 'setup' && (
-                                        <div className="space-y-6 animate-in slide-in-from-bottom-4">
-                                            <div className="grid grid-cols-2 gap-3">
-                                                {THEMES.map(t => (
-                                                    <button key={t.id} onClick={() => setSelThemes(p => p.includes(t.id) ? (p.length > 1 ? p.filter(id => id !== t.id) : p) : [...p, t.id])} className={`p-5 rounded-2xl text-left border-2 transition-all ${selThemes.includes(t.id) ? 'border-blue-600 bg-blue-50 scale-[1.02] shadow-sm' : 'border-slate-100 opacity-60'}`}>
-                                                        <span className="font-black text-xs text-blue-600 uppercase font-black">Unit {t.id}</span><br/><span className="font-bold text-[11px] text-slate-700 font-black leading-tight font-black">{t.name}</span>
-                                                    </button>
-                                                ))}
+                                    {quizStep === 'setup' ? (
+                                        <div className="space-y-4 animate-up">
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {THEMES.map(t => (<button key={t.id} onClick={()=>setSelThemes(p=>p.includes(t.id)?(p.length > 1 ? p.filter(i=>i!==t.id) : p):[...p,t.id])} className={`p-4 rounded-xl text-left border-2 ${selThemes.includes(t.id)?'border-blue-600 bg-blue-50':'border-slate-100 opacity-60'}`}><span className="font-black text-xs uppercase">Unit {t.id}</span></button>))}
                                             </div>
-                                            <div className="flex gap-4">
-                                                {['MCQ', 'ERQ'].map(type => (
-                                                    <button key={type} onClick={() => setSelType(type)} className={`flex-1 py-4 rounded-xl font-black border-2 transition-all ${selType === type ? 'border-blue-600 bg-blue-600 text-white shadow-lg font-black' : 'text-slate-400 bg-slate-50 font-black'}`}>{type}</button>
-                                                ))}
+                                            <div className="flex gap-2">
+                                                {['MCQ','ERQ'].map(type=>(<button key={type} onClick={()=>setSelType(type)} className={`flex-1 py-3 rounded-lg font-black border-2 ${selType===type?'border-blue-600 bg-blue-600 text-white':'text-slate-400 bg-slate-50'}`}>{type}</button>))}
                                             </div>
-                                            <button onClick={startPractice} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase italic shadow-xl active:scale-95 transition-all font-black">Launch Assessment</button>
+                                            <button onClick={startPractice} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase italic tracking-widest shadow-lg">Start Training</button>
                                         </div>
-                                    )}
-
-                                    {quizStep === 'practice' && currentQ && (
-                                        <div className="space-y-8 animate-in zoom-in-95">
-                                            <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-50 space-y-6">
-                                                <div className="text-slate-900 font-extrabold italic leading-tight text-xl border-l-8 border-blue-600 pl-5 font-black tracking-tight">{currentQ.question}</div>
-                                                {currentQ.type === 'MCQ' ? (
-                                                    <div className="grid grid-cols-1 gap-3">
-                                                        {Object.entries(currentQ.options).map(([k, v], idx) => {
-                                                            const res = sessionResults[currentQ.id];
-                                                            const label = ["A", "B", "C", "D"][idx] || k;
-                                                            let btnStyle = "border-slate-100 bg-white text-slate-700";
+                                    ) : cur && (
+                                        <div className="space-y-4 animate-up">
+                                            <div className="bg-white p-6 rounded-3xl border border-slate-50 shadow-md">
+                                                <div className="text-slate-900 font-black italic text-base border-l-4 border-blue-600 pl-3 mb-6 leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
+                                                {cur.type === 'MCQ' ? (
+                                                    <div className="grid gap-2">
+                                                        {Object.entries(cur.options).map(([k, v], idx) => {
+                                                            const res = sessionResults[cur.id];
+                                                            const label = ["A","B","C","D"][idx] || k;
+                                                            let st = "border-slate-100 bg-white";
                                                             if (res) {
-                                                                if (String(k).trim().toUpperCase() === String(currentQ.answer).trim().toUpperCase()) {
-                                                                    btnStyle = "border-green-500 bg-green-100 text-green-900 shadow-md scale-[1.02] z-10 border-4";
-                                                                } else if (String(k).trim().toUpperCase() === String(res.answer).trim().toUpperCase()) {
-                                                                    btnStyle = "border-red-500 bg-red-50 text-red-900 opacity-80 border-4";
-                                                                } else {
-                                                                    btnStyle = "border-slate-100 opacity-40";
-                                                                }
+                                                                if (String(k)===String(cur.answer)) st="border-green-500 bg-green-50 z-10 border-2";
+                                                                else if (String(k)===String(res.answer)) st="border-red-500 bg-red-50 border-2";
+                                                                else st="opacity-30 grayscale";
                                                             }
-                                                            return (
-                                                                <button key={k} disabled={!!res} onClick={() => handleMcqSubmit(currentQ.id, k, currentQ.answer)} className={`w-full p-5 rounded-2xl border-2 text-left font-bold transition-all flex items-center gap-4 ${btnStyle}`}>
-                                                                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-inner ${res?.answer === k ? 'bg-slate-800 text-white font-black' : 'bg-slate-100 text-slate-400'}`}>{label}</span>
-                                                                    <span className="flex-1 text-sm font-bold font-black">{v}</span>
-                                                                </button>
-                                                            );
+                                                            return (<button key={k} disabled={!!res} onClick={()=>submitMcq(k, cur.answer)} className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${st}`}><span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-black">{label}</span><span className="text-sm font-bold">{v}</span></button>);
                                                         })}
                                                     </div>
                                                 ) : (
-                                                    <div className="space-y-4">
-                                                        <textarea disabled={!!sessionResults[currentQ.id]} className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl min-h-[300px] outline-none font-medium text-slate-700 shadow-inner" placeholder="在此輸入您的分析性回答..." value={tempAnswer} onChange={(e) => setTempAnswer(e.target.value)} />
-                                                        {!sessionResults[currentQ.id] && (
-                                                            <button onClick={() => submitErq(currentQ.id)} disabled={!tempAnswer.trim() || loading} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase shadow-xl italic font-black font-black">Submit for Grading</button>
-                                                        )}
+                                                    <div className="space-y-3">
+                                                        <textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-50 border-2 rounded-2xl min-h-[180px] text-sm outline-none" placeholder="Input analytical response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />
+                                                        {!sessionResults[cur.id] && <button onClick={submitErq} disabled={!tempAnswer.trim()||loading} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase italic">{loading?'Evaluating...':'Submit Answer'}</button>}
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {loading && <div className="py-24 flex flex-col items-center animate-pulse"><div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-6"></div><p className="font-black text-xl italic text-slate-400 uppercase tracking-tighter font-black">AI Moderating...</p></div>}
-
-                                            {sessionResults[currentQ.id] && (
-                                                <div id="report-content" ref={reportRef} className="space-y-6 bg-white rounded-[2rem] no-animation">
-                                                    <div className="p-10 rounded-[2.5rem] bg-white border border-slate-200">
-                                                        <div className="flex justify-between items-center mb-8">
-                                                            <span className="ui-label font-black text-slate-400 text-[10px] uppercase font-black italic">Moderator Assessment</span>
-                                                            <button onClick={exportPDF} className="text-[10px] font-black text-blue-600 uppercase flex items-center gap-1 hover:scale-105 transition-transform"><AppIcon name="Next" size={12} /> 輸出高清 PDF</button>
+                                            {sessionResults[cur.id] && (
+                                                <div id="report-content" className="space-y-1 animate-up">
+                                                    <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-sm no-animation">
+                                                        <div className="flex justify-between items-center mb-5">
+                                                            <span className="text-[10px] font-black text-slate-400 uppercase italic">Assessment Report</span>
+                                                            {cur.type === 'ERQ' && <button onClick={exportPDF} className="text-[10px] font-black text-blue-600 flex items-center gap-1 uppercase">Export PDF</button>}
                                                         </div>
-                                                        
-                                                        {/* 報告內包含題目 */}
-                                                        <div className="mb-10 pb-10 border-b border-slate-100">
-                                                            <span className="badge-pill bg-slate-900 text-white font-black" style={{ backgroundColor: '#1e293b' }}>評核題目 (Source Question)</span>
-                                                            <div className="text-xl font-black text-slate-900 leading-tight italic" dangerouslySetInnerHTML={{ __html: bioCompiler(currentQ.question) }} />
-                                                        </div>
-
-                                                        {currentQ.type === 'MCQ' 
-                                                            ? renderFeedbackCards(currentQ.prefetchedInsight, false, "", currentQ.explanation) 
-                                                            : renderFeedbackCards(sessionResults[currentQ.id].feedback, true, sessionResults[currentQ.id].answer)
+                                                        {cur.type === 'ERQ' && (
+                                                            <div className="mb-6 pb-4 border-b border-slate-100">
+                                                                <span className="badge-mini bg-slate-900">Question</span>
+                                                                <div className="text-sm font-black text-slate-800 italic leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
+                                                            </div>
+                                                        )}
+                                                        {cur.type === 'MCQ' 
+                                                            ? renderFeedback(cur.prefetchedInsight, false, "", cur.explanation) 
+                                                            : renderFeedback(sessionResults[cur.id].feedback, true, sessionResults[cur.id].answer)
                                                         }
                                                     </div>
                                                 </div>
                                             )}
 
-                                            <div className="flex gap-4">
-                                                <button onClick={() => { const i = currentIndex-1; if(i>=0){setCurrentIndex(i); setTempAnswer(sessionResults[queue[i].id]?.answer || '');}}} disabled={currentIndex === 0} className="btn-action bg-white border-2 border-slate-100 text-slate-400 flex-1 font-black font-black uppercase"><AppIcon name="Prev" /> PREV</button>
-                                                <button onClick={() => { if (currentIndex === queue.length - 1) setQuizStep('setup'); else { setCurrentIndex(currentIndex+1); setTempAnswer(sessionResults[queue[currentIndex+1].id]?.answer || ''); } }} className="btn-action bg-slate-900 text-white flex-1 font-black font-black uppercase">NEXT {currentIndex === queue.length - 1 ? '(FINISH)' : ''} <AppIcon name="Next" /></button>
+                                            <div className="flex gap-2">
+                                                <button onClick={()=>{const i=currentIndex-1; if(i>=0){setCurrentIndex(i); setTempAnswer(sessionResults[queue[i].id]?.answer||'');}}} disabled={currentIndex===0} className="btn-action bg-white border text-slate-400 flex-1 font-black">PREV</button>
+                                                <button onClick={()=>{if(currentIndex===queue.length-1)setQuizStep('setup'); else{setCurrentIndex(currentIndex+1); setTempAnswer(sessionResults[queue[currentIndex+1].id]?.answer||'');}}} className="btn-action bg-slate-900 text-white flex-1 font-black">NEXT</button>
                                             </div>
                                         </div>
                                     )}
@@ -582,21 +418,20 @@
                             )}
 
                             {tab === 'config' && (
-                                <div className="space-y-6 animate-in zoom-in-95">
-                                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
-                                        <p className="ui-label tracking-widest font-black text-slate-400 text-xs uppercase italic font-black">Settings</p>
-                                        <div className="p-6 bg-slate-900 rounded-3xl text-white space-y-4">
-                                            <p className="text-xs font-black uppercase text-blue-400 font-black">Gemini API Key</p>
-                                            <input type="password" placeholder="貼上 API Key 以啟用完整功能" className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none text-sm placeholder-white/20" value={userApiKey} onChange={(e) => {setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} />
+                                <div className="space-y-4 animate-up">
+                                    <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-6">
+                                        <div className="p-4 bg-slate-900 rounded-2xl text-white space-y-2">
+                                            <p className="text-[9px] font-black uppercase text-blue-400">Gemini API Key</p>
+                                            <input type="password" placeholder="Enter API Key" className="w-full p-2 bg-white/10 border-none rounded-lg text-sm" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} />
                                         </div>
-                                        <div className="p-6 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-between">
-                                            <div><span className="font-bold text-sm text-slate-600 font-black font-black">文字縮放 (持久記憶)</span><p className="text-[10px] text-slate-400 font-bold">{globalFontSize}px</p></div>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => setGlobalFontSize(v => Math.max(12, v-1))} className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black shadow-sm">-</button>
-                                                <button onClick={() => setGlobalFontSize(v => Math.min(30, v+1))} className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black shadow-sm">+</button>
+                                        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                                            <span className="font-bold text-xs uppercase tracking-widest text-slate-400">UI Scale</span>
+                                            <div className="flex gap-1">
+                                                <button onClick={()=>setGlobalFontSize(v=>Math.max(12,v-1))} className="w-8 h-8 rounded-lg bg-white border font-black">-</button>
+                                                <button onClick={()=>setGlobalFontSize(v=>Math.min(24,v+1))} className="w-8 h-8 rounded-lg bg-white border font-black">+</button>
                                             </div>
                                         </div>
-                                        <button onClick={() => { if(confirm("確定要清空嗎？")) { localStorage.removeItem('local_custom_bank'); window.location.reload(); } }} className="w-full py-4 text-xs font-black text-rose-500 bg-rose-50 rounded-xl uppercase italic font-black font-black font-black">清空本地自定義題庫</button>
+                                        <button onClick={()=>{if(confirm("Wipe expanded bank?")){localStorage.removeItem('local_custom_bank'); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-tighter">Clear Local Bank</button>
                                     </div>
                                 </div>
                             )}
@@ -604,10 +439,9 @@
                     </main>
 
                     <nav className="glass-nav">
-                        <button onClick={() => {setTab('home'); setQuizStep('setup');}} className={`nav-item ${tab === 'home' ? 'nav-active' : ''}`}><AppIcon name="Home" />首頁</button>
-                        <button onClick={() => setTab('builder')} className={`nav-item ${tab === 'builder' ? 'nav-active' : ''}`}><AppIcon name="Next" />產題</button>
-                        <button onClick={() => {setTab('quiz'); setQuizStep('setup');}} className={`nav-item ${tab === 'quiz' ? 'nav-active' : ''}`}><AppIcon name="Brain" />測驗</button>
-                        <button onClick={() => setTab('config')} className={`nav-item ${tab === 'config' ? 'nav-active' : ''}`}><AppIcon name="Config" />設定</button>
+                        <button onClick={()=>setTab('home')} className={`nav-item ${tab==='home'?'nav-active':''}`}><AppIcon name="Home" />Dashboard</button>
+                        <button onClick={()=>setTab('quiz')} className={`nav-item ${tab==='quiz'?'nav-active':''}`}><AppIcon name="Brain" />Training</button>
+                        <button onClick={()=>setTab('config')} className={`nav-item ${tab==='config'?'nav-active':''}`}><AppIcon name="Config" />Setup</button>
                     </nav>
                 </div>
             );
