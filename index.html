@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master | 專業同步與測驗優化系統</title>
+    <title>IB Bio Master | 最終穩定加固版</title>
     
     <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -25,15 +25,15 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; color: #1e293b; margin: 0; overflow: hidden; height: 100vh; }
         
         .app-container { height: 100vh; width: 100%; max-width: 780px; margin: 0 auto; background: white; display: flex; flex-direction: column; position: relative; }
-        .header-fixed { border-bottom: 1px solid #f1f5f9; flex-shrink: 0; background: white; padding: 12px 0; }
+        .header-fixed { border-bottom: 1px solid #f1f5f9; flex-shrink: 0; background: white; padding: 10px 0; }
         .main-scroll { flex: 1; overflow-y: auto; padding: 1.25rem; }
-        .content-buffer { padding-bottom: 95px; width: 100%; }
+        .content-buffer { padding-bottom: 100px; width: 100%; }
 
         .glass-nav { background: white; border-top: 1px solid #f1f5f9; height: 75px; flex-shrink: 0; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.02); }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #2563eb; }
         
-        /* 報告與卡片樣式 */
+        /* 報告與卡片質感 */
         .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: white; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .card-blue { border-color: #2563eb; background: #f0f7ff; }
         .card-rose { border-color: #e11d48; background: #fff1f2; }
@@ -43,8 +43,8 @@
 
         .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 10px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; background: #1e293b; color: white; }
         
-        .math-container { line-height: 1.75; word-break: break-word; margin-bottom: 1rem; }
-        .indent-content { padding-left: 1.25rem; border-left: 3px solid rgba(0,0,0,0.05); margin-top: 0.8rem; color: #334155; }
+        .math-container { line-height: 1.8; word-break: break-word; margin-bottom: 1rem; }
+        .indent-content { padding-left: 1.25rem; border-left: 3.5px solid rgba(0,0,0,0.05); margin-top: 0.8rem; color: #334155; }
 
         .animate-up { animation: slideUp 0.35s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -52,25 +52,23 @@
         .btn-action { padding: 12px 20px; border-radius: 14px; font-weight: 800; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-size: 0.9rem; }
         .toast-msg { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 10px 24px; border-radius: 999px; font-weight: 700; font-size: 0.8rem; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
 
-        /* MCQ 選項 */
+        /* MCQ 選項對比 */
         .option-label { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; background: #f1f5f9; color: #1e293b; border: 2.5px solid #cbd5e1; transition: 0.2s; flex-shrink: 0; }
         .selected-label { background: #1e293b; color: white; border-color: #1e293b; }
 
-        /* 控制項 (彩色) */
-        .font-cycle-btn { background: #eff6ff; padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #2563eb; border: 2px solid #dbeafe; transition: 0.2s; box-shadow: 0 2px 5px rgba(37, 99, 235, 0.1); }
+        /* 彩色控制項 */
+        .font-cycle-btn { background: #eff6ff; padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #2563eb; border: 2px solid #dbeafe; transition: 0.2s; }
         .back-nav-btn { color: #2563eb; padding: 10px; border-radius: 14px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; }
+        .next-nav-btn { color: #2563eb; padding: 8px; border-radius: 12px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
         
-        .mastery-container { display: flex; align-items: center; gap: 12px; }
-        .mastery-label-text { font-size: 13px; font-weight: 800; color: #94a3b8; }
-        .mastery-toggle-btn { width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .mastery-container { display: flex; align-items: center; gap: 10px; }
+        .mastery-label-text { font-size: 12px; font-weight: 800; color: #94a3b8; }
+        .mastery-toggle-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
         /* 表格優化 */
-        .bio-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.85em; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .bio-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9em; background: white; border-radius: 12px; overflow: hidden; }
         .bio-table th { background: #f8fafc; padding: 12px; text-align: left; font-weight: 800; border-bottom: 2px solid #e2e8f0; color: #64748b; }
         .bio-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
-        
-        .pdf-mode { font-size: 11px !important; line-height: 1.25 !important; }
-        .pdf-mode .themed-card { margin-bottom: 0.5rem !important; padding: 0.8rem 1.1rem !important; border-width: 1px !important; border-left-width: 6px !important; box-shadow: none !important; break-inside: avoid; }
     </style>
 </head>
 <body>
@@ -88,27 +86,34 @@
 
         const FONT_SIZES = [14, 16, 19, 23];
 
-        const AppIcon = ({ name, size = 18, color = "currentColor", fill = "none" }) => {
+        const AppIcon = ({ name, size = 18, color = "currentColor", fill = "none", strokeWidth = "2.5" }) => {
             const icons = {
-                Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
-                Brain: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>,
-                Config: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>,
-                Check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>,
-                Sparkles: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 3l.94 2.06L8 6l-2.06.94L5 9l-.94-2.06L2 6l2.06-.94L5 3zm14 15l.94 2.06L22 21l-2.06.94L19 24l-.94-2.06L16 21l2.06-.94L19 18zm4.5-105l1.09 2.41L27 11l-2.41 1.09L23.5 14.5l-1.09-2.41L20 11l2.41-1.09L23.5 7.5z"/></svg>,
+                Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
+                Brain: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>,
+                Config: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>,
+                Check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>,
+                Sparkles: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><path d="M5 3l.94 2.06L8 6l-2.06.94L5 9l-.94-2.06L2 6l2.06-.94L5 3zm14 15l.94 2.06L22 21l-2.06.94L19 24l-.94-2.06L16 21l2.06-.94L19 18zm4.5-10.5l1.09 2.41L27 11l-2.41 1.09L23.5 14.5l-1.09-2.41L20 11l2.41-1.09L23.5 7.5z"/></svg>,
                 House: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
                 Star: <svg width={size} height={size} fill={fill} stroke={color} strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,
-                Download: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Download: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>,
+                NextArrow: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
             };
             return icons[name] || null;
         };
 
+        // --- 強力純淨化過濾器 ---
+        const cleanRawText = (text) => {
+            if (!text) return "";
+            return text
+                .replace(/(\*\*|__|\*|_|#+|~+|`+)/g, "") // 移除 Markdown 語法
+                .replace(/Supplement for:.*?\n/gi, "")    // 移除系統補充標籤
+                .replace(/---/g, "")                    // 移除分隔線
+                .trim();
+        };
+
         const bioCompiler = (input) => {
-            let text = String(input || "").trim();
-            if (!text || text === "undefined") return "";
-            
-            // 關鍵修正：強力全域過濾 Markdown 符號與不必要的系統字元，解決怪異符號問題
-            text = text.replace(/(\*\*|__|\*|_|#+|~+|`+)/g, "");
-            text = text.replace(/Supplement for:.*?\n/gi, "").replace(/---/g, "");
+            let text = cleanRawText(input);
+            if (!text) return "";
             
             const chemPattern = /\b(Na\+|K\+|H\+|Ca2\+|Mg2\+|Cl-|NO2-|NO3-|NH4\+|CO2|H2O|O2|C6H12O6|ATP|ADP|NAD\+|NADH|RuBP|Rubisco|q2|p2|2pq)\b/g;
             text = text.replace(chemPattern, (match) => `$\\text{${match}}$`);
@@ -133,7 +138,6 @@
                         finalHTML.push(`<table class="bio-table"><thead><tr>${tableData[0].map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${tableData.slice(1).map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
                         inTable = false; tableData = [];
                     }
-                    // 加入適度段落空行與垂直間距，提升易讀性
                     finalHTML.push(`<div class="mb-3 math-container">${line}</div>`);
                 }
             });
@@ -164,11 +168,11 @@
 
             const reportRef = useRef(null);
 
-            // --- 更新：輸入 Key 後自動偵測並跳轉 ---
+            // --- AI Key 自動導航邏輯 ---
             useEffect(() => {
                 if (userApiKey && userApiKey.trim().length > 10 && tab === 'config') {
                     setTab('home');
-                    showToast("AI 功能已啟動，已自動返回主頁面");
+                    showToast("AI Key 已就緒，歡迎回來");
                 } else if (!userApiKey && tab !== 'config') {
                     setTab('config');
                 }
@@ -246,18 +250,17 @@
 
             const directImport = () => {
                 try {
-                    // 超強力提取 JSON，保證產題 100% 匯入成功
                     const match = generatedJson.match(/\{[\s\S]*\}/);
                     if (match) {
                         importToBank(JSON.parse(match[0]));
                         setGeneratedJson("");
-                        showToast("同步成功！庫存已更新");
+                        showToast("已成功匯入新題目");
                     } else throw new Error();
-                } catch(e) { showToast("解析失敗"); }
+                } catch(e) { showToast("解析失敗，請確認 AI 回傳內容"); }
             };
 
             const startPractice = () => {
-                // 題數統計關鍵：過濾掉已標記熟習的題目
+                // 精確題數過濾：僅包含未掌握的
                 const pool = selThemes.flatMap(t => masterBank[t] || []).filter(q => q && q.id && q.type === selType && !masteredIds.has(q.id));
                 if (pool.length) {
                     setQueue([...pool].sort(() => Math.random() - 0.5));
@@ -272,22 +275,32 @@
                     localStorage.setItem('mastered_ids', JSON.stringify(Array.from(next)));
                     return next;
                 });
-                showToast("熟悉度已更新");
+                showToast("已更新熟悉度");
             };
 
+            // --- 核心導航機制：處理下一題與複習排序 ---
             const handleNext = () => {
                 if (!queue[currentIndex]) return;
                 const curQ = queue[currentIndex];
+                const res = sessionResults[curQ.id];
                 const isMastered = masteredIds.has(curQ.id);
 
                 if (isMastered) {
-                    // 若標記為熟悉，從隊列移除，絕不重複
+                    // 若標記為熟悉，從隊列移除，絕對不重複
                     setQueue(prev => prev.filter(q => q.id !== curQ.id));
                     if (currentIndex >= queue.length - 1 && queue.length > 1) {
                          setCurrentIndex(0);
                     }
+                } else if (res) {
+                    // 答對或提交但未標記熟悉：移到隊列最末端 (Spaced Repetition)
+                    setQueue(prev => {
+                        const next = [...prev];
+                        const target = next.splice(currentIndex, 1)[0];
+                        next.push(target);
+                        return next;
+                    });
                 } else {
-                    // 若未標記熟悉：無論答對答錯，都移到末端再次複習 (Spaced Repetition)
+                    // 沒答題直接跳過：移至末端
                     setQueue(prev => {
                         const next = [...prev];
                         const target = next.splice(currentIndex, 1)[0];
@@ -297,7 +310,7 @@
                 }
 
                 if (queue.length <= 1 && isMastered) {
-                    showToast("全部題目已練習完畢！");
+                    showToast("全部題目已掌握！");
                     setQuizStep('setup');
                 } else {
                     setTempAnswer('');
@@ -308,7 +321,7 @@
                 if (!queue[currentIndex]) return;
                 const isCorrect = String(k).toUpperCase() === String(ans).toUpperCase();
                 setSessionResults(prev => ({ ...prev, [queue[currentIndex].id]: { answer: k, isCorrect } }));
-                // 答對不跳走，留在原地看解說
+                // 不自動跳題
             };
 
             const submitErq = async () => {
@@ -319,6 +332,7 @@
                 const fb = await askAI(usr, sys);
                 if (fb) setSessionResults(prev => ({ ...prev, [queue[currentIndex].id]: { answer: tempAnswer, feedback: fb } }));
                 setLoading(false);
+                // 不自動跳題
             };
 
             const askAI = async (p, s) => {
@@ -377,18 +391,35 @@
 
             const cur = queue[currentIndex];
 
+            // --- RENDER ---
             return (
                 <div className="app-container">
                     {statusMsg && <div className="toast-msg">{statusMsg}</div>}
                     
-                    <header className="header-fixed flex items-center justify-between px-4">
-                        <div className="w-16">
+                    <header className="header-fixed flex items-center justify-between px-4 py-3">
+                        <div className="flex items-center gap-2">
                             {tab === 'quiz' && quizStep === 'practice' && (
                                 <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm active:scale-95"><AppIcon name="House" size={24} /></button>
                             )}
+                            {tab === 'quiz' && quizStep === 'practice' && (
+                                <div className="ml-2 flex items-center gap-1.5">
+                                    <span className="text-[11px] font-black uppercase text-slate-400">Q {currentIndex + 1} / {queue.length}</span>
+                                    <button onClick={handleNext} className="next-nav-btn shadow-sm active:scale-95"><AppIcon name="NextArrow" size={18} /></button>
+                                </div>
+                            )}
                         </div>
+                        
                         <h1 className="font-black text-slate-900 italic text-sm uppercase tracking-widest">IB Bio Master Pro</h1>
-                        <div className="w-16 flex justify-end">
+                        
+                        <div className="flex items-center gap-3">
+                            {tab === 'quiz' && quizStep === 'practice' && (
+                                <div className="mastery-container">
+                                    <span className="mastery-label-text">{masteredIds.has(cur?.id) ? "熟悉" : ""}</span>
+                                    <button onClick={() => toggleMastery(cur?.id)} className={`mastery-toggle-btn shadow-sm active:scale-95 transition-colors ${masteredIds.has(cur?.id) ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                        <AppIcon name="Star" size={20} fill={masteredIds.has(cur?.id) ? "white" : "none"} />
+                                    </button>
+                                </div>
+                            )}
                             {tab === 'quiz' && quizStep === 'practice' && (
                                 <button onClick={cycleFontSize} className="font-cycle-btn shadow-sm active:scale-95">Aa</button>
                             )}
@@ -401,8 +432,7 @@
                                 <div className="space-y-4 animate-up">
                                     <div className="bg-slate-900 rounded-3xl p-6 text-white text-center shadow-lg">
                                         <div className="grid grid-cols-2 gap-3 mb-6">
-                                            {/* 庫存邏輯修正：總題數 - 已掌握題目 */}
-                                            <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-blue-400">{Object.values(masterBank).flat().length}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Stock</p></div>
+                                            <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-blue-400">{Object.values(masterBank).flat().length}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Questions</p></div>
                                             <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-emerald-400">{masteredIds.size}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Mastered</p></div>
                                         </div>
                                         <div className="grid grid-cols-4 gap-2">
@@ -424,11 +454,11 @@
                                             <div className="flex gap-1">
                                                 {[{id:'mixed',n:'綜合'}, {id:'mcq',n:'選擇'}, {id:'erq',n:'論述'}].map(m=>(<button key={m.id} onClick={()=>setBuildRatio(m.id)} className={`flex-1 py-1.5 rounded-lg font-black text-[10px] border transition-all ${buildRatio===m.id ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-400 border-slate-100'}`}>{m.n}</button>))}
                                             </div>
-                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 ${buildRatio} questions for Unit ${buildTheme}. Output a JSON object { "${buildTheme}": [ ... ] }. MCQ MUST have detailed "explanation" and "prefetchedInsight".`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] italic shadow-md active:scale-95">{loading ? 'AI Working...' : 'Generate New Questions'}</button>
+                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 ${buildRatio} questions for Unit ${buildTheme}. Output a JSON object { "${buildTheme}": [ ... ] }. MCQ MUST have detailed "explanation" and "prefetchedInsight". NO markdown bolding in output.`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] italic shadow-md active:scale-95">{loading ? 'AI Working...' : 'Generate New Questions'}</button>
                                         </div>
                                         {generatedJson && (
                                             <div className="mt-4 pt-4 border-t space-y-2">
-                                                <button onClick={directImport} className="btn-action w-full bg-emerald-600 text-white font-black uppercase shadow-lg"><AppIcon name="Check" /> Add to Bank</button>
+                                                <button onClick={directImport} className="btn-action w-full bg-emerald-600 text-white font-black uppercase shadow-lg"><AppIcon name="Check" /> Add to Local Bank</button>
                                                 <textarea readOnly className="w-full h-24 p-3 bg-slate-900 text-blue-300 text-[8px] rounded-xl font-mono border-none outline-none" value={generatedJson} />
                                             </div>
                                         )}
@@ -450,16 +480,6 @@
                                         </div>
                                     ) : cur && (
                                         <div className="space-y-4 animate-up">
-                                            <div className="flex justify-between items-center px-1">
-                                                <div className="status-pill text-[9px] uppercase font-black tracking-tighter">Question {currentIndex + 1} / {queue.length}</div>
-                                                <div className="mastery-container">
-                                                    <span className="mastery-label-text">{masteredIds.has(cur.id) ? "熟悉" : ""}</span>
-                                                    <button onClick={() => toggleMastery(cur.id)} className={`mastery-toggle-btn shadow-sm active:scale-95 transition-colors ${masteredIds.has(cur.id) ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                                                        <AppIcon name="Star" size={20} fill={masteredIds.has(cur.id) ? "white" : "none"} />
-                                                    </button>
-                                                </div>
-                                            </div>
-
                                             <div style={{ fontSize: `${contentFontSize}px` }}>
                                                 <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-md">
                                                     <div className="text-slate-900 font-black italic border-l-4 border-blue-600 pl-3 mb-6 leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
@@ -474,12 +494,12 @@
                                                                     else if (String(k)===String(res.answer)) st="border-red-500 bg-red-50 border-2";
                                                                     else st="opacity-30 grayscale";
                                                                 }
-                                                                return (<button key={k} disabled={!!res} onClick={()=>submitMcq(k, cur.answer)} className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${st}`}><span className={`option-label ${res?.answer === k ? 'selected-label shadow-inner' : ''}`}>{label}</span><span className="font-bold">{v}</span></button>);
+                                                                return (<button key={k} disabled={!!res} onClick={()=>submitMcq(k, cur.answer)} className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${st}`}><span className={`option-label ${res?.answer === k ? 'selected-label shadow-inner' : ''}`}>{label}</span><span className="font-bold">{cleanRawText(v)}</span></button>);
                                                             })}
                                                         </div>
                                                     ) : (
                                                         <div className="space-y-3">
-                                                            <textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-50 border-2 rounded-2xl min-h-[160px] outline-none font-medium" placeholder="Input analytical response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />
+                                                            <textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-50 border-2 rounded-2xl min-h-[160px] outline-none font-medium text-slate-800" placeholder="Input analytical response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />
                                                             {!sessionResults[cur.id] && <button onClick={submitErq} disabled={!tempAnswer.trim()||loading} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase italic tracking-widest shadow-md">{loading?'Analyzing...':'Submit Response'}</button>}
                                                         </div>
                                                     )}
@@ -506,11 +526,6 @@
                                                     </div>
                                                 )}
                                             </div>
-
-                                            <div className="flex gap-2 pt-2">
-                                                <button onClick={()=>{const i=currentIndex-1; if(i>=0){setCurrentIndex(i); setTempAnswer(sessionResults[queue[i].id]?.answer||'');}}} disabled={currentIndex===0} className="btn-action bg-white border text-slate-400 flex-1 font-black">PREV</button>
-                                                <button onClick={handleNext} className="btn-action bg-slate-900 text-white flex-1 font-black">NEXT</button>
-                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -521,9 +536,9 @@
                                     <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-6">
                                         <div className="p-4 bg-slate-900 rounded-2xl text-white space-y-2">
                                             <p className="text-[9px] font-black uppercase text-blue-400">Gemini AI Access</p>
-                                            <input type="password" placeholder="請輸入有效 API Key 以開始使用" className="w-full p-3 bg-white/10 border-none rounded-lg text-sm text-blue-100 placeholder:text-blue-300/40" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} />
+                                            <input type="password" placeholder="請輸入有效 API Key 以啟用功能" className="w-full p-3 bg-white/10 border-none rounded-lg text-sm text-blue-100 placeholder:text-blue-300/40" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} />
                                         </div>
-                                        <button onClick={()=>{if(confirm("確定要清空本地數據嗎？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest">Reset Application Data</button>
+                                        <button onClick={()=>{if(confirm("確定要重置所有數據嗎？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest">Reset All Data</button>
                                     </div>
                                 </div>
                             )}
