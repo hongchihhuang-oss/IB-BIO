@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master | Professional Assessment System</title>
+    <title>IB Bio Master | 專業連續練習系統</title>
     <!-- React & Tailwind -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- KaTeX for Science -->
+    <!-- KaTeX for Scientific Formulas -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
@@ -30,23 +30,24 @@
         
         .math-container { word-break: break-word; line-height: 1.85; }
         
-        .themed-card { border-left-width: 6px; padding: 1.5rem; border-radius: 1.5rem; background: white; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: 0.3s; }
+        .themed-card { border-left-width: 6px; padding: 1.5rem; border-radius: 1.5rem; background: white; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
         .card-blue { border-color: #2563eb; background: #f0f7ff; }
         .card-rose { border-color: #e11d48; background: #fff1f2; }
         .card-amber { border-color: #f59e0b; background: #fffbeb; }
         .card-emerald { border-color: #10b981; background: #ecfdf5; }
 
+        /* 資訊大點間隔：1.8rem 空白行 */
         .info-segment { margin-bottom: 1.8rem; display: block; font-weight: 500; color: #334155; }
         .info-segment:last-child { margin-bottom: 0; }
         .segment-header { font-weight: 800; color: #1e293b; display: block; margin-bottom: 0.4rem; font-size: 1.05rem; }
 
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
         .badge-pill { display: inline-block; font-size: 0.65rem; font-weight: 900; padding: 3px 12px; border-radius: 999px; margin-bottom: 10px; background: #2563eb; color: white; text-transform: uppercase; }
+        .status-pill { background: #f1f5f9; padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; color: #64748b; }
         
-        .bank-pill { background: #f1f5f9; padding: 4px 12px; border-radius: 10px; font-size: 10px; font-weight: 800; color: #64748b; border: 1px solid #e2e8f0; }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-in-card { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-card { animation: slideUp 0.4s ease-out forwards; }
+
+        .btn-action { padding: 14px 20px; border-radius: 14px; font-weight: 800; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
     </style>
 </head>
 <body>
@@ -55,8 +56,7 @@
     <script type="text/babel">
         const { useState, useEffect, Fragment, useCallback, useRef, useMemo } = React;
 
-        // --- 1. 全域配置 ---
-        const apiKey = ""; 
+        // --- 1. 全域處理與配置 ---
         const THEMES = [
             { id: "A", name: "Unity & Molecules", color: "#2563eb" }, 
             { id: "B", name: "Function & Cells", color: "#10b981" }, 
@@ -64,15 +64,15 @@
             { id: "D", name: "Evolution", color: "#f59e0b" }
         ];
 
-        const bioCompiler = (input, contextQ = "") => {
+        const bioCompiler = (input) => {
             let text = String(input || "").trim();
             if (!text || text === "undefined") return "";
 
-            // 清理冗餘 AI 標籤
+            // 清理標籤
             text = text.replace(/^(Assuming\sthat|Based\son|Since|Note\sthat|Explanation|Analysis|Insight):?\s*/gi, "");
             text = text.replace(/Supplement for:.*?\n/gi, "").replace(/#+\s?.*?\n/gi, "").replace(/---/g, "");
             
-            // 自動偵測化學式
+            // 自動偵測化學符號模式並包裹 LaTeX
             const chemPattern = /\b(Na\+|K\+|H\+|Ca2\+|Mg2\+|Cl-|NO2-|NO3-|NH4\+|extNa\+|extK\+|CO2|H2O|O2|C6H12O6|Cu2\+|ATP|ADP|NAD\+|NADH|RuBP|Rubisco|q2|p2|2pq)\b/g;
             text = text.replace(chemPattern, (match) => `$\\text{${match}}$`);
 
@@ -93,7 +93,7 @@
                     if (cells.length > 0) tableData.push(cells);
                 } else {
                     if (inTable && tableData.length > 0) {
-                        finalHTML.push(`<div class="bio-table-wrapper my-4"><table class="bio-table w-full border-collapse"><thead><tr class="bg-slate-50">${tableData[0].map(c => `<th class="p-3 text-left border-b font-black text-xs uppercase text-slate-500">${c}</th>`).join('')}</tr></thead><tbody>${tableData.slice(1).map(row => `<tr class="border-b">${row.map(c => `<td class="p-3 text-sm font-semibold text-slate-700">${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+                        finalHTML.push(`<div class="bio-table-wrapper my-4 overflow-x-auto"><table class="bio-table w-full border-collapse"><thead><tr class="bg-slate-50">${tableData[0].map(c => `<th class="p-3 text-left border-b font-black text-xs uppercase">${c}</th>`).join('')}</tr></thead><tbody>${tableData.slice(1).map(row => `<tr class="border-b">${row.map(c => `<td class="p-3 text-sm font-medium">${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
                         inTable = false; tableData = [];
                     }
                     if (l) {
@@ -112,53 +112,65 @@
             return finalHTML.join('');
         };
 
+        // --- 2. React App 主要組件 ---
+
         const App = () => {
             const [tab, setTab] = useState('home');
             const [globalFontSize, setGlobalFontSize] = useState(Number(localStorage.getItem('fontSize')) || 17);
             const [userApiKey, setUserApiKey] = useState(localStorage.getItem('gemini_api_key') || "");
             
-            // 題庫與狀態
+            // 題庫管理
             const [masterBank, setMasterBank] = useState({ A:[], B:[], C:[], D:[] });
-            const [usedIds, setUsedIds] = useState(new Set());
+            const [masteredIds, setMasteredIds] = useState(new Set(JSON.parse(localStorage.getItem('mastered_ids') || '[]')));
             const [isLoaded, setIsLoaded] = useState(false);
 
-            const [quizStep, setQuizStep] = useState('setup');
-            const [currentQuestion, setCurrentQuestion] = useState(null);
+            // 測驗流程狀態
+            const [quizStep, setQuizStep] = useState('setup'); // setup, practice
+            const [queue, setQueue] = useState([]); // 題目的隊列
+            const [currentIndex, setCurrentIndex] = useState(0);
+            
+            // 答題紀錄 (Session 持久化)
+            const [sessionResults, setSessionResults] = useState({}); // { [qId]: { answer, feedback, isCorrect } }
+            
             const [selThemes, setSelThemes] = useState(['A']); 
             const [selType, setSelType] = useState('MCQ');
-            const [userAnswer, setUserAnswer] = useState('');
-            const [aiFeedback, setAiFeedback] = useState('');
+            const [tempAnswer, setTempAnswer] = useState(''); // 暫存正在輸入的文字
             const [loading, setLoading] = useState(false);
 
-            // --- 自動載入本地題庫 ---
+            // 自動載入題庫
             useEffect(() => {
-                const loadAll = async () => {
-                    const pool = { A:[], B:[], C:[], D:[] };
+                const fetchAll = async () => {
+                    const tempPool = { A:[], B:[], C:[], D:[] };
                     for (const id of ['A', 'B', 'C', 'D']) {
                         try {
                             const res = await fetch(`./questions_bank_${id}.json`);
                             if (res.ok) {
                                 const data = await res.json();
-                                if (data[id]) pool[id] = data[id];
+                                if (data[id]) tempPool[id] = data[id];
                             }
                         } catch (e) {}
                     }
-                    setMasterBank(pool);
+                    setMasterBank(tempPool);
                     setIsLoaded(true);
                 };
-                loadAll();
+                fetchAll();
             }, []);
 
-            // KaTeX 強制渲染
+            // KaTeX 渲染
             useEffect(() => {
                 const render = () => { if (window.renderMathInElement) renderMathInElement(document.body, { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}], throwOnError: false }); };
                 render();
-                const timer = setTimeout(render, 200);
+                const timer = setTimeout(render, 250);
                 return () => clearTimeout(timer);
-            }, [quizStep, currentQuestion, aiFeedback, tab]);
+            }, [quizStep, currentIndex, sessionResults, tab]);
+
+            // 保存熟悉標記
+            useEffect(() => {
+                localStorage.setItem('mastered_ids', JSON.stringify(Array.from(masteredIds)));
+            }, [masteredIds]);
 
             const askAI = async (prompt, system) => {
-                const finalKey = userApiKey || apiKey; 
+                const finalKey = userApiKey || ""; 
                 if (!finalKey) return null;
                 try {
                     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${finalKey}`, {
@@ -174,68 +186,77 @@
                 } catch (e) { return null; }
             };
 
-            const startAssessment = () => {
+            const startPractice = () => {
                 if (!selThemes.length) return;
+                // 過濾熟悉題目
+                const pool = selThemes.flatMap(t => masterBank[t] || []).filter(q => q.type === selType && !masteredIds.has(q.id));
                 
-                // 核心：從總庫中選取尚未被使用的題目
-                const available = selThemes.flatMap(t => masterBank[t] || []).filter(q => q.type === selType && !usedIds.has(q.id));
-                
-                if (available.length > 0) {
-                    const picked = available[Math.floor(Math.random() * available.length)];
-                    setCurrentQuestion(picked);
-                    setUserAnswer('');
-                    setAiFeedback('');
-                    setQuizStep('asking');
+                if (pool.length > 0) {
+                    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+                    setQueue(shuffled);
+                    setCurrentIndex(0);
+                    setQuizStep('practice');
+                    setSessionResults({});
+                    setTempAnswer('');
                 } else {
-                    alert("所選單元的本地題庫已完成，將重新開始循環。");
-                    setUsedIds(new Set());
-                    // 立即從完整題池再抽一次
-                    const freshPool = selThemes.flatMap(t => masterBank[t] || []).filter(q => q.type === selType);
-                    const picked = freshPool[Math.floor(Math.random() * freshPool.length)];
-                    setCurrentQuestion(picked);
-                    setUserAnswer('');
-                    setAiFeedback('');
-                    setQuizStep('asking');
+                    alert("目前選擇的類別已無剩餘題目 (皆已標記為熟悉)。");
                 }
             };
 
-            const handleNext = () => {
-                if (currentQuestion) {
-                    setUsedIds(prev => {
-                        const next = new Set(prev);
-                        next.add(currentQuestion.id);
-                        return next;
-                    });
-                }
-                // 強制回到設定頁面，滿足重新選取題型類別的要求
-                setQuizStep('setup');
-                setCurrentQuestion(null);
-            };
-
-            const submitErq = async () => {
-                if (!userAnswer.trim()) return;
-                setLoading(true); setQuizStep('grading');
+            const handleMcqSubmit = (qId, choice, answer) => {
+                const correct = choice === answer;
+                setSessionResults(prev => ({ ...prev, [qId]: { answer: choice, isCorrect: correct } }));
                 
-                // 強化 AI 指令，防止其漏掉學生提到的關鍵字
-                const sys = "You are a Senior IB Biology Moderator. Grade the student response strictly based on the 2025 Mark Scheme. IMPORTANT: Perform a keyword and concept audit. If the student uses a technical term or describes a relevant concept correctly, you MUST acknowledge it. Do not state the student missed a point if it is present in their text.";
-                const usr = `Question: "${currentQuestion.question}"\n\nStudent Answer: "${userAnswer}"\n\nREQUIRED HEADERS for output:\n1. Mark Scheme Analysis\n2. Knowledge Gaps\n3. Pathway to Level 7\n4. Model Exemplar\n\nUse LaTeX for symbols.`;
+                // 如果答錯，將本題加入隊列最後面
+                if (!correct) {
+                    const currentQ = queue[currentIndex];
+                    setQueue(prev => [...prev, currentQ]);
+                }
+            };
+
+            const submitErq = async (qId) => {
+                if (!tempAnswer.trim()) return;
+                setLoading(true);
+                const currentQ = queue[currentIndex];
+                const sys = "You are a Senior IB Biology Chief Moderator. You MUST perform a keyword audit. If the student uses a technical term or describes a relevant concept correctly, you MUST acknowledge it. Grade strictly against 2025 Mark Scheme.";
+                const usr = `Question: "${currentQ.question}"\n\nStudent Response: "${tempAnswer}"\n\nOUTPUT HEADERS:\n1. Mark Scheme Analysis\n2. Knowledge Gaps\n3. Pathway to Level 7\n4. Model Exemplar\n\nUse LaTeX for symbols.`;
 
                 const fb = await askAI(usr, sys);
-                if (fb) { 
-                    setAiFeedback(fb); 
-                    setQuizStep('erq_feedback'); 
+                if (fb) {
+                    setSessionResults(prev => ({ ...prev, [qId]: { answer: tempAnswer, feedback: fb } }));
                 } else {
-                    alert("評分失敗，請檢查網路或 API Key。");
-                    setQuizStep('asking');
+                    alert("AI 評分失敗，請檢查 API Key 設置。");
                 }
                 setLoading(false);
             };
 
-            const renderThemedCards = useCallback((text, isErq = false) => {
+            const toggleMastery = (qId) => {
+                setMasteredIds(prev => {
+                    const next = new Set(prev);
+                    if (next.has(qId)) next.delete(qId);
+                    else next.add(qId);
+                    return next;
+                });
+            };
+
+            const navigate = (dir) => {
+                const nextIdx = currentIndex + dir;
+                if (nextIdx >= 0 && nextIdx < queue.length) {
+                    setCurrentIndex(nextIdx);
+                    // 切換題目時，讀取已存在的答案或清空
+                    const nextQ = queue[nextIdx];
+                    setTempAnswer(sessionResults[nextQ.id]?.answer || '');
+                }
+            };
+
+            const currentQ = queue[currentIndex];
+            const currentRes = currentQ ? sessionResults[currentQ.id] : null;
+
+            const renderFeedbackCards = useCallback((text, isErq = false) => {
                 if (!text) return null;
                 const markers = isErq 
                     ? ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar"] 
-                    : ["Key Concept", "Pitfall", "Core Fact", "Analysis", "Calculation"];
+                    : ["Key Concept", "Pitfall", "Core Fact", "Deep Analysis", "Calculation"];
                 
                 let parts = []; let temp = text;
                 markers.forEach(m => {
@@ -250,14 +271,9 @@
                 parts.push(temp);
 
                 const validParts = parts.filter(p => p.trim().length > 5);
-                if (validParts.length === 0 && text.trim().length > 0) {
-                    return <div className="themed-card card-blue animate-in-card"><span className="badge-pill bg-slate-800 opacity-80">Evaluation</span><div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(text, currentQuestion?.question) }} /></div>;
-                }
-
                 return validParts.map((sec, idx) => {
                     const cs = sec.trim();
-                    let color = "card-blue", label = "Concept";
-                    
+                    let color = "card-blue", label = "Insight";
                     if (isErq) {
                         if (/Mark Scheme/i.test(cs)) { label = "Analysis"; color = "card-blue"; }
                         else if (/Gap/i.test(cs)) { label = "Gaps"; color = "card-rose"; }
@@ -268,25 +284,24 @@
                         else if (/Pitfall/i.test(cs)) { label = "Pitfall"; color = "card-rose"; }
                         else if (/Fact|Analysis|Calculation/i.test(cs)) { label = "Fact"; color = "card-emerald"; }
                     }
-
                     let body = cs;
-                    markers.forEach(h => { 
-                        const reg = new RegExp('^' + h + ':?', 'i');
-                        body = body.replace(reg, "").trim();
-                    });
-                    
-                    return <div key={idx} className={`themed-card ${color} animate-in-card`}><span className="badge-pill bg-slate-800 opacity-80 uppercase">{label}</span><div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(body, currentQuestion?.question) }} /></div>;
+                    markers.forEach(h => { body = body.replace(new RegExp('^' + h + ':?', 'i'), "").trim(); });
+                    return <div key={idx} className={`themed-card ${color} animate-card`}><span className="badge-pill bg-slate-800 opacity-80 uppercase">{label}</span><div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(body) }} /></div>;
                 });
-            }, [currentQuestion]);
+            }, []);
 
             return (
                 <div className="app-container" style={{ fontSize: `${globalFontSize}px` }}>
                     <header className="header-fixed flex flex-col items-center py-4 bg-white border-b border-slate-100">
                         <h1 className="font-extrabold text-slate-900 italic text-xl uppercase tracking-tighter">IB Bio Master Pro</h1>
-                        <div className="flex gap-2 mt-1">
-                            <span className="bank-pill">題庫: {Object.values(masterBank).flat().length}</span>
-                            <span className="bank-pill text-blue-600 font-black">剩餘: {Object.values(masterBank).flat().length - usedIds.size}</span>
-                        </div>
+                        {quizStep === 'practice' && currentQ && (
+                            <div className="flex gap-4 mt-1 items-center">
+                                <span className="status-pill uppercase tracking-widest">Q {currentIndex + 1} / {queue.length}</span>
+                                <button onClick={() => toggleMastery(currentQ.id)} className={`flex items-center gap-1 text-[10px] font-black transition-colors ${masteredIds.has(currentQ.id) ? 'text-amber-500' : 'text-slate-300'}`}>
+                                    <AppIcon name="Star" size={14} fill={masteredIds.has(currentQ.id) ? "currentColor" : "none"} />熟悉
+                                </button>
+                            </div>
+                        )}
                     </header>
 
                     <main className="main-scroll">
@@ -294,24 +309,19 @@
                             {tab === 'home' && (
                                 <div className="space-y-6 animate-in fade-in">
                                     <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white text-center shadow-xl">
-                                        <h2 className="text-xl font-black mb-4 uppercase italic">學習進度</h2>
-                                        {!isLoaded ? (
-                                            <div className="animate-pulse">同步 GitHub 題庫中...</div>
-                                        ) : (
+                                        <h2 className="text-xl font-black mb-4 uppercase italic">學習狀況</h2>
+                                        {!isLoaded ? <div className="animate-pulse">正在加載 GitHub 題庫...</div> : (
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-blue-400">{Object.values(masterBank).flat().length}</p><p className="text-[10px] opacity-40 uppercase font-black">總題數</p></div>
-                                                <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-emerald-400">{usedIds.size}</p><p className="text-[10px] opacity-40 uppercase font-black">已练习</p></div>
+                                                <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-amber-400">{masteredIds.size}</p><p className="text-[10px] opacity-40 uppercase font-black">熟悉題目</p></div>
                                             </div>
                                         )}
                                     </div>
                                     <div className="grid grid-cols-1 gap-4 px-2">
                                         {THEMES.map(t => (
                                             <div key={t.id} className="bg-white p-5 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-2 h-8 rounded-full" style={{ backgroundColor: t.color }}></div>
-                                                    <div><p className="text-[10px] font-black opacity-30">Theme {t.id}</p><p className="font-bold text-sm text-slate-700">{t.name}</p></div>
-                                                </div>
-                                                <div className="text-xl font-black text-slate-800">{(masterBank[t.id] || []).length}</div>
+                                                <div className="flex items-center gap-3"><div className="w-2 h-8 rounded-full" style={{ backgroundColor: t.color }}></div><div><p className="text-[10px] font-black opacity-30 uppercase tracking-widest">Theme {t.id}</p><p className="font-bold text-sm text-slate-700">{t.name}</p></div></div>
+                                                <div className="text-xl font-black text-slate-800">{(masterBank[t.id] || []).filter(q => !masteredIds.has(q.id)).length}</div>
                                             </div>
                                         ))}
                                     </div>
@@ -324,8 +334,8 @@
                                         <div className="space-y-6 animate-in slide-in-from-bottom-4">
                                             <div className="grid grid-cols-2 gap-3">
                                                 {THEMES.map(t => (
-                                                    <button key={t.id} onClick={() => setSelThemes(p => p.includes(t.id) ? (p.length > 1 ? p.filter(id => id !== t.id) : p) : [...p, t.id])} className={`p-5 rounded-2xl text-left border-2 transition-all ${selThemes.includes(t.id) ? 'border-blue-600 bg-blue-50 scale-[1.02]' : 'border-slate-100 opacity-60 shadow-inner'}`}>
-                                                        <span className="font-black text-xs text-blue-600">{t.id}</span><br/><span className="font-bold text-[11px] text-slate-700">{t.name}</span>
+                                                    <button key={t.id} onClick={() => setSelThemes(p => p.includes(t.id) ? (p.length > 1 ? p.filter(id => id !== t.id) : p) : [...p, t.id])} className={`p-5 rounded-2xl text-left border-2 transition-all ${selThemes.includes(t.id) ? 'border-blue-600 bg-blue-50 scale-[1.02]' : 'border-slate-100 opacity-60'}`}>
+                                                        <span className="font-black text-xs text-blue-600 uppercase">Unit {t.id}</span><br/><span className="font-bold text-[11px] text-slate-700 leading-tight">{t.name}</span>
                                                     </button>
                                                 ))}
                                             </div>
@@ -334,66 +344,59 @@
                                                     <button key={type} onClick={() => setSelType(type)} className={`flex-1 py-4 rounded-xl font-black border-2 transition-all ${selType === type ? 'border-blue-600 bg-blue-600 text-white shadow-lg' : 'text-slate-400 bg-slate-50'}`}>{type}</button>
                                                 ))}
                                             </div>
-                                            <button onClick={startAssessment} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase italic tracking-widest shadow-xl active:scale-95 transition-all">Launch Assessment</button>
+                                            <button onClick={startPractice} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase italic tracking-widest shadow-xl active:scale-95 transition-all">Launch Assessment</button>
                                         </div>
                                     )}
 
-                                    {quizStep === 'asking' && currentQuestion && (
-                                        <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-50 space-y-8 animate-in zoom-in-95">
-                                            <div className="text-slate-900 font-extrabold italic leading-tight text-xl border-l-8 border-blue-600 pl-5">{currentQuestion.question}</div>
-                                            {selType === 'MCQ' ? (
-                                                <div className="grid grid-cols-1 gap-3">
-                                                    {Object.entries(currentQuestion?.options || {}).map(([k, v]) => (
-                                                        <button key={k} onClick={() => {
-                                                            const correct = k === currentQuestion.answer;
-                                                            setUserAnswer(k); setQuizStep('mcq_feedback');
-                                                        }} className="w-full p-5 rounded-2xl border-2 border-slate-100 text-left font-bold text-slate-700 active:border-blue-600 transition-all flex items-center gap-4">
-                                                            <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-black text-slate-400 shadow-inner">{k}</span>
-                                                            <span className="flex-1">{v}</span>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-4">
-                                                    <textarea className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl min-h-[300px] outline-none font-medium text-slate-700 shadow-inner" placeholder="在此輸入您的論述答案..." value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} />
-                                                    <button onClick={submitErq} disabled={!userAnswer.trim() || loading} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase shadow-xl italic active:scale-95 transition-all">Submit Evaluation</button>
+                                    {quizStep === 'practice' && currentQ && (
+                                        <div className="space-y-8 animate-in zoom-in-95">
+                                            <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-50 space-y-6">
+                                                <div className="text-slate-900 font-extrabold italic leading-tight text-xl border-l-8 border-blue-600 pl-5">{currentQ.question}</div>
+                                                
+                                                {currentQ.type === 'MCQ' ? (
+                                                    <div className="grid grid-cols-1 gap-3">
+                                                        {Object.entries(currentQ.options).map(([k, v]) => {
+                                                            let style = "border-slate-100 bg-white text-slate-700";
+                                                            if (currentRes) {
+                                                                if (k === currentQ.answer) style = "border-green-500 bg-green-50 text-green-900 shadow-md scale-[1.02] z-10";
+                                                                else if (k === currentRes.answer) style = "border-red-500 bg-red-50 text-red-900 opacity-60";
+                                                                else style = "border-slate-100 opacity-30";
+                                                            }
+                                                            return (
+                                                                <button key={k} disabled={!!currentRes} onClick={() => handleMcqSubmit(currentQ.id, k, currentQ.answer)} className={`w-full p-5 rounded-2xl border-2 text-left font-bold transition-all flex items-center gap-4 ${style}`}>
+                                                                    <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-inner ${currentRes?.answer === k ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-400'}`}>{k}</span>
+                                                                    <span className="flex-1 text-sm">{v}</span>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-4">
+                                                        <textarea disabled={!!currentRes} className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl min-h-[300px] outline-none font-medium text-slate-700 shadow-inner" placeholder="在此輸入您的專業論述..." value={tempAnswer} onChange={(e) => setTempAnswer(e.target.value)} />
+                                                        {!currentRes && (
+                                                            <button onClick={() => submitErq(currentQ.id)} disabled={!tempAnswer.trim() || loading} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase shadow-xl italic active:scale-95 transition-all">Submit Evaluation</button>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {loading && <div className="py-24 flex flex-col items-center animate-pulse"><div className="w-20 h-20 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-6"></div><p className="font-black text-xl italic text-slate-400 uppercase tracking-tighter">AI Moderation...</p></div>}
+
+                                            {currentRes && (
+                                                <div className="space-y-6">
+                                                    <div className="p-8 rounded-[2.5rem] bg-slate-100 border border-slate-200">
+                                                        <div className="flex justify-between items-center mb-6 uppercase tracking-widest font-black text-slate-400 text-xs">評核結果</div>
+                                                        {currentQ.type === 'MCQ' ? renderFeedbackCards(currentQ.prefetchedInsight) : renderFeedbackCards(currentRes.feedback, true)}
+                                                    </div>
                                                 </div>
                                             )}
-                                        </div>
-                                    )}
 
-                                    {loading && <div className="py-24 flex flex-col items-center animate-pulse"><div className="w-20 h-20 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-6"></div><p className="font-black text-xl italic text-slate-400 uppercase tracking-tighter">Moderating...</p></div>}
-
-                                    {(quizStep === 'mcq_feedback' || quizStep === 'erq_feedback') && currentQuestion && (
-                                        <div className="space-y-4 animate-in fade-in">
-                                            <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl math-container overflow-hidden">
-                                                {quizStep === 'mcq_feedback' && (
-                                                    <Fragment>
-                                                        <div className="text-slate-900 font-bold mb-8 italic opacity-40 px-2 text-base">{currentQuestion.question}</div>
-                                                        <div className="grid grid-cols-1 gap-3 mb-10">
-                                                            {Object.entries(currentQuestion?.options || {}).map(([k, v]) => {
-                                                                const isCorrect = k === currentQuestion.answer, isUser = k === userAnswer;
-                                                                let st = "border-slate-100 bg-slate-50 text-slate-400 opacity-40"; 
-                                                                if (isCorrect) st = "border-green-500 bg-green-50 text-green-900 shadow-md scale-[1.03] z-10";
-                                                                else if (isUser) st = "border-red-500 bg-red-50 text-red-900 shadow-sm";
-                                                                return (
-                                                                    <div key={k} className={`p-5 rounded-2xl font-bold border-2 flex items-center gap-4 transition-all duration-300 ${st}`}>
-                                                                        <span className={`w-8 h-8 rounded-full flex items-center justify-center font-black ${isCorrect ? 'bg-green-600 text-white' : (isUser ? 'bg-red-600 text-white' : 'bg-slate-200')}`} style={{ fontSize: '10px' }}>{k}</span>
-                                                                        <span className="flex-1 text-sm">{v}</span>
-                                                                        {isCorrect && <div className="text-green-500"><AppIcon name="Check" size={20} /></div>}
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    </Fragment>
+                                            <div className="flex gap-4">
+                                                {selType === 'ERQ' && (
+                                                    <button onClick={() => navigate(-1)} disabled={currentIndex === 0} className="btn-action bg-white border-2 border-slate-100 text-slate-400 flex-1 font-black"><AppIcon name="Prev" /> PREV</button>
                                                 )}
-                                                <div className="p-8 rounded-[2.5rem] bg-slate-50 border border-slate-200">
-                                                    <div className="flex justify-between items-center mb-6"><span className="ui-label tracking-widest font-black text-slate-400 uppercase text-xs">Evaluation Report</span></div>
-                                                    {quizStep === 'mcq_feedback' && <div className="mt-4">{renderThemedCards(currentQuestion.prefetchedInsight)}</div>}
-                                                    {quizStep === 'erq_feedback' && <div className="space-y-4">{renderThemedCards(aiFeedback, true)}</div>}
-                                                </div>
+                                                <button onClick={() => { if (currentIndex === queue.length - 1) setQuizStep('setup'); else navigate(1); }} className="btn-action bg-slate-900 text-white flex-1 font-black">NEXT {currentIndex === queue.length - 1 ? '(FINISH)' : ''} <AppIcon name="Next" /></button>
                                             </div>
-                                            <button onClick={handleNext} className="w-full bg-slate-900 text-white py-6 rounded-2xl font-black uppercase shadow-xl italic active:scale-95 transition-all">Next Challenge</button>
                                         </div>
                                     )}
                                 </div>
@@ -404,9 +407,9 @@
                                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
                                         <p className="ui-label tracking-widest font-black text-slate-400 text-xs uppercase">Settings</p>
                                         <div className="p-6 bg-slate-900 rounded-3xl text-white space-y-4">
-                                            <p className="text-xs font-black uppercase text-blue-400 tracking-widest">Gemini API Key (永久儲存)</p>
+                                            <p className="text-xs font-black uppercase text-blue-400 tracking-widest">Gemini API Key</p>
                                             <input type="password" className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none text-sm placeholder-white/20" placeholder="貼上您的 API Key..." value={userApiKey} onChange={(e) => {setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} />
-                                            <p className="text-[9px] opacity-40 leading-relaxed">Key 已加密儲存。本地題庫讀取不消耗額度，僅在 ERQ 評分時發送請求。</p>
+                                            <p className="text-[9px] opacity-40 italic">Key 將安全地儲存在此瀏覽器中。標記熟悉的題目會自動過濾。答錯的題目會自動輪轉至隊列末端。</p>
                                         </div>
                                         <div className="p-6 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-between">
                                             <div><span className="font-bold text-sm text-slate-600">Interface Scale</span><p className="text-[10px] text-slate-400 font-bold">{globalFontSize}px</p></div>
@@ -430,12 +433,15 @@
             );
         };
 
-        const AppIcon = ({ name, size = 22, color = "currentColor" }) => {
+        const AppIcon = ({ name, size = 22, color = "currentColor", fill = "none" }) => {
             const icons = {
-                Home: <svg className="mb-1" width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
-                Brain: <svg className="mb-1" width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>,
-                Config: <svg className="mb-1" width={size} height={size} fill="none" stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>,
-                Check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                Home: <svg className="mb-1" width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
+                Brain: <svg className="mb-1" width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>,
+                Config: <svg className="mb-1" width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>,
+                Check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>,
+                Star: <svg width={size} height={size} fill={fill} stroke={color} strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,
+                Next: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>,
+                Prev: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
             };
             return icons[name] || null;
         };
