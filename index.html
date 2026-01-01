@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master | 最終穩定優化版</title>
+    <title>IB Bio Master | 最終穩定加固版</title>
     
     <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -33,8 +33,8 @@
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #2563eb; }
         
-        /* 報告與卡片樣式 */
-        .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: white; margin-bottom: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        /* 報告與卡片質感優化 */
+        .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: white; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .card-blue { border-color: #2563eb; background: #f0f7ff; }
         .card-rose { border-color: #e11d48; background: #fff1f2; }
         .card-amber { border-color: #f59e0b; background: #fffbeb; }
@@ -43,8 +43,8 @@
 
         .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 10px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; background: #1e293b; color: white; }
         
-        .math-container { line-height: 1.8; word-break: break-word; margin-bottom: 1rem; }
-        .indent-content { padding-left: 1.25rem; border-left: 3px solid rgba(0,0,0,0.05); margin-top: 0.8rem; color: #334155; }
+        .math-container { line-height: 1.8; word-break: break-word; margin-bottom: 0.75rem; }
+        .indent-content { padding-left: 1.25rem; border-left: 3px solid rgba(0,0,0,0.04); margin-top: 0.5rem; color: #475569; }
 
         .animate-up { animation: slideUp 0.35s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -56,20 +56,24 @@
         .option-label { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; background: #f1f5f9; color: #1e293b; border: 2.5px solid #cbd5e1; transition: 0.2s; flex-shrink: 0; }
         .selected-label { background: #1e293b; color: white; border-color: #1e293b; }
 
-        /* 控制項 */
-        .font-cycle-btn { background: #eff6ff; padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #2563eb; border: 2px solid #dbeafe; transition: 0.2s; }
+        /* 彩色大控制項 */
+        .font-cycle-btn { background: #eff6ff; padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #2563eb; border: 2px solid #dbeafe; transition: 0.2s; box-shadow: 0 2px 5px rgba(37, 99, 235, 0.1); }
+        .font-cycle-btn:active { transform: scale(0.9); background: #dbeafe; }
         .back-nav-btn { color: #2563eb; padding: 10px; border-radius: 14px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; }
-        
-        .mastery-container { display: flex; align-items: center; gap: 12px; }
-        .mastery-label-text { font-size: 12px; font-weight: 800; color: #94a3b8; }
-        .mastery-toggle-btn { width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .back-nav-btn:active { transform: scale(0.9); }
 
-        .bio-table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.9em; background: white; border-radius: 12px; overflow: hidden; }
-        .bio-table th { background: #f8fafc; padding: 12px; text-align: left; font-weight: 800; border-bottom: 2px solid #e2e8f0; color: #64748b; }
-        .bio-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+        /* 熟悉度區塊：標籤在左，星星在右 */
+        .mastery-container { display: flex; align-items: center; gap: 12px; }
+        .mastery-label-text { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
+        .mastery-toggle-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+
+        /* 表格優化 */
+        .bio-table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.85em; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .bio-table th { background: #f8fafc; padding: 10px; text-align: left; font-weight: 800; border-bottom: 2px solid #e2e8f0; color: #64748b; }
+        .bio-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; color: #334155; }
         
-        .pdf-mode { font-size: 11px !important; line-height: 1.3 !important; }
-        .pdf-mode .themed-card { margin-bottom: 0.5rem !important; padding: 0.8rem 1.1rem !important; border-width: 1px !important; border-left-width: 6px !important; box-shadow: none !important; break-inside: avoid; }
+        .pdf-mode { font-size: 11px !important; line-height: 1.25 !important; }
+        .pdf-mode .themed-card { margin-bottom: 0.4rem !important; padding: 0.8rem 1rem !important; border-width: 1px !important; border-left-width: 6px !important; box-shadow: none !important; break-inside: avoid; }
     </style>
 </head>
 <body>
@@ -105,8 +109,8 @@
             let text = String(input || "").trim();
             if (!text || text === "undefined") return "";
             
-            // 關鍵修正：強力清除 Markdown 特殊符號 (掃除圖片中的怪異符號)
-            text = text.replace(/(\*\*|__|\*|_|#+|~+)/g, "");
+            // 關鍵：全域徹底過濾 Markdown 符號與不必要的系統字元
+            text = text.replace(/(\*\*|__|\*|_|#+|~+|`+)/g, "");
             text = text.replace(/Supplement for:.*?\n/gi, "").replace(/---/g, "");
             
             const chemPattern = /\b(Na\+|K\+|H\+|Ca2\+|Mg2\+|Cl-|NO2-|NO3-|NH4\+|CO2|H2O|O2|C6H12O6|ATP|ADP|NAD\+|NADH|RuBP|Rubisco|q2|p2|2pq)\b/g;
@@ -132,7 +136,8 @@
                         finalHTML.push(`<table class="bio-table"><thead><tr>${tableData[0].map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${tableData.slice(1).map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
                         inTable = false; tableData = [];
                     }
-                    finalHTML.push(`<div class="mb-2 math-container">${line}</div>`);
+                    // 加入適度段落空行
+                    finalHTML.push(`<div class="mb-3 math-container">${line}</div>`);
                 }
             });
             return finalHTML.join('');
@@ -162,13 +167,12 @@
 
             const reportRef = useRef(null);
 
-            // --- 核心更新：輸入 Key 後自動跳轉至主畫面 ---
+            // --- 更新重點：輸入 Key 後自動跳轉主畫面 ---
             useEffect(() => {
-                if (userApiKey && userApiKey.trim().length > 10) {
-                    if (tab === 'config') setTab('home');
+                if (userApiKey && userApiKey.trim().length > 10 && tab === 'config') {
+                    setTab('home');
                 } else if (!userApiKey && tab !== 'config') {
                     setTab('config');
-                    showToast("請輸入有效 API Key 以啟用功能");
                 }
             }, [userApiKey]);
 
@@ -244,11 +248,12 @@
 
             const directImport = () => {
                 try {
+                    // 超強力提取 JSON
                     const match = generatedJson.match(/\{[\s\S]*\}/);
                     if (match) {
                         importToBank(JSON.parse(match[0]));
                         setGeneratedJson("");
-                        showToast("同步成功！庫存已更新");
+                        showToast("同步成功！Dashboard 已更新");
                     } else throw new Error();
                 } catch(e) { showToast("解析失敗"); }
             };
@@ -258,7 +263,7 @@
                 if (pool.length) {
                     setQueue([...pool].sort(() => Math.random() - 0.5));
                     setCurrentIndex(0); setQuizStep('practice'); setSessionResults({}); setTempAnswer('');
-                } else showToast("無未掌握題目");
+                } else showToast("目前的單元都已掌握！");
             };
 
             const toggleMastery = (qId) => {
@@ -273,31 +278,30 @@
             const handleNext = () => {
                 if (!queue[currentIndex]) return;
                 const curQ = queue[currentIndex];
+                const res = sessionResults[curQ.id];
                 const isMastered = masteredIds.has(curQ.id);
 
                 if (isMastered) {
-                    // 若標記為熟悉，從目前隊列移除
+                    // 核心邏輯：設為熟悉則移除，保證不重複
                     setQueue(prev => prev.filter(q => q.id !== curQ.id));
                     if (currentIndex >= queue.length - 1 && queue.length > 1) {
-                        setCurrentIndex(0);
+                         setCurrentIndex(0);
                     }
+                } else if (res) {
+                    // 答對但未標記熟悉：移到隊列最末端 (Spaced Repetition)
+                    setQueue(prev => {
+                        const next = [...prev];
+                        const target = next.splice(currentIndex, 1)[0];
+                        next.push(target);
+                        return next;
+                    });
                 } else {
-                    // 若答對但未標記熟悉，移至末端
-                    if (sessionResults[curQ.id]?.isCorrect || selType === 'ERQ') {
-                         setQueue(prev => {
-                            const next = [...prev];
-                            const target = next.splice(currentIndex, 1)[0];
-                            next.push(target);
-                            return next;
-                        });
-                    } else {
-                        // 答錯或其他情況，直接下一題
-                        setCurrentIndex(p => (p + 1) % queue.length);
-                    }
+                    // 普通切換
+                    setCurrentIndex(p => (p + 1) % queue.length);
                 }
 
                 if (queue.length <= 1 && isMastered) {
-                    showToast("全部題目已掌握！");
+                    showToast("全部題目已練習完畢！");
                     setQuizStep('setup');
                 } else {
                     setTempAnswer('');
@@ -313,7 +317,7 @@
             const submitErq = async () => {
                 if (!tempAnswer.trim() || !queue[currentIndex]) return;
                 setLoading(true);
-                const sys = "Senior IB Bio Moderator. Use EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Provide detailed examples. NO markdown symbols.";
+                const sys = "Senior IB Bio Moderator. Use EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Provide detailed comparisons. NO bolding symbols like stars.";
                 const usr = `Question: "${queue[currentIndex].question}"\nStudent Answer: "${tempAnswer}"\nGrade with headers.`;
                 const fb = await askAI(usr, sys);
                 if (fb) setSessionResults(prev => ({ ...prev, [queue[currentIndex].id]: { answer: tempAnswer, feedback: fb } }));
@@ -337,7 +341,7 @@
                 if (!reportRef.current) return;
                 const element = reportRef.current;
                 element.classList.add('pdf-mode');
-                const opt = { margin: 8, filename: 'Bio_Report.pdf', image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } };
+                const opt = { margin: 8, filename: 'Assessment_Report.pdf', image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } };
                 html2pdf().set(opt).from(element).save().then(() => element.classList.remove('pdf-mode'));
             };
 
@@ -355,7 +359,7 @@
 
                 let cards = [];
                 if (isErq && original) cards.push(<div key="user" className="themed-card card-slate"><span className="badge-mini bg-slate-500 text-white">Your Response</span><div className="font-semibold text-slate-600 italic leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(original) }} /></div>);
-                if (!isErq && expl) cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini bg-emerald-600 text-white">Brief Review</span><div className="font-semibold text-emerald-800" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
+                if (!isErq && expl) cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini bg-emerald-600 text-white">Knowledge Briefing</span><div className="font-semibold text-emerald-800" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
 
                 found.forEach((p, i) => {
                     const content = text.substring(p.index + p.rawLen, (i + 1 < found.length) ? found[i+1].index : text.length).trim();
@@ -370,7 +374,7 @@
                     if (content.length > 2) cards.push(<div key={p.name+i} className={`themed-card ${color}`}><span className="badge-mini bg-slate-800 text-white">{label}</span><div className="font-medium text-slate-700 indent-content" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} /></div>);
                 });
 
-                if (!cards.length) cards.push(<div key="fb" className="themed-card card-blue"><span className="badge-mini">AI Feedback</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(text) }} /></div>);
+                if (!cards.length) cards.push(<div key="fb" className="themed-card card-blue"><span className="badge-mini">AI Evaluation</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(text) }} /></div>);
                 return cards;
             }, []);
 
@@ -400,7 +404,7 @@
                                 <div className="space-y-4 animate-up">
                                     <div className="bg-slate-900 rounded-3xl p-6 text-white text-center shadow-lg">
                                         <div className="grid grid-cols-2 gap-3 mb-6">
-                                            <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-blue-400">{Object.values(masterBank).flat().length}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Stock</p></div>
+                                            <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-blue-400">{Object.values(masterBank).flat().length}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Questions</p></div>
                                             <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-emerald-400">{masteredIds.size}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Mastered</p></div>
                                         </div>
                                         <div className="grid grid-cols-4 gap-2">
@@ -413,6 +417,7 @@
                                         </div>
                                     </div>
 
+                                    {/* Generator Embedded */}
                                     <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-4">
                                         <h2 className="font-black text-xs uppercase italic text-slate-400 flex items-center gap-2"><AppIcon name="Sparkles" size={12} /> AI Generator</h2>
                                         <div className="space-y-3">
@@ -422,7 +427,7 @@
                                             <div className="flex gap-1">
                                                 {[{id:'mixed',n:'綜合'}, {id:'mcq',n:'選擇'}, {id:'erq',n:'論述'}].map(m=>(<button key={m.id} onClick={()=>setBuildRatio(m.id)} className={`flex-1 py-1.5 rounded-lg font-black text-[10px] border transition-all ${buildRatio===m.id ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-400 border-slate-100'}`}>{m.n}</button>))}
                                             </div>
-                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 ${buildRatio} questions for Unit ${buildTheme}. Output a JSON object { "${buildTheme}": [ ... ] }. MCQ MUST have detailed "explanation" and "prefetchedInsight".`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] italic shadow-md active:scale-95">{loading ? 'AI Constructing...' : 'Generate New Questions'}</button>
+                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 ${buildRatio} questions for Unit ${buildTheme}. Output a JSON object { "${buildTheme}": [ ... ] }. MCQ MUST have detailed "explanation" and "prefetchedInsight".`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] italic shadow-md active:scale-95">{loading ? 'AI Working...' : 'Generate New Questions'}</button>
                                         </div>
                                         {generatedJson && (
                                             <div className="mt-4 pt-4 border-t space-y-2">
@@ -444,7 +449,7 @@
                                             <div className="flex gap-2">
                                                 {['MCQ','ERQ'].map(type=>(<button key={type} onClick={()=>setSelType(type)} className={`flex-1 py-3 rounded-lg font-black border-2 transition-all ${selType===type?'bg-slate-900 text-white border-slate-900 shadow-md':'text-slate-400 bg-slate-50'}`}>{type}</button>))}
                                             </div>
-                                            <button onClick={startPractice} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase italic tracking-widest shadow-lg active:scale-95 transition-all">Start Training</button>
+                                            <button onClick={startPractice} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase italic tracking-widest shadow-lg active:scale-95 transition-all">Start Session</button>
                                         </div>
                                     ) : cur && (
                                         <div className="space-y-4 animate-up">
@@ -477,7 +482,7 @@
                                                         </div>
                                                     ) : (
                                                         <div className="space-y-3">
-                                                            <textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-50 border-2 rounded-2xl min-h-[160px] outline-none font-medium text-slate-800" placeholder="Input analytical response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />
+                                                            <textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-50 border-2 rounded-2xl min-h-[160px] outline-none font-medium" placeholder="Input analytical response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />
                                                             {!sessionResults[cur.id] && <button onClick={submitErq} disabled={!tempAnswer.trim()||loading} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase italic tracking-widest shadow-md">{loading?'Analyzing...':'Submit Response'}</button>}
                                                         </div>
                                                     )}
@@ -521,12 +526,7 @@
                                             <p className="text-[9px] font-black uppercase text-blue-400">Gemini AI Access</p>
                                             <input type="password" placeholder="請輸入 API Key 以開始使用" className="w-full p-3 bg-white/10 border-none rounded-lg text-sm text-blue-100 placeholder:text-blue-300/40" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} />
                                         </div>
-                                        {(!userApiKey) && (
-                                            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200">
-                                                <p className="text-xs font-bold text-amber-700 leading-relaxed italic">您尚未輸入 API Key。輸入完成後，系統會自動跳轉至主頁面。</p>
-                                            </div>
-                                        )}
-                                        <button onClick={()=>{if(confirm("確定要清空所有數據嗎？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest">Reset All Data</button>
+                                        <button onClick={()=>{if(confirm("確定要清空本地數據嗎？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest">Reset Application Data</button>
                                     </div>
                                 </div>
                             )}
