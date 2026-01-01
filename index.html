@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>IB Bio Master | 專業同步與自動化建庫系統</title>
     
-    <!-- 核心資源載入 (已修正連結格式) -->
+    <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -55,9 +55,16 @@
         .hidden-file-input { display: none; }
         .toast-msg { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 999px; font-weight: 700; font-size: 0.8rem; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out; }
 
-        /* PDF 高清化輸出樣式 */
-        .no-animation { animation: none !important; opacity: 1 !important; transform: none !important; transition: none !important; background-color: #ffffff !important; box-shadow: none !important; border-left: 6px solid #2563eb !important; }
-        .pdf-area { background: white !important; }
+        /* PDF 匯出強制淨化樣式 */
+        .no-animation, .no-animation * { 
+            animation: none !important; 
+            opacity: 1.0 !important; 
+            transform: none !important; 
+            transition: none !important; 
+            box-shadow: none !important;
+            background-image: none !important;
+        }
+        .pdf-white-bg { background-color: #ffffff !important; }
     </style>
 </head>
 <body>
@@ -66,7 +73,7 @@
     <script type="text/babel">
         const { useState, useEffect, Fragment, useCallback, useRef, useMemo } = React;
 
-        // --- 全域常數與輔助工具 ---
+        // --- GLOBAL CONSTANTS ---
         const THEMES = [
             { id: "A", name: "Unity & Molecules", color: "#2563eb" }, 
             { id: "B", name: "Function & Cells", color: "#10b981" }, 
@@ -162,7 +169,7 @@
                     if (resAll.ok) {
                         const data = await resAll.json();
                         Object.keys(data).forEach(k => {
-                            const unit = k.toUpperCase();
+                            const unit = k.toUpperCase().replace('THEME ', '');
                             if (pool[unit]) pool[unit] = [...pool[unit], ...data[k]];
                         });
                     }
@@ -182,13 +189,13 @@
                     } catch (e) {}
                 }
                 
-                // 載入本地庫
+                // 合併本地庫
                 const localBank = JSON.parse(localStorage.getItem('local_custom_bank') || '{}');
                 Object.keys(localBank).forEach(unit => {
                     const id = unit.toUpperCase();
                     if (pool[id]) {
                         const existingIds = new Set(pool[id].map(q => q.id));
-                        const uniqueNew = localBank[unit].filter(q => !existingIds.has(q.id));
+                        const uniqueNew = (localBank[unit] || []).filter(q => q && !existingIds.has(q.id));
                         pool[id] = [...pool[id], ...uniqueNew];
                     }
                 });
@@ -204,38 +211,51 @@
                 render();
                 const timer = setTimeout(render, 400);
                 return () => clearTimeout(timer);
-            }, [quizStep, currentIndex, sessionResults, tab, generatedJson]);
+            }, [quizStep, currentIndex, sessionResults, tab]);
 
             const showToast = (msg) => { setStatusMsg(msg); setTimeout(() => setStatusMsg(""), 3000); };
 
+            // --- 匯入引擎強化：解決題目為 0 的問題 ---
             const importToBank = (json) => {
+                if (!json || typeof json !== 'object') return;
+                
                 const localCustom = JSON.parse(localStorage.getItem('local_custom_bank') || '{}');
-                Object.keys(json).forEach(unit => {
-                    const uKey = unit.toUpperCase();
-                    if (['A','B','C','D'].includes(uKey)) {
-                        localCustom[uKey] = [...(localCustom[uKey] || []), ...json[unit]];
-                        const map = new Map();
-                        localCustom[uKey].forEach(q => { if(q) map.set(q.id, q); });
-                        localCustom[uKey] = Array.from(map.values());
-                    }
+                
+                setMasterBank(prev => {
+                    const next = { ...prev };
+                    Object.keys(json).forEach(unit => {
+                        // 寬鬆識別鍵名 (例如 "Theme A" -> "A")
+                        let uKey = unit.toUpperCase().replace('THEME ', '').trim();
+                        if (['A','B','C','D'].includes(uKey)) {
+                            const incoming = Array.isArray(json[unit]) ? json[unit] : [];
+                            
+                            // 更新本地自定義存儲
+                            localCustom[uKey] = [...(localCustom[uKey] || []), ...incoming];
+                            const uniqueMap = new Map();
+                            localCustom[uKey].forEach(q => { if(q && q.id) uniqueMap.set(q.id, q); });
+                            localCustom[uKey] = Array.from(uniqueMap.values());
+                            
+                            // 立即同步更新當前 state 以反映在 Dashboard
+                            const existingIdsInNext = new Set(next[uKey].map(q => q.id));
+                            const uniqueIncoming = incoming.filter(q => q && q.id && !existingIdsInNext.has(q.id));
+                            next[uKey] = [...next[uKey], ...uniqueIncoming];
+                        }
+                    });
+                    localStorage.setItem('local_custom_bank', JSON.stringify(localCustom));
+                    return { ...next }; // 強制觸發 React 更新
                 });
-                localStorage.setItem('local_custom_bank', JSON.stringify(localCustom));
-                loadAllBanks();
             };
 
-            const handleFileImport = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    try {
-                        const json = JSON.parse(event.target.result);
-                        importToBank(json);
-                        showToast(`題庫匯入成功！`);
-                    } catch (err) { showToast("JSON 解析失敗。"); }
-                };
-                reader.readAsText(file);
-                e.target.value = "";
+            const directImportBuilder = () => {
+                try {
+                    const cleanJsonStr = generatedJson.replace(/```json\n?|```/g, "").trim();
+                    const json = JSON.parse(cleanJsonStr);
+                    importToBank(json);
+                    setGeneratedJson("");
+                    showToast("一鍵匯入成功！題數已更新。");
+                } catch(e) { 
+                    showToast("解析失敗，格式可能有誤。"); 
+                }
             };
 
             const askAI = async (prompt, system, isJson = false) => {
@@ -273,9 +293,8 @@
             const submitErq = async (qId) => {
                 if (!tempAnswer.trim()) return;
                 setLoading(true);
-                const currentQ = queue[currentIndex];
-                const sys = "Senior IB Bio Moderator. Tech keyword audit. Use headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Detailed content required.";
-                const usr = `Question: "${currentQ.question}"\nStudent Answer: "${tempAnswer}"\nEvaluate using 4 headers. Use LaTeX.`;
+                const sys = "Senior IB Bio Moderator. Perform a deep keyword and concept audit. Strictly use 4 headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Detailed content with examples required.";
+                const usr = `Question: "${queue[currentIndex].question}"\nStudent Answer: "${tempAnswer}"\nEvaluate using 4 headers. Use LaTeX.`;
                 const fb = await askAI(usr, sys);
                 if (fb) setSessionResults(prev => ({ ...prev, [qId]: { answer: tempAnswer, feedback: fb } }));
                 setLoading(false);
@@ -287,44 +306,33 @@
                 let mcqNum = buildCount, erqNum = 0;
                 if (buildRatio === 'erq') { mcqNum = 0; erqNum = buildCount; }
                 else if (buildRatio === 'mixed') { mcqNum = Math.floor(buildCount * 0.8); erqNum = buildCount - mcqNum; }
-                const usr = `Generate ${mcqNum} MCQ and ${erqNum} ERQ for Theme ${buildTheme}. Format JSON. Use unique IDs like 'U_${Date.now()}'. Options MUST be an Object {"A":"...", "B":"...", ...}.`;
+                // 強化 ID 隨機性，防止去重誤刪
+                const usr = `Generate ${mcqNum} MCQ and ${erqNum} ERQ for Theme ${buildTheme}. Format JSON. Use random unique IDs starting with 'U_${Date.now()}_'. Options must be Object {"A":"...", "B":"...", ...}.`;
                 const res = await askAI(usr, "Expert IB Teacher. JSON only.", true);
                 if (res) setGeneratedJson(res); else showToast("產題失敗。");
                 setLoading(false);
-            };
-
-            const directImportBuilder = () => {
-                try {
-                    const cleanJson = generatedJson.replace(/```json\n?|```/g, "").trim();
-                    const json = JSON.parse(cleanJson);
-                    importToBank(json);
-                    setGeneratedJson("");
-                    showToast("一鍵匯入成功！");
-                } catch(e) { showToast("解析失敗。"); }
             };
 
             const exportPDF = () => {
                 if (!reportRef.current) return;
                 const element = reportRef.current;
                 const cards = element.querySelectorAll('.themed-card');
+                
+                // PDF 淨化模式：移除陰影、動畫、透明度
                 cards.forEach(c => c.classList.add('no-animation'));
+                element.classList.add('pdf-white-bg');
+
                 const opt = {
-                    margin: 10, filename: `IB_Bio_Report.pdf`,
+                    margin: [10, 10],
+                    filename: `IB_Bio_Report.pdf`,
                     image: { type: 'jpeg', quality: 1.0 },
-                    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
+
                 html2pdf().set(opt).from(element).save().then(() => {
                     cards.forEach(c => c.classList.remove('no-animation'));
-                });
-            };
-
-            const toggleMastery = (qId) => {
-                setMasteredIds(prev => {
-                    const next = new Set(prev);
-                    if (next.has(qId)) next.delete(qId); else next.add(qId);
-                    localStorage.setItem('mastered_ids', JSON.stringify(Array.from(next)));
-                    return next;
+                    element.classList.remove('pdf-white-bg');
                 });
             };
 
@@ -344,14 +352,15 @@
                 
                 let found = [];
                 markers.forEach(m => {
-                    const idx = text.toLowerCase().indexOf(m.toLowerCase());
-                    if (idx !== -1) found.push({ name: m, index: idx });
+                    const regex = new RegExp(m, 'i');
+                    const match = text.match(regex);
+                    if (match) found.push({ name: m, index: match.index });
                 });
                 found.sort((a,b) => a.index - b.index);
 
                 let cards = [];
                 if (isErq && originalAnswer) {
-                    cards.push(<div key="u" className="themed-card card-slate no-animation"><span className="badge-pill bg-slate-600 text-white font-black">Your Response</span><div className="font-semibold text-slate-600 italic" dangerouslySetInnerHTML={{ __html: bioCompiler(originalAnswer) }} /></div>);
+                    cards.push(<div key="u" className="themed-card card-slate no-animation"><span className="badge-pill bg-slate-600 text-white font-black uppercase">Your Original Response</span><div className="font-semibold text-slate-600 italic leading-relaxed" dangerouslySetInnerHTML={{ __html: bioCompiler(originalAnswer) }} /></div>);
                 }
 
                 found.forEach((m, i) => {
@@ -360,7 +369,7 @@
                     const content = text.substring(start, end).replace(new RegExp('^' + m.name + ':?', 'i'), "").trim();
                     let color = "card-blue", label = m.name;
                     if (isErq) {
-                        if (/Mark Scheme/i.test(m.name)) { label = "Analysis"; color = "card-blue"; }
+                        if (/Mark Scheme/i.test(m.name)) { label = "Markscheme"; color = "card-blue"; }
                         else if (/Gap/i.test(m.name)) { label = "Gaps"; color = "card-rose"; }
                         else if (/Pathway/i.test(m.name)) { label = "Pathway"; color = "card-amber"; }
                         else if (/Exemplar/i.test(m.name)) { label = "Exemplar"; color = "card-emerald"; }
@@ -372,11 +381,12 @@
                     if (content.length > 2) cards.push(<div key={m.name} className={`themed-card ${color} no-animation`}><span className="badge-pill bg-slate-800 opacity-80 uppercase font-black">{label}</span><div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} /></div>);
                 });
                 if (cards.length === 0 || (isErq && cards.length === 1)) {
-                    cards.push(<div key="f" className="themed-card card-blue no-animation"><span className="badge-pill bg-slate-800 opacity-80">AI Moderator</span><div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(text) }} /></div>);
+                    cards.push(<div key="f" className="themed-card card-blue no-animation"><span className="badge-pill bg-slate-800 opacity-80 font-black">Moderator Commentary</span><div className="font-semibold text-slate-700 leading-relaxed text-[1rem]" dangerouslySetInnerHTML={{ __html: bioCompiler(text) }} /></div>);
                 }
                 return cards;
             }, []);
 
+            // 修復 ReferenceError: currentQ
             const currentQ = queue[currentIndex];
 
             return (
@@ -399,16 +409,26 @@
                                     <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white text-center shadow-xl">
                                         <h2 className="text-xl font-black mb-6 uppercase italic font-black">題庫管理</h2>
                                         <div className="grid grid-cols-2 gap-4 mb-8">
-                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-blue-400">{Object.values(masterBank).flat().length}</p><p className="text-[10px] opacity-40 uppercase font-black">總題數</p></div>
-                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-amber-400">{masteredIds.size}</p><p className="text-[10px] opacity-40 uppercase font-black">已掌握</p></div>
+                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-blue-400 font-black">{Object.values(masterBank).flat().length}</p><p className="text-[10px] opacity-40 uppercase font-black">總題數</p></div>
+                                            <div className="bg-white/10 p-4 rounded-2xl"><p className="text-2xl font-black text-amber-400 font-black">{masteredIds.size}</p><p className="text-[10px] opacity-40 uppercase font-black">已掌握</p></div>
                                         </div>
-                                        <button onClick={() => fileInputRef.current.click()} className="btn-action w-full bg-blue-600 text-white shadow-lg py-5 font-black italic"><AppIcon name="Next" size={20} /> 手動匯入 JSON</button>
-                                        <input type="file" accept=".json" className="hidden-file-input" ref={fileInputRef} onChange={handleFileImport} />
+                                        <button onClick={() => fileInputRef.current.click()} className="btn-action w-full bg-blue-600 text-white shadow-lg py-5 mb-2 font-black italic"><AppIcon name="Next" size={20} /> 直接選擇 JSON 匯入</button>
+                                        <input type="file" accept=".json" className="hidden-file-input" ref={fileInputRef} onChange={(e) => {
+                                            const file = e.target.files[0];
+                                            if (!file) return;
+                                            const reader = new FileReader();
+                                            reader.onload = (ev) => {
+                                                try { importToBank(JSON.parse(ev.target.result)); showToast("匯入成功！數字已同步。"); }
+                                                catch (err) { showToast("解析失敗。"); }
+                                            };
+                                            reader.readAsText(file);
+                                            e.target.value = "";
+                                        }} />
                                     </div>
                                     <div className="grid grid-cols-1 gap-4 px-2">
                                         {THEMES.map(t => (
                                             <div key={t.id} className="bg-white p-5 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
-                                                <div className="flex items-center gap-3"><div className="w-2 h-8 rounded-full" style={{ backgroundColor: t.color }}></div><div><p className="text-[10px] font-black opacity-30 uppercase font-black">Theme {t.id}</p><p className="font-bold text-sm text-slate-700 font-black">{t.name}</p></div></div>
+                                                <div className="flex items-center gap-3"><div className="w-2 h-8 rounded-full" style={{ backgroundColor: t.color }}></div><div><p className="text-[10px] font-black opacity-30 uppercase">Theme {t.id}</p><p className="font-bold text-sm text-slate-700 font-black">{t.name}</p></div></div>
                                                 <div className="text-xl font-black text-slate-800">{(masterBank[t.id] || []).filter(q => q && !masteredIds.has(q.id)).length}</div>
                                             </div>
                                         ))}
@@ -451,7 +471,7 @@
                                             <div className="grid grid-cols-2 gap-3">
                                                 {THEMES.map(t => (
                                                     <button key={t.id} onClick={() => setSelThemes(p => p.includes(t.id) ? (p.length > 1 ? p.filter(id => id !== t.id) : p) : [...p, t.id])} className={`p-5 rounded-2xl text-left border-2 transition-all ${selThemes.includes(t.id) ? 'border-blue-600 bg-blue-50 scale-[1.02] shadow-sm' : 'border-slate-100 opacity-60'}`}>
-                                                        <span className="font-black text-xs text-blue-600 uppercase font-black tracking-widest">Unit {t.id}</span><br/><span className="font-bold text-[11px] text-slate-700 font-black">{t.name}</span>
+                                                        <span className="font-black text-xs text-blue-600 uppercase font-black tracking-widest font-black">Unit {t.id}</span><br/><span className="font-bold text-[11px] text-slate-700 font-black">{t.name}</span>
                                                     </button>
                                                 ))}
                                             </div>
@@ -474,18 +494,19 @@
                                                             const res = sessionResults[currentQ.id];
                                                             const label = ["A", "B", "C", "D"][idx] || k;
                                                             
-                                                            let style = "border-slate-100 bg-white text-slate-700";
+                                                            let btnStyle = "border-slate-100 bg-white text-slate-700";
                                                             if (res) {
                                                                 if (String(k).trim().toUpperCase() === String(currentQ.answer).trim().toUpperCase()) {
-                                                                    style = "border-green-500 bg-green-100 text-green-900 shadow-md scale-[1.02] z-10 border-4";
+                                                                    btnStyle = "border-green-500 bg-green-100 text-green-900 shadow-md scale-[1.02] z-10 border-4";
                                                                 } else if (String(k).trim().toUpperCase() === String(res.answer).trim().toUpperCase()) {
-                                                                    style = "border-red-500 bg-red-50 text-red-900 opacity-80 border-4";
+                                                                    btnStyle = "border-red-500 bg-red-50 text-red-900 opacity-80 border-4";
                                                                 } else {
-                                                                    style = "border-slate-100 opacity-40";
+                                                                    btnStyle = "border-slate-100 opacity-40";
                                                                 }
                                                             }
+                                                            
                                                             return (
-                                                                <button key={k} disabled={!!res} onClick={() => handleMcqSubmit(currentQ.id, k, currentQ.answer)} className={`w-full p-5 rounded-2xl border-2 text-left font-bold transition-all flex items-center gap-4 ${style}`}>
+                                                                <button key={k} disabled={!!res} onClick={() => handleMcqSubmit(currentQ.id, k, currentQ.answer)} className={`w-full p-5 rounded-2xl border-2 text-left font-bold transition-all flex items-center gap-4 ${btnStyle}`}>
                                                                     <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-inner ${res?.answer === k ? 'bg-slate-800 text-white font-black' : 'bg-slate-100 text-slate-400'}`}>{label}</span>
                                                                     <span className="flex-1 text-sm font-bold">{v}</span>
                                                                 </button>
@@ -494,9 +515,9 @@
                                                     </div>
                                                 ) : (
                                                     <div className="space-y-4">
-                                                        <textarea disabled={!!sessionResults[currentQ.id]} className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl min-h-[300px] outline-none font-medium text-slate-700 shadow-inner" placeholder="在此輸入您的學術分析回答..." value={tempAnswer} onChange={(e) => setTempAnswer(e.target.value)} />
+                                                        <textarea disabled={!!sessionResults[currentQ.id]} className="w-full p-6 bg-slate-50 border-2 border-slate-100 rounded-3xl min-h-[300px] outline-none font-medium text-slate-700 shadow-inner" placeholder="在此輸入分析性回答..." value={tempAnswer} onChange={(e) => setTempAnswer(e.target.value)} />
                                                         {!sessionResults[currentQ.id] && (
-                                                            <button onClick={() => submitErq(currentQ.id)} disabled={!tempAnswer.trim() || loading} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase shadow-xl italic active:scale-95 transition-all">Submit Evaluation</button>
+                                                            <button onClick={() => submitErq(currentQ.id)} disabled={!tempAnswer.trim() || loading} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase shadow-xl italic font-black">Submit Evaluation</button>
                                                         )}
                                                     </div>
                                                 )}
@@ -505,7 +526,7 @@
                                             {loading && <div className="py-24 flex flex-col items-center animate-pulse"><div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-6"></div><p className="font-black text-xl italic text-slate-400 uppercase tracking-tighter">AI Moderating...</p></div>}
 
                                             {sessionResults[currentQ.id] && (
-                                                <div id="report-content" ref={reportRef} className="space-y-6 bg-white rounded-[2rem] pdf-mode">
+                                                <div id="report-content" ref={reportRef} className="space-y-6 bg-white rounded-[2rem] pdf-white-bg">
                                                     <div className="p-8 rounded-[2.5rem] bg-slate-100 border border-slate-200">
                                                         <div className="flex justify-between items-center mb-6">
                                                             <span className="ui-label font-black text-slate-400 text-[10px] uppercase font-black italic">Moderator Report</span>
@@ -521,7 +542,7 @@
 
                                             <div className="flex gap-4">
                                                 <button onClick={() => { const i = currentIndex-1; if(i>=0){setCurrentIndex(i); setTempAnswer(sessionResults[queue[i].id]?.answer || '');}}} disabled={currentIndex === 0} className="btn-action bg-white border-2 border-slate-100 text-slate-400 flex-1 font-black"><AppIcon name="Prev" /> PREV</button>
-                                                <button onClick={() => { if (currentIndex === queue.length - 1) setQuizStep('setup'); else { setCurrentIndex(currentIndex+1); setTempAnswer(sessionResults[queue[currentIndex+1].id]?.answer || ''); } }} className="btn-action bg-slate-900 text-white flex-1 font-black">NEXT {currentIndex === queue.length - 1 ? '(FINISH)' : ''} <AppIcon name="Next" /></button>
+                                                <button onClick={() => { if (currentIndex === queue.length - 1) setQuizStep('setup'); else { setCurrentIndex(currentIndex+1); setTempAnswer(sessionResults[queue[currentIndex+1].id]?.answer || ''); } }} className="btn-action bg-slate-900 text-white flex-1 font-black font-black uppercase">NEXT {currentIndex === queue.length - 1 ? '(FINISH)' : ''} <AppIcon name="Next" /></button>
                                             </div>
                                         </div>
                                     )}
@@ -531,10 +552,10 @@
                             {tab === 'config' && (
                                 <div className="space-y-6 animate-in zoom-in-95">
                                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
-                                        <p className="ui-label tracking-widest font-black text-slate-400 text-xs uppercase italic">Settings</p>
+                                        <p className="ui-label tracking-widest font-black text-slate-400 text-xs uppercase italic font-black">Settings</p>
                                         <div className="p-6 bg-slate-900 rounded-3xl text-white space-y-4">
                                             <p className="text-xs font-black uppercase text-blue-400 font-black">Gemini API Key</p>
-                                            <input type="password" placeholder="貼上 API Key 以啟用功能" className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none text-sm placeholder-white/20" value={userApiKey} onChange={(e) => {setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} />
+                                            <input type="password" placeholder="貼上 API Key 以啟用完整功能" className="w-full p-4 bg-white/10 border border-white/20 rounded-xl outline-none text-sm placeholder-white/20" value={userApiKey} onChange={(e) => {setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} />
                                         </div>
                                         <div className="p-6 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-between">
                                             <div><span className="font-bold text-sm text-slate-600 font-black">文字縮放 (持久記憶)</span><p className="text-[10px] text-slate-400 font-bold">{globalFontSize}px</p></div>
@@ -543,7 +564,7 @@
                                                 <button onClick={() => setGlobalFontSize(v => Math.min(30, v+1))} className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black shadow-sm">+</button>
                                             </div>
                                         </div>
-                                        <button onClick={() => { if(confirm("確定要清空嗎？")) { localStorage.removeItem('local_custom_bank'); window.location.reload(); } }} className="w-full py-4 text-xs font-black text-rose-500 bg-rose-50 rounded-xl uppercase italic">清空本地自定義題庫</button>
+                                        <button onClick={() => { if(confirm("確定要清空嗎？")) { localStorage.removeItem('local_custom_bank'); window.location.reload(); } }} className="w-full py-4 text-xs font-black text-rose-500 bg-rose-50 rounded-xl uppercase italic font-black">清空本地自定義題庫</button>
                                     </div>
                                 </div>
                             )}
