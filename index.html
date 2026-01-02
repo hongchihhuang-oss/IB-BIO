@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master | 最終穩定優化版</title>
+    <title>IB Bio Master | 最終穩定加固版</title>
     
     <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -33,7 +33,7 @@
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #2563eb; }
         
-        /* 報告質感優化 */
+        /* 報告與卡片質感 */
         .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: white; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .card-blue { border-color: #2563eb; background: #f0f7ff; }
         .card-rose { border-color: #e11d48; background: #fff1f2; }
@@ -41,10 +41,10 @@
         .card-emerald { border-color: #10b981; background: #ecfdf5; }
         .card-slate { border-color: #64748b; background: #f8fafc; }
 
-        .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 8px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; background: #1e293b; color: white; }
+        .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 10px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; background: #1e293b; color: white; }
         
-        .math-container { line-height: 1.75; word-break: break-word; margin-bottom: 0.8rem; }
-        .indent-content { padding-left: 1.25rem; border-left: 3.5px solid rgba(0,0,0,0.05); margin-top: 0.75rem; color: #334155; }
+        .math-container { line-height: 1.8; word-break: break-word; margin-bottom: 0.75rem; }
+        .indent-content { padding-left: 1.25rem; border-left: 3.5px solid rgba(0,0,0,0.05); margin-top: 0.7rem; color: #334155; }
 
         .animate-up { animation: slideUp 0.35s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -55,14 +55,14 @@
 
         /* 控制項 (彩色且放大) */
         .font-cycle-btn { background: #eff6ff; padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #2563eb; border: 2px solid #dbeafe; transition: 0.2s; box-shadow: 0 2px 5px rgba(37, 99, 235, 0.1); }
-        .back-nav-btn { color: #2563eb; padding: 10px; border-radius: 14px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; }
+        .back-nav-btn { color: #2563eb; padding: 10px; border-radius: 14px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; display: flex; align-items: center; }
         .next-nav-btn { color: #2563eb; padding: 8px; border-radius: 12px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
         
-        .mastery-container { display: flex; align-items: center; gap: 12px; }
+        .mastery-container { display: flex; align-items: center; gap: 10px; }
         .mastery-label-text { font-size: 13px; font-weight: 800; color: #94a3b8; }
         .mastery-toggle-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
-        .bio-table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.85em; background: white; border-radius: 12px; overflow: hidden; }
+        .bio-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9em; background: white; border-radius: 12px; overflow: hidden; }
         .bio-table th { background: #f8fafc; padding: 12px; text-align: left; font-weight: 800; border-bottom: 2px solid #e2e8f0; color: #64748b; }
         .bio-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
         
@@ -91,11 +91,11 @@
                 Brain: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>,
                 Config: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>,
                 Check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>,
-                Sparkles: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><path d="M5 3l.94 2.06L8 6l-2.06.94L5 9l-.94-2.06L2 6l2.06-.94L5 3zm14 15l.94 2.06L22 21l-2.06.94L19 24l-.94-2.06L16 21l2.06-.94L19 18zm4.5-105l1.09 2.41L27 11l-2.41 1.09L23.5 14.5l-1.09-2.41L20 11l2.41-1.09L23.5 7.5z"/></svg>,
+                Sparkles: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><path d="M5 3l.94 2.06L8 6l-2.06.94L5 9l-.94-2.06L2 6l2.06-.94L5 3zm14 15l.94 2.06L22 21l-2.06.94L19 24l-.94-2.06L16 21l2.06-.94L19 18zm4.5-10.5l1.09 2.41L27 11l-2.41 1.09L23.5 14.5l-1.09-2.41L20 11l2.41-1.09L23.5 7.5z"/></svg>,
                 House: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
                 Star: <svg width={size} height={size} fill={fill} stroke={color} strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,
-                NextArrow: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="4" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>,
-                Download: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Download: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>,
+                NextArrow: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="4" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
             };
             return icons[name] || null;
         };
@@ -104,7 +104,7 @@
         const cleanRawText = (text) => {
             if (!text) return "";
             return text
-                .replace(/(\*\*|__|\*|#+|~+|`+)/g, "") // 只移除 Markdown 符號，絕不碰 LaTeX 的底線
+                .replace(/(\*\*|__|\*|#+|~+|`+)/g, "") // 移除 Markdown 符號，保留底線和花括號
                 .replace(/Supplement for:.*?\n/gi, "")
                 .replace(/---/g, "")
                 .trim();
@@ -168,7 +168,7 @@
 
             const reportRef = useRef(null);
 
-            // --- AI Key 自動導航偵測 ---
+            // --- AI Key 自動導航偵測 (修正問題) ---
             useEffect(() => {
                 if (userApiKey && userApiKey.trim().length > 10 && tab === 'config') {
                     setTab('home');
@@ -178,30 +178,23 @@
                 }
             }, [userApiKey]);
 
-            // --- 核心統計引擎 (精確去重) ---
+            // --- 精確題數統計 (去重引擎) ---
             const stats = useMemo(() => {
-                const getUniqueCount = (unitKey) => {
-                    const pool = masterBank[unitKey] || [];
-                    const uniqueIds = new Set();
-                    return pool.filter(q => {
-                        if (q && q.id && !uniqueIds.has(q.id)) {
-                            uniqueIds.add(q.id);
-                            return true;
-                        }
-                        return false;
-                    }).length;
-                };
+                const globalUniqueMap = new Map();
+                Object.values(masterBank).flat().forEach(q => {
+                    if (q && q.id) globalUniqueMap.set(q.id, q);
+                });
 
-                const globalIds = new Set();
-                Object.values(masterBank).flat().forEach(q => { if(q && q.id) globalIds.add(q.id); });
+                const allUnique = Array.from(globalUniqueMap.values());
+                const countByTheme = (id) => allUnique.filter(q => q.theme === id || q.id.startsWith(id)).length;
 
                 return {
-                    total: globalIds.size,
+                    total: allUnique.length,
                     mastered: masteredIds.size,
-                    A: getUniqueCount('A'),
-                    B: getUniqueCount('B'),
-                    C: getUniqueCount('C'),
-                    D: getUniqueCount('D')
+                    A: countByTheme('A'),
+                    B: countByTheme('B'),
+                    C: countByTheme('C'),
+                    D: countByTheme('D')
                 };
             }, [masterBank, masteredIds]);
 
@@ -215,7 +208,10 @@
                             const data = await res.json();
                             Object.keys(data).forEach(k => {
                                 const u = k.toUpperCase().replace('THEME ', '').trim();
-                                if (pool[u]) pool[u] = [...pool[u], ...(data[k] || [])];
+                                if (pool[u]) {
+                                    const exist = new Set(pool[u].map(q => q.id));
+                                    pool[u] = [...pool[u], ...(data[k] || [])];
+                                }
                             });
                         }
                     } catch (e) {}
@@ -223,7 +219,10 @@
                 const local = JSON.parse(localStorage.getItem('local_custom_bank') || '{}');
                 Object.keys(local).forEach(u => {
                     const id = u.toUpperCase().replace('THEME ', '').trim();
-                    if (pool[id]) pool[id] = [...pool[id], ...(local[u] || [])];
+                    if (pool[id]) {
+                        const exist = new Set(pool[id].map(q => q.id));
+                        pool[id] = [...pool[id], ...(local[u] || [])];
+                    }
                 });
                 setMasterBank(pool);
             }, []);
@@ -257,9 +256,11 @@
                                 return q;
                             });
                             local[uKey] = [...(local[uKey] || []), ...norm];
+                            // 本地庫去重
                             const map = new Map();
                             local[uKey].forEach(q => { if(q && q.id) map.set(q.id, q); });
                             local[uKey] = Array.from(map.values());
+                            // 立即同步更新
                             next[uKey] = [...next[uKey], ...norm];
                         }
                     });
@@ -280,8 +281,9 @@
             };
 
             const startPractice = () => {
-                const pool = selThemes.flatMap(t => masterBank[t] || []).filter(q => q && q.id && q.type === selType && !masteredIds.has(q.id));
-                const uniquePool = Array.from(new Map(pool.map(q => [q.id, q])).values());
+                const rawPool = selThemes.flatMap(t => masterBank[t] || [])
+                                 .filter(q => q && q.id && q.type === selType && !masteredIds.has(q.id));
+                const uniquePool = Array.from(new Map(rawPool.map(q => [q.id, q])).values());
                 if (uniquePool.length) {
                     setQueue([...uniquePool].sort(() => Math.random() - 0.5));
                     setCurrentIndex(0); setQuizStep('practice'); setSessionResults({}); setTempAnswer('');
@@ -304,10 +306,13 @@
                 const isMastered = masteredIds.has(curQ.id);
 
                 if (isMastered) {
+                    // 若標記為熟悉，從隊列移除，絕對不重複
                     setQueue(prev => prev.filter(q => q.id !== curQ.id));
-                    if (currentIndex >= queue.length - 1 && queue.length > 1) setCurrentIndex(0);
+                    if (currentIndex >= queue.length - 1 && queue.length > 1) {
+                         setCurrentIndex(0);
+                    }
                 } else if (res) {
-                    // 若答對或答過但未熟悉：移到隊列末端 (Spaced Repetition)
+                    // 若答對或答過但未熟悉：移到隊列最末端 (Spaced Repetition)
                     setQueue(prev => {
                         const next = [...prev];
                         const target = next.splice(currentIndex, 1)[0];
@@ -315,12 +320,12 @@
                         return next;
                     });
                 } else {
-                    // 沒作答按 Next，直接下一個
+                    // 沒答題按 Next，直接下一個
                     setCurrentIndex(p => (p + 1) % queue.length);
                 }
 
                 if (queue.length <= 1 && isMastered) {
-                    showToast("單元練習結束！");
+                    showToast("全部題目已掌握！");
                     setQuizStep('setup');
                 } else {
                     setTempAnswer('');
@@ -335,7 +340,7 @@
             const submitErq = async () => {
                 if (!tempAnswer.trim() || !queue[currentIndex]) return;
                 setLoading(true);
-                const sys = "Senior IB Bio Moderator. Use EXACT plain headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Provide detailed comparisons. NO bolding symbols.";
+                const sys = "Senior IB Bio Moderator. Use EXACT plain headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Detailed content. NO bolding symbols.";
                 const usr = `Question: "${queue[currentIndex].question}"\nStudent Answer: "${tempAnswer}"\nGrade with headers.`;
                 const fb = await askAI(usr, sys);
                 if (fb) setSessionResults(prev => ({ ...prev, [queue[currentIndex].id]: { answer: tempAnswer, feedback: fb } }));
@@ -375,7 +380,7 @@
                 found.sort((a,b) => a.index - b.index);
 
                 let cards = [];
-                if (isErq && original) cards.push(<div key="user" className="themed-card card-slate"><span className="badge-mini bg-slate-500 text-white">Your Response</span><div className="font-semibold text-slate-600 italic leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(original) }} /></div>);
+                if (isErq && original) cards.push(<div key="user" className="themed-card card-slate"><span className="badge-mini bg-slate-500 text-white">Original Response</span><div className="font-semibold text-slate-600 italic leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(original) }} /></div>);
                 if (!isErq && expl) cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini bg-emerald-600 text-white">Knowledge Briefing</span><div className="font-semibold text-emerald-800" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
 
                 found.forEach((p, i) => {
@@ -390,7 +395,7 @@
                     
                     if (content.length > 2) cards.push(<div key={p.name+i} className={`themed-card ${color}`}><span className="badge-mini bg-slate-800 text-white">{label}</span><div className="font-medium text-slate-700 indent-content" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} /></div>);
                 });
-                if (!cards.length) cards.push(<div key="fb" className="themed-card card-blue"><span className="badge-mini">AI Evaluation</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(text) }} /></div>);
+                if (!cards.length) cards.push(<div key="fb" className="themed-card card-blue"><span className="badge-mini">AI Feedback</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(text) }} /></div>);
                 return cards;
             }, []);
 
@@ -399,8 +404,6 @@
                 render();
                 setTimeout(render, 450); // 防崩潰延遲渲染
             }, [quizStep, currentIndex, sessionResults, tab, contentFontSize, generatedJson]);
-
-            const cur = queue[currentIndex];
 
             return (
                 <div className="app-container">
@@ -418,9 +421,7 @@
                                 </div>
                             )}
                         </div>
-                        
                         <h1 className="font-black text-slate-900 italic text-sm uppercase tracking-widest">IB Bio Master Pro</h1>
-                        
                         <div className="flex items-center gap-3">
                             {tab === 'quiz' && quizStep === 'practice' && (
                                 <div className="mastery-container">
@@ -442,7 +443,7 @@
                                 <div className="space-y-4 animate-up">
                                     <div className="bg-slate-900 rounded-3xl p-6 text-white text-center shadow-lg">
                                         <div className="grid grid-cols-2 gap-3 mb-6">
-                                            <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-blue-400">{stats.total}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Questions</p></div>
+                                            <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-blue-400">{stats.total}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Total Qs</p></div>
                                             <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-emerald-400">{stats.mastered}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Mastered</p></div>
                                         </div>
                                         <div className="grid grid-cols-4 gap-2">
@@ -456,7 +457,7 @@
                                     </div>
 
                                     <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-4">
-                                        <h2 className="font-black text-xs uppercase italic text-slate-400 flex items-center gap-2"><AppIcon name="Sparkles" size={12} /> AI Generator</h2>
+                                        <h2 className="font-black text-xs uppercase italic text-slate-400 flex items-center gap-2"><AppIcon name="Sparkles" size={12} /> AI Bank Generator</h2>
                                         <div className="space-y-3">
                                             <div className="flex gap-2 p-1 rounded-xl bg-slate-50">
                                                 {THEMES.map(t=>(<button key={t.id} onClick={()=>setBuildTheme(t.id)} className={`flex-1 py-1.5 rounded-lg font-black text-xs transition-all ${buildTheme===t.id ? 'bg-white shadow-md' : 'text-slate-400'}`} style={{ color: buildTheme===t.id ? t.color : 'inherit' }}>{t.id}</button>))}
@@ -464,11 +465,11 @@
                                             <div className="flex gap-1">
                                                 {[{id:'mixed',n:'綜合'}, {id:'mcq',n:'選擇'}, {id:'erq',n:'論述'}].map(m=>(<button key={m.id} onClick={()=>setBuildRatio(m.id)} className={`flex-1 py-1.5 rounded-lg font-black text-[10px] border transition-all ${buildRatio===m.id ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-400 border-slate-100'}`}>{m.n}</button>))}
                                             </div>
-                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 ${buildRatio} questions for Theme ${buildTheme}. Format JSON: { "${buildTheme}": [ ... ] }. Use unique IDs. MCQ MUST have detailed "explanation" and "prefetchedInsight".`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] italic shadow-md active:scale-95">{loading ? 'AI Working...' : 'Generate New Questions'}</button>
+                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 ${buildRatio} questions for Unit ${buildTheme}. Output JSON object { "${buildTheme}": [ ... ] }. MCQ MUST have explanation & prefetchedInsight. NO markdown symbols.`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] italic shadow-md active:scale-95">{loading ? 'AI Working...' : 'Generate New Questions'}</button>
                                         </div>
                                         {generatedJson && (
                                             <div className="mt-4 pt-4 border-t space-y-2">
-                                                <button onClick={directImport} className="btn-action w-full bg-emerald-600 text-white font-black uppercase shadow-lg"><AppIcon name="Check" /> Add to Bank</button>
+                                                <button onClick={directImport} className="btn-action w-full bg-emerald-600 text-white font-black uppercase shadow-lg"><AppIcon name="Check" /> Add to Local Bank</button>
                                                 <textarea readOnly className="w-full h-24 p-3 bg-slate-900 text-blue-300 text-[8px] rounded-xl font-mono border-none outline-none" value={generatedJson} />
                                             </div>
                                         )}
