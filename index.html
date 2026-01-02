@@ -98,20 +98,17 @@
             return icons[name] || null;
         };
 
-        // --- 還原：強效 LaTeX 保護機制 (絕對保留底線與 $ 內容) ---
+        // --- 強效渲染機制：修正化學式與 LaTeX 重複包裹問題 ---
         const cleanRawText = (textArg) => {
             const text = String(textArg || "");
             if (!text) return "";
             const latexBlocks = [];
-            // 隔離保護鎖
             let processed = text.replace(/\$([^\$]+)\$/g, (match) => {
                 latexBlocks.push(match);
                 return `__LATEX_SHIELD_${latexBlocks.length - 1}__`;
             });
-            // 只清理 Markdown 標記
             processed = processed.replace(/(\*\*|__)/g, "").replace(/#+\s?/g, "");
             processed = processed.replace(/Supplement for:.*?\n/gi, "").replace(/---/g, "");
-            // 還原保護鎖
             latexBlocks.forEach((val, i) => {
                 processed = processed.replace(`__LATEX_SHIELD_${i}__`, val);
             });
@@ -119,17 +116,34 @@
         };
 
         const bioCompiler = (input) => {
-            let text = cleanRawText(input);
+            let text = String(input || "");
             if (!text) return "";
-            
+
+            // 1. 先隔離已經存在的 LaTeX 區塊，避免重複包裹
+            const latexBlocks = [];
+            let processed = text.replace(/\$([^\$]+)\$/g, (match) => {
+                latexBlocks.push(match);
+                return `__LATEX_SHIELD_${latexBlocks.length - 1}__`;
+            });
+
+            // 2. 清理 Markdown 雜質
+            processed = processed.replace(/(\*\*|__)/g, "").replace(/#+\s?/g, "");
+
+            // 3. 在非 LaTeX 區域進行化學式自動識別
             const chemPattern = /\b(Na\+|K\+|H\+|Ca2\+|Mg2\+|Cl-|NO2-|NO3-|NH4\+|CO2|H2O|O2|C6H12O6|ATP|ADP|NAD\+|NADH|RuBP|Rubisco|Vmax|Km|V_{max}|K_m)\b/g;
-            text = text.replace(chemPattern, (match) => {
+            processed = processed.replace(chemPattern, (match) => {
                 if (match.includes("Vmax") || match.includes("V_{max}")) return "$V_{max}$";
                 if (match.includes("Km") || match.includes("K_m")) return "$K_m$";
                 return `$\\text{${match}}$`;
             });
 
-            const lines = text.split('\n');
+            // 4. 還原 LaTeX 區塊
+            latexBlocks.forEach((val, i) => {
+                processed = processed.replace(`__LATEX_SHIELD_${i}__`, val);
+            });
+
+            // 5. 處理表格與換行
+            const lines = processed.split('\n');
             let finalHTML = [];
             let inTable = false;
             let tableData = [];
@@ -174,10 +188,8 @@
             const [buildTheme, setBuildTheme] = useState('A');
             const [buildRatio, setBuildRatio] = useState('mixed'); 
 
-            // --- 確保 cur 有效 ---
             const cur = useMemo(() => (queue && queue.length > 0) ? queue[currentIndex] : null, [queue, currentIndex]);
 
-            // --- 統計引擎 (精確去重) ---
             const stats = useMemo(() => {
                 const uniqueMap = new Map();
                 Object.values(masterBank).flat().forEach(q => { if (q && q.id) uniqueMap.set(q.id, q); });
@@ -193,7 +205,6 @@
                 };
             }, [masterBank, masteredIds]);
 
-            // --- PDF 匯出 ---
             const exportPDF = useCallback(() => {
                 const element = document.getElementById('report-content');
                 if (!element) return;
@@ -202,7 +213,6 @@
                 html2pdf().set(opt).from(element).save().then(() => element.classList.remove('pdf-mode'));
             }, []);
 
-            // --- 字型切換 ---
             const cycleFontSize = useCallback(() => {
                 const sizes = [14, 16, 19, 23];
                 const nextS = sizes[(sizes.indexOf(contentFontSize) + 1) % sizes.length];
@@ -210,7 +220,6 @@
                 localStorage.setItem('contentFontSize', String(nextS));
             }, [contentFontSize]);
 
-            // --- 報告渲染引擎 (還原專業配色與切割，防止內容張冠李戴) ---
             const renderFeedback = useCallback((text, isErq, original, expl, prefetched) => {
                 if (!text && !expl && !prefetched) return null;
                 const markers = isErq 
@@ -225,7 +234,6 @@
                     while ((match = reg.exec(fullText)) !== null) found.push({ name: m, index: match.index, rawLen: match[0].length });
                 });
                 
-                // 根據索引排序並精確切割
                 found.sort((a,b) => a.index - b.index);
 
                 let cards = [];
@@ -260,7 +268,6 @@
                 return cards;
             }, [cur]);
 
-            // --- 強力匯入引擎：標籤標準化與選項截斷 ---
             const importToBank = (json) => {
                 if (!json) return;
                 setMasterBank(prev => {
@@ -385,7 +392,6 @@
                 } catch (e) { return null; }
             };
 
-            // --- AI Key 自動導航 ---
             useEffect(() => {
                 if (userApiKey && userApiKey.trim().length > 10 && tab === 'config') setTab('home');
                 else if (!userApiKey && tab !== 'config') setTab('config');
