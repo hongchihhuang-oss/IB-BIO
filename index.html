@@ -98,51 +98,40 @@
             return icons[name] || null;
         };
 
-        // --- 強效渲染機制：修正化學式與 LaTeX 重複包裹問題 ---
-        const cleanRawText = (textArg) => {
-            const text = String(textArg || "");
-            if (!text) return "";
-            const latexBlocks = [];
-            let processed = text.replace(/\$([^\$]+)\$/g, (match) => {
-                latexBlocks.push(match);
-                return `__LATEX_SHIELD_${latexBlocks.length - 1}__`;
-            });
-            processed = processed.replace(/(\*\*|__)/g, "").replace(/#+\s?/g, "");
-            processed = processed.replace(/Supplement for:.*?\n/gi, "").replace(/---/g, "");
-            latexBlocks.forEach((val, i) => {
-                processed = processed.replace(`__LATEX_SHIELD_${i}__`, val);
-            });
-            return processed.trim();
-        };
-
-        const bioCompiler = (input) => {
-            let text = String(input || "");
+        // --- 強效處理引擎：防止重複包裹，修正顯示問題 ---
+        const bioCompiler = (input, skipDiv = false) => {
+            let text = String(input || "").trim();
             if (!text) return "";
 
-            // 1. 先隔離已經存在的 LaTeX 區塊，避免重複包裹
+            // 1. 預處理：移除 AI 可能產生的轉義 \$ 
+            text = text.replace(/\\(\$)/g, '$1');
+
+            // 2. 保護機制：隔離已存在的 LaTeX 塊
             const latexBlocks = [];
-            let processed = text.replace(/\$([^\$]+)\$/g, (match) => {
+            let processed = text.replace(/\$+[^\$]+\$+/g, (match) => {
                 latexBlocks.push(match);
                 return `__LATEX_SHIELD_${latexBlocks.length - 1}__`;
             });
 
-            // 2. 清理 Markdown 雜質
+            // 3. 清理 Markdown 雜質
             processed = processed.replace(/(\*\*|__)/g, "").replace(/#+\s?/g, "");
 
-            // 3. 在非 LaTeX 區域進行化學式自動識別
+            // 4. 化學式自動識別 (僅限非 LaTeX 區域)
             const chemPattern = /\b(Na\+|K\+|H\+|Ca2\+|Mg2\+|Cl-|NO2-|NO3-|NH4\+|CO2|H2O|O2|C6H12O6|ATP|ADP|NAD\+|NADH|RuBP|Rubisco|Vmax|Km|V_{max}|K_m)\b/g;
             processed = processed.replace(chemPattern, (match) => {
-                if (match.includes("Vmax") || match.includes("V_{max}")) return "$V_{max}$";
-                if (match.includes("Km") || match.includes("K_m")) return "$K_m$";
+                if (match.includes("Vmax")) return "$V_{max}$";
+                if (match.includes("Km")) return "$K_m$";
                 return `$\\text{${match}}$`;
             });
 
-            // 4. 還原 LaTeX 區塊
+            // 5. 還原 LaTeX 塊 (使用函數式還原防止 $ 符號解析錯誤)
             latexBlocks.forEach((val, i) => {
-                processed = processed.replace(`__LATEX_SHIELD_${i}__`, val);
+                processed = processed.replace(`__LATEX_SHIELD_${i}__`, () => val);
             });
 
-            // 5. 處理表格與換行
+            if (skipDiv) return processed;
+
+            // 6. 表格與分段處理
             const lines = processed.split('\n');
             let finalHTML = [];
             let inTable = false;
@@ -486,7 +475,7 @@
                                                                     else if (String(k)===String(res.answer)) st="border-red-500 bg-red-50 border-2";
                                                                     else st="opacity-30 grayscale";
                                                                 }
-                                                                return (<button key={k} disabled={!!res} onClick={()=>submitMcq(k, cur.answer)} className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${st}`}><span className={`option-label ${res?.answer === k ? 'selected-label shadow-inner' : ''}`}>{k}</span><span className="font-bold">{cleanRawText(v)}</span></button>);
+                                                                return (<button key={k} disabled={!!res} onClick={()=>submitMcq(k, cur.answer)} className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${st}`}><span className={`option-label ${res?.answer === k ? 'selected-label shadow-inner' : ''}`}>{k}</span><span className="font-bold" dangerouslySetInnerHTML={{ __html: bioCompiler(v, true) }} /></button>);
                                                             })}
                                                         </div>
                                                     ) : (
