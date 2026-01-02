@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master | 最終穩定加固版</title>
+    <title>IB Bio Master | 純淨穩定最終版</title>
     
-    <!-- 核心資源 -->
+    <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- KaTeX 科學渲染 -->
+    <!-- KaTeX 科學渲染 (保留但僅作基礎解析) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
-    <!-- html2pdf 匯出 -->
+    <!-- html2pdf 匯出功能 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -33,18 +33,18 @@
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #2563eb; }
         
-        /* 質感報告樣式 */
-        .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: white; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        /* 還原質感報告樣式 */
+        .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: white; margin-bottom: 1.1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .card-blue { border-color: #2563eb; background: #f0f7ff; }
         .card-rose { border-color: #e11d48; background: #fff1f2; }
         .card-amber { border-color: #f59e0b; background: #fffbeb; }
         .card-emerald { border-color: #10b981; background: #ecfdf5; }
         .card-slate { border-color: #64748b; background: #f8fafc; }
 
-        .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 10px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; background: #1e293b; color: white; }
+        .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 8px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; background: #1e293b; color: white; }
         
-        .math-container { line-height: 1.8; word-break: break-word; margin-bottom: 0.75rem; }
-        .indent-content { padding-left: 1.25rem; border-left: 3.5px solid rgba(0,0,0,0.05); margin-top: 0.8rem; color: #334155; }
+        .math-container { line-height: 1.75; word-break: break-word; margin-bottom: 0.8rem; }
+        .indent-content { padding-left: 1.25rem; border-left: 3.5px solid rgba(0,0,0,0.05); margin-top: 0.75rem; color: #334155; }
 
         .animate-up { animation: slideUp 0.35s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -53,7 +53,7 @@
         .option-label { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; background: #f1f5f9; color: #1e293b; border: 2.5px solid #cbd5e1; transition: 0.2s; flex-shrink: 0; }
         .selected-label { background: #1e293b; color: white; border-color: #1e293b; }
 
-        /* 控制按鈕 */
+        /* 控制項 */
         .font-cycle-btn { background: #eff6ff; padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #2563eb; border: 2px solid #dbeafe; transition: 0.2s; }
         .back-nav-btn { color: #2563eb; padding: 10px; border-radius: 14px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; }
         .next-nav-btn { color: #2563eb; padding: 10px; border-radius: 12px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
@@ -62,13 +62,13 @@
         .mastery-label-text { font-size: 13px; font-weight: 800; color: #94a3b8; }
         .mastery-toggle-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
-        /* 表格樣式優化 */
-        .bio-table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.85em; background: white; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; }
-        .bio-table th { background: #f8fafc; padding: 12px; text-align: left; font-weight: 800; border-bottom: 2px solid #e2e8f0; color: #64748b; }
-        .bio-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #334155; line-height: 1.5; }
+        /* 表格樣式 */
+        .bio-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85em; background: white; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; }
+        .bio-table th { background: #f8fafc; padding: 10px; text-align: left; font-weight: 800; border-bottom: 2px solid #e2e8f0; color: #64748b; }
+        .bio-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; color: #334155; line-height: 1.5; }
         
-        .pdf-mode { font-size: 11px !important; }
-        .pdf-mode .themed-card { margin-bottom: 0.4rem !important; padding: 0.8rem 1rem !important; border-width: 1px !important; border-left-width: 6px !important; box-shadow: none !important; break-inside: avoid; }
+        .pdf-mode { font-size: 11px !important; line-height: 1.25 !important; }
+        .pdf-mode .themed-card { margin-bottom: 0.5rem !important; padding: 0.8rem 1rem !important; border-width: 1px !important; border-left-width: 6px !important; box-shadow: none !important; break-inside: avoid; }
     </style>
 </head>
 <body>
@@ -84,13 +84,13 @@
             { id: "D", name: "Evolution", color: "#f59e0b", bg: "#fffbeb" }
         ];
 
-        // --- 元件圖示 ---
+        // --- 元件圖示 (必須在 App 前定義) ---
         const AppIcon = ({ name, size = 18, color = "currentColor", fill = "none", strokeWidth = "2.5" }) => {
             const icons = {
-                Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
-                Brain: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>,
-                Config: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>,
-                Check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>,
+                Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
+                Brain: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
+                Config: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/><circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
+                Check: <svg width={size} height={size} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>,
                 House: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3.5" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
                 Star: <svg width={size} height={size} fill={fill} stroke={color} strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,
                 NextArrow: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="4.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>,
@@ -100,31 +100,29 @@
             return icons[name] || null;
         };
 
-        // --- 核心修復：最強 LaTeX 保護分段處理 (避開錢字號內的底線 _) ---
-        const cleanRawText = (raw) => {
-            const text = String(raw || "");
+        // --- 純淨處理：不再使用任何隔離佔位符，直接清理 ---
+        const cleanRawText = (textArg) => {
+            const text = String(textArg || "");
             if (!text) return "";
-            
-            // 使用分段法：將 $ 內的內容與外部拆開，只處理外部的 Markdown
-            const parts = text.split('$');
-            for (let i = 0; i < parts.length; i++) {
-                if (i % 2 === 0) { // 在錢字號外部
-                    parts[i] = parts[i].replace(/(\*\*|__)/g, "").replace(/#+\s?/g, "");
-                }
-            }
-            return parts.join('$').trim();
+            // 只清理 Markdown 雜質，不觸碰底線或錢字號，徹底解決 SHIELD_0 問題
+            return text
+                .replace(/(\*\*|__)/g, "")
+                .replace(/#+\s?/g, "")
+                .replace(/Supplement for:.*?\n/gi, "")
+                .replace(/---/g, "")
+                .trim();
         };
 
         const bioCompiler = (input) => {
             let text = cleanRawText(input);
             if (!text) return "";
             
-            // 自動修補常用學術術語，確保斜體呈現
+            // 手動校正 LaTeX 符號，如果 AI 忘記加 $ 就幫它補上，確保顯示
             const chemPattern = /\b(Na\+|K\+|H\+|Ca2\+|Mg2\+|Cl-|NO2-|NO3-|NH4\+|CO2|H2O|O2|C6H12O6|ATP|ADP|NAD\+|NADH|RuBP|Rubisco|Vmax|Km|V_{max}|K_m)\b/g;
-            text = text.replace(chemPattern, (match) => {
-                if (match.includes("Vmax") || match.includes("V_{max}")) return "$V_{max}$";
-                if (match.includes("Km") || match.includes("K_m")) return "$K_m$";
-                return `$\\text{${match}}$`;
+            text = text.replace(chemPattern, (m) => {
+                if (m.includes("Vmax") || m.includes("V_{max}")) return "$V_{max}$";
+                if (m.includes("Km") || m.includes("K_m")) return "$K_m$";
+                return `$\\text{${m}}$`;
             });
 
             const lines = text.split('\n');
@@ -135,7 +133,6 @@
             lines.forEach((l) => {
                 const line = l.trim();
                 if (!line) return;
-
                 if (line.includes('|')) {
                     const cells = line.split('|').filter(c => c.trim().length > 0).map(c => c.trim());
                     if (cells.length > 0 && !line.includes(':---')) {
@@ -172,13 +169,14 @@
             const [buildTheme, setBuildTheme] = useState('A');
             const [buildRatio, setBuildRatio] = useState('mixed'); 
 
-            const cur = useMemo(() => (queue && queue.length > 0) ? queue[currentIndex] : null, [queue, currentIndex]);
+            // 當前題目安全讀取
+            const cur = (queue && queue.length > 0) ? queue[currentIndex] : null;
 
             // --- 統計引擎 (精確去重) ---
             const stats = useMemo(() => {
-                const uniqueMap = new Map();
-                Object.values(masterBank).flat().forEach(q => { if (q && q.id) uniqueMap.set(q.id, q); });
-                const allUnique = Array.from(uniqueMap.values());
+                const globalRegistry = new Map();
+                Object.values(masterBank).flat().forEach(q => { if (q && q.id) globalRegistry.set(q.id, q); });
+                const allUnique = Array.from(globalRegistry.values());
                 const countByTheme = (tid) => allUnique.filter(q => {
                     const qid = String(q.id || "");
                     return q.theme === tid || qid.startsWith(tid);
@@ -216,16 +214,16 @@
 
             useEffect(() => { loadAllBanks(); }, [loadAllBanks]);
 
-            // --- PDF 匯出功能 ---
+            // --- 匯出 PDF ---
             const exportPDF = useCallback(() => {
                 const element = document.getElementById('report-content');
                 if (!element) return;
                 element.classList.add('pdf-mode');
-                const opt = { margin: 10, filename: 'IB_Assessment_Report.pdf', image:{type:'jpeg',quality:1}, html2canvas:{scale:2}, jsPDF:{unit:'mm',format:'a4'} };
+                const opt = { margin: 10, filename: 'Assessment_Report.pdf', image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } };
                 html2pdf().set(opt).from(element).save().then(() => element.classList.remove('pdf-mode'));
             }, []);
 
-            // --- 精確切割引擎：還原配色與區塊分配 (解決錯位問題) ---
+            // --- 報告渲染引擎 (還原專業配色與切割) ---
             const renderFeedback = useCallback((text, isErq, original, expl, prefetched) => {
                 if (!text && !expl && !prefetched) return null;
                 const markers = isErq 
@@ -240,45 +238,41 @@
                 if (!isErq) {
                     if (expl) cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini bg-emerald-600 text-white">Correct Answer Detail: {cur?.answer}</span><div className="font-semibold text-emerald-800" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
                     if (prefetched) {
-                        const subTypes = ["Key Concept", "Deep Analysis", "Fact", "Pitfall"];
-                        subTypes.forEach(st => {
-                            const stReg = new RegExp(`${st}:?\\s?([\\s\\S]*?)(?=${subTypes.join(':|')}:|$)`, 'i');
-                            const stMatch = prefetched.match(stReg);
-                            if (stMatch && stMatch[1].trim().length > 5) cards.push(<div key={st} className="themed-card card-blue"><span className="badge-mini bg-blue-800 text-white">{st}</span><div className="font-medium text-slate-700 indent-content" dangerouslySetInnerHTML={{ __html: bioCompiler(stMatch[1]) }} /></div>);
+                        const subs = ["Key Concept", "Deep Analysis", "Fact", "Pitfall"];
+                        subs.forEach(s => {
+                            const reg = new RegExp(`${s}:?\\s?([\\s\\S]*?)(?=${subs.join(':|')}:|$)`, 'i');
+                            const match = prefetched.match(reg);
+                            if (match && match[1].length > 5) cards.push(<div key={s} className="themed-card card-blue"><span className="badge-mini bg-blue-800 text-white">{s}</span><div className="font-medium text-slate-700 indent-content" dangerouslySetInnerHTML={{ __html: bioCompiler(match[1]) }} /></div>);
                         });
                     }
                 }
 
-                // 標題定位與精密切割
-                let segments = [];
+                // 精確區塊切割
+                let positions = [];
                 markers.forEach(m => {
                     const match = fullText.match(new RegExp(`(?:\\*\\*|#+\\s*)?${m}`, 'i'));
-                    if (match) segments.push({ name: m, index: match.index, rawLen: match[0].length });
+                    if (match) positions.push({ name: m, index: match.index, rawLen: match[0].length });
                 });
-                segments.sort((a,b) => a.index - b.index);
+                positions.sort((a,b) => a.index - b.index);
 
-                segments.forEach((seg, i) => {
-                    const nextIndex = (i + 1 < segments.length) ? segments[i+1].index : fullText.length;
-                    const content = fullText.substring(seg.index + seg.rawLen, nextIndex).replace(/^[:\s\*-]+/, "").trim();
-                    
-                    let color = "card-blue", label = seg.name;
+                positions.forEach((p, i) => {
+                    const next = (i + 1 < positions.length) ? positions[i+1].index : fullText.length;
+                    const content = fullText.substring(p.index + p.rawLen, next).replace(/^[:\s\*-]+/, "").trim();
+                    let color = "card-blue", label = p.name;
                     if (isErq) {
-                        if (/Mark/i.test(seg.name)) { label="Mark Scheme"; color="card-emerald"; }
-                        else if (/Gap/i.test(seg.name)) { label="Knowledge Gaps"; color="card-rose"; }
-                        else if (/Pathway/i.test(seg.name)) { label="Steps to L7"; color="card-amber"; }
-                        else if (/Exemplar/i.test(seg.name)) { label="Model Exemplar"; color="card-blue"; }
+                        if (/Mark/i.test(p.name)) { label="Mark Scheme"; color="card-emerald"; }
+                        else if (/Gap/i.test(p.name)) { label="Knowledge Gaps"; color="card-rose"; }
+                        else if (/Pathway/i.test(p.name)) { label="Step to L7"; color="card-amber"; }
+                        else if (/Exemplar/i.test(p.name)) { label="Model Exemplar"; color="card-blue"; }
                     }
-                    
-                    if (content.length > 2) {
-                        cards.push(<div key={seg.name+i} className={`themed-card ${color}`}><span className="badge-mini bg-slate-800 text-white">{label}</span><div className="font-medium text-slate-700 indent-content" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} /></div>);
-                    }
+                    if (content.length > 2) cards.push(<div key={p.name+i} className={`themed-card ${color}`}><span className="badge-mini bg-slate-800 text-white">{label}</span><div className="font-medium text-slate-700 indent-content" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} /></div>);
                 });
 
-                if (cards.length === 0 && fullText.length > 10) cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini">AI Evaluation</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(fullText) }} /></div>);
+                if (cards.length === 0 && fullText.length > 5) cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini">AI Analysis</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(fullText) }} /></div>);
                 return cards;
             }, [cur]);
 
-            // --- 匯入引擎：強力標準化與論述題保障 ---
+            // --- 匯入引擎：標籤標準化與截斷 ---
             const importToBank = (json) => {
                 if (!json) return;
                 setMasterBank(prev => {
@@ -289,13 +283,15 @@
                         if (['A','B','C','D'].includes(uKey)) {
                             const incoming = Array.isArray(json[unit]) ? json[unit] : [json[unit]];
                             const norm = incoming.map(q => {
-                                q.id = "GEN_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4);
+                                q.id = "U_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4);
                                 q.theme = uKey;
+                                // 判斷題型
                                 q.type = (q.options && Object.keys(q.options).length >= 2) ? 'MCQ' : 'ERQ';
                                 if (q.type === 'MCQ') {
-                                    const rawVals = Object.values(q.options).slice(0, 4);
+                                    // 標準化 A-D 標籤
+                                    const rawValues = Object.values(q.options).slice(0, 4);
                                     const cleanOpts = {};
-                                    ['A','B','C','D'].forEach((l, i) => { if (rawVals[i]) cleanOpts[l] = rawVals[i]; });
+                                    ['A','B','C','D'].forEach((l, i) => { if (rawValues[i]) cleanOpts[l] = rawValues[i]; });
                                     q.options = cleanOpts;
                                     const a = String(q.answer).toUpperCase();
                                     q.answer = a.includes('0') ? 'A' : (a.includes('1') ? 'B' : (a.includes('2') ? 'C' : (a.includes('3') ? 'D' : a)));
@@ -328,16 +324,16 @@
                 if (uniquePool.length) {
                     setQueue([...uniquePool].sort(() => Math.random() - 0.5));
                     setCurrentIndex(0); setQuizStep('practice'); setSessionResults({}); setTempAnswer('');
-                } else showToast("目前無未掌握題目");
+                } else showToast("目前單元無可用題目");
             };
 
             const handleNext = () => {
                 if (!queue || queue.length === 0) return;
                 const isMastered = masteredIds.has(cur?.id);
                 if (isMastered) {
-                    const nQ = queue.filter(q => q.id !== cur.id);
-                    setQueue(nQ);
-                    if (currentIndex >= nQ.length && nQ.length > 0) setCurrentIndex(0);
+                    const newQueue = queue.filter(q => q.id !== cur.id);
+                    setQueue(newQueue);
+                    if (currentIndex >= newQueue.length && newQueue.length > 0) setCurrentIndex(0);
                 } else {
                     setQueue(prev => {
                         const next = [...prev];
@@ -346,7 +342,7 @@
                         return next;
                     });
                 }
-                if (queue.length <= 1 && isMastered) { showToast("練習結束！"); setQuizStep('setup'); }
+                if (queue.length <= 1 && isMastered) { showToast("完成練習！"); setQuizStep('setup'); }
                 else { setTempAnswer(''); }
             };
 
@@ -394,7 +390,7 @@
                     {statusMsg && <div className="toast-msg">{statusMsg}</div>}
                     <header className="header-fixed flex items-center justify-between px-4 py-3">
                         <div className="flex items-center gap-2">
-                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm active:scale-95"><AppIcon name="House" size={24} /></button>}
+                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm"><AppIcon name="House" size={24} /></button>}
                             {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-50 px-2 py-1.5 rounded-xl border border-slate-100 flex items-center gap-1"><span className="text-[11px] font-black uppercase text-slate-400">Q {currentIndex + 1} / {queue.length}</span></div>}
                         </div>
                         <h1 className="font-black text-slate-900 italic text-sm uppercase tracking-widest">IB Bio Master Pro</h1>
@@ -413,10 +409,10 @@
                                 </div>
                             )}
                             {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => {
-                                const sizes = [14, 16, 19, 23];
-                                setContentFontSize(prev => sizes[(sizes.indexOf(prev) + 1) % sizes.length]);
+                                const s = [14, 16, 19, 23];
+                                setContentFontSize(prev => s[(s.indexOf(prev) + 1) % s.length]);
                             }} className="font-cycle-btn shadow-sm active:scale-95">Aa</button>}
-                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={handleNext} className="next-nav-btn shadow-sm active:scale-95"><AppIcon name="NextArrow" size={22} /></button>}
+                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={handleNext} className="next-nav-btn shadow-sm active:scale-95"><AppIcon name="NextArrow" size={20} /></button>}
                         </div>
                     </header>
 
@@ -438,7 +434,7 @@
                                         <div className="space-y-3">
                                             <div className="flex gap-2 p-1 rounded-xl bg-slate-50">{THEMES.map(t=>(<button key={t.id} onClick={()=>setBuildTheme(t.id)} className={`flex-1 py-1.5 rounded-lg font-black text-xs transition-all ${buildTheme===t.id ? 'bg-white shadow-md' : 'text-slate-400'}`} style={{ color: buildTheme===t.id ? t.color : 'inherit' }}>{t.id}</button>))}</div>
                                             <div className="flex gap-1">{[{id:'mixed',n:'綜合'}, {id:'mcq',n:'選擇'}, {id:'erq',n:'論述'}].map(m=>(<button key={m.id} onClick={()=>setBuildRatio(m.id)} className={`flex-1 py-1.5 rounded-lg font-black text-[10px] border transition-all ${buildRatio===m.id ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-400 border-slate-100'}`}>{m.n}</button>))}</div>
-                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 questions for Unit ${buildTheme} (${buildRatio}). Output JSON: { "${buildTheme}": [ ... ] }. Include ERQ. MCQ must have 4 options A, B, C, D. EACH needs answer, explanation, prefetchedInsight. NO markdown bolding **. Use plain text for terms (no LaTeX shields).`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase text-[10px] shadow-md">{loading ? 'AI Working...' : 'Generate 10 New Questions'}</button>
+                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 questions for Unit ${buildTheme} (${buildRatio}). Output JSON: { "${buildTheme}": [ ... ] }. Include ERQ questions. MCQ must have 4 options A, B, C, D. EACH needs "answer", "explanation", "prefetchedInsight". NO complex symbols. Use plain text for Vmax and Km.`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase text-[10px] shadow-md">{loading ? 'AI Working...' : 'Generate 10 New Questions'}</button>
                                         </div>
                                         {generatedJson && (
                                             <div className="mt-4 pt-4 border-t space-y-2">
@@ -478,7 +474,7 @@
                                                         </div>
                                                     ) : (
                                                         <div className="space-y-3">
-                                                            <textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-50 border-2 rounded-2xl min-h-[160px] outline-none font-medium" placeholder="Input analytical response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />
+                                                            <textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-50 border-2 rounded-2xl min-h-[160px] outline-none font-medium text-slate-800" placeholder="Input analytical response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />
                                                             {!sessionResults[cur.id] && <button onClick={submitErq} disabled={!tempAnswer.trim()||loading} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-md">{loading?'Analyzing...':'Submit'}</button>}
                                                         </div>
                                                     )}
@@ -508,7 +504,7 @@
                             {tab === 'config' && (
                                 <div className="space-y-4 animate-up">
                                     <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-6">
-                                        <div className="p-4 bg-slate-900 rounded-2xl text-white space-y-2"><p className="text-[9px] font-black uppercase text-blue-400">Gemini AI Access</p><input type="password" placeholder="API Key" className="w-full p-3 bg-white/10 border-none rounded-lg text-sm text-blue-100" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} /></div>
+                                        <div className="p-4 bg-slate-900 rounded-2xl text-white space-y-2"><p className="text-[9px] font-black uppercase text-blue-400">Gemini AI Access</p><input type="password" placeholder="請輸入有效 API Key" className="w-full p-3 bg-white/10 border-none rounded-lg text-sm text-blue-100" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} /></div>
                                         <button onClick={()=>{if(confirm("確定要重置嗎？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest">Reset All Data</button>
                                     </div>
                                 </div>
