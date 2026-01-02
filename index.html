@@ -11,7 +11,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- KaTeX -->
+    <!-- KaTeX 科學公式渲染 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
@@ -24,17 +24,17 @@
         :root { --primary: #2563eb; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; color: #1e293b; margin: 0; overflow: hidden; height: 100vh; }
         
-        .app-container { height: 100vh; width: 100%; max-width: 780px; margin: 0 auto; background: white; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 50px rgba(0,0,0,0.04); }
-        .header-fixed { border-bottom: 1px solid #f1f5f9; flex-shrink: 0; background: white; padding: 12px 0; }
-        .main-scroll { flex: 1; overflow-y: auto; padding: 1.2rem; }
-        .content-buffer { padding-bottom: 95px; width: 100%; }
+        .app-container { height: 100vh; width: 100%; max-width: 780px; margin: 0 auto; background: white; display: flex; flex-direction: column; position: relative; }
+        .header-fixed { border-bottom: 1px solid #f1f5f9; flex-shrink: 0; background: white; padding: 10px 0; }
+        .main-scroll { flex: 1; overflow-y: auto; padding: 1.25rem; }
+        .content-buffer { padding-bottom: 100px; width: 100%; }
 
-        .glass-nav { background: white; border-top: 1px solid #f1f5f9; height: 75px; flex-shrink: 0; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -4px 15px rgba(0,0,0,0.02); }
+        .glass-nav { background: white; border-top: 1px solid #f1f5f9; height: 75px; flex-shrink: 0; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.02); }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #2563eb; }
         
-        /* 質感卡片與報告 */
-        .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: white; margin-bottom: 1.2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        /* 報告與卡片質感 */
+        .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: white; margin-bottom: 1.25rem; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
         .card-blue { border-color: #2563eb; background: #f0f7ff; }
         .card-rose { border-color: #e11d48; background: #fff1f2; }
         .card-amber { border-color: #f59e0b; background: #fffbeb; }
@@ -46,23 +46,20 @@
         .math-container { line-height: 1.8; word-break: break-word; margin-bottom: 0.75rem; }
         .indent-content { padding-left: 1.25rem; border-left: 3.5px solid rgba(0,0,0,0.05); margin-top: 0.8rem; color: #334155; }
 
-        .animate-up { animation: slideUp 0.4s ease-out forwards; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-
         /* MCQ 選項 */
-        .option-label { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; background: #f1f5f9; color: #1e293b; border: 2.5px solid #cbd5e1; transition: 0.2s; flex-shrink: 0; }
+        .option-label { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; background: #f1f5f9; color: #1e293b; border: 2.5px solid #cbd5e1; flex-shrink: 0; }
         .selected-label { background: #1e293b; color: white; border-color: #1e293b; }
 
-        /* 彩色化控制按鈕 */
+        /* 彩色控制按鈕 */
         .font-cycle-btn { background: #eff6ff; padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #2563eb; border: 2px solid #dbeafe; transition: 0.2s; box-shadow: 0 2px 5px rgba(37, 99, 235, 0.1); }
-        .back-nav-btn { color: #2563eb; padding: 10px; border-radius: 14px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; display: flex; align-items: center; }
+        .back-nav-btn { color: #2563eb; padding: 10px; border-radius: 14px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; }
         .next-nav-btn { color: #2563eb; padding: 8px; border-radius: 12px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
         
         .mastery-container { display: flex; align-items: center; gap: 10px; }
         .mastery-label-text { font-size: 13px; font-weight: 800; color: #94a3b8; }
         .mastery-toggle-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
-        .bio-table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.9em; background: white; border-radius: 12px; overflow: hidden; border: 1px solid #f1f5f9; }
+        .bio-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9em; background: white; border-radius: 12px; overflow: hidden; }
         .bio-table th { background: #f8fafc; padding: 12px; text-align: left; font-weight: 800; border-bottom: 2px solid #e2e8f0; color: #64748b; }
         .bio-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
     </style>
@@ -87,21 +84,19 @@
                 Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
                 Brain: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>,
                 Config: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>,
-                Check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>,
-                Sparkles: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><path d="M5 3l.94 2.06L8 6l-2.06.94L5 9l-.94-2.06L2 6l2.06-.94L5 3zm14 15l.94 2.06L22 21l-2.06.94L19 24l-.94-2.06L16 21l2.06-.94L19 18zm4.5-10.5l1.09 2.41L27 11l-2.41 1.09L23.5 14.5l-1.09-2.41L20 11l2.41-1.09L23.5 7.5z"/></svg>,
                 House: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3.5" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
                 Star: <svg width={size} height={size} fill={fill} stroke={color} strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,
-                NextArrow: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="4.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>,
-                Download: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                NextArrow: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="4.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
             };
             return icons[name] || null;
         };
 
-        // --- 強力純淨化：絕對保留 LaTeX 符號與底線 ---
+        // --- 強力純淨化：絕不破壞 LaTeX 必要的底線和括號 ---
         const cleanRawText = (text) => {
             if (!text) return "";
+            // 只移除 Markdown 語法，保留底線、花括號、錢字號以供 KaTeX 渲染
             return text
-                .replace(/(\*\*|__|\*|#+|~+|`+)/g, "") // 移除 Markdown，但絕對不移除 _ 和 { }
+                .replace(/(\*\*|__|\*|#+|~+|`+)/g, "")
                 .replace(/Supplement for:.*?\n/gi, "")
                 .replace(/---/g, "")
                 .trim();
@@ -111,7 +106,7 @@
             let text = cleanRawText(input);
             if (!text) return "";
             
-            // 處理常見化學與酶科學標籤，自動 LaTeX 化提高渲染穩定性
+            // 科學公式優先保護渲染
             const chemPattern = /\b(Na\+|K\+|H\+|Ca2\+|Mg2\+|Cl-|NO2-|NO3-|NH4\+|CO2|H2O|O2|C6H12O6|ATP|ADP|NAD\+|NADH|RuBP|Rubisco|q2|p2|2pq|Vmax|Km)\b/g;
             text = text.replace(chemPattern, (match) => {
                 if (match === "Vmax") return "$V_{max}$";
@@ -127,6 +122,7 @@
             lines.forEach((l) => {
                 const line = l.trim();
                 if (!line) return;
+
                 if (line.includes('|')) {
                     const cells = line.split('|').filter(c => c.trim().length > 0).map(c => c.trim());
                     if (cells.length > 0 && !line.includes(':---')) {
@@ -166,27 +162,25 @@
             const [buildTheme, setBuildTheme] = useState('A');
             const [buildRatio, setBuildRatio] = useState('mixed'); 
 
-            const reportRef = useRef(null);
-
-            // --- AI Key 自動跳轉邏輯 ---
+            // --- AI Key 自動偵測導航 ---
             useEffect(() => {
                 if (userApiKey && userApiKey.trim().length > 10 && tab === 'config') {
                     setTab('home');
-                    showToast("AI 功能就緒");
                 } else if (!userApiKey && tab !== 'config') {
                     setTab('config');
                 }
             }, [userApiKey]);
 
-            // --- 精確去重統計引擎 (對齊 82 題) ---
+            // --- 核心去重統計引擎 (確保 82 題絕對正確) ---
             const stats = useMemo(() => {
-                const uniqueQuestionsMap = new Map();
+                const uniqueRegistry = new Map();
+                // 掃描所有題庫進行去重
                 Object.values(masterBank).flat().forEach(q => {
-                    if (q && q.id) uniqueQuestionsMap.set(q.id, q);
+                    if (q && q.id) uniqueRegistry.set(q.id, q);
                 });
 
-                const allUnique = Array.from(uniqueQuestionsMap.values());
-                const countByTheme = (id) => allUnique.filter(q => q.theme === id || q.id.startsWith(id)).length;
+                const allUnique = Array.from(uniqueRegistry.values());
+                const countByTheme = (themeId) => allUnique.filter(q => q.theme === themeId || q.id.startsWith(themeId)).length;
 
                 return {
                     total: allUnique.length,
@@ -200,8 +194,8 @@
 
             const loadAllBanks = useCallback(async () => {
                 const pool = { A:[], B:[], C:[], D:[] };
-                const files = ['questions_bank.json', 'questions_bank_A.json', 'questions_bank_B.json', 'questions_bank_C.json', 'questions_bank_D.json'];
-                for (const f of files) {
+                const targets = ['questions_bank.json', 'questions_bank_A.json', 'questions_bank_B.json', 'questions_bank_C.json', 'questions_bank_D.json'];
+                for (const f of targets) {
                     try {
                         const res = await fetch(`./${f}`);
                         if (res.ok) {
@@ -235,21 +229,17 @@
                 if (!json) return;
                 const local = JSON.parse(localStorage.getItem('local_custom_bank') || '{}');
                 setMasterBank(prev => {
-                    const next = JSON.parse(JSON.stringify(prev));
+                    const next = { ...prev };
                     Object.keys(json).forEach(unit => {
                         let uKey = unit.toUpperCase().replace('THEME ', '').trim();
                         if (['A','B','C','D'].includes(uKey)) {
                             const incoming = Array.isArray(json[unit]) ? json[unit] : [json[unit]];
                             const norm = incoming.map(q => {
                                 if (!q.id) q.id = "U_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
-                                if (q.type === 'MCQ' && Array.isArray(q.options)) {
-                                    const obj = {};
-                                    q.options.forEach((v, i) => { obj[String.fromCharCode(65 + i)] = v; });
-                                    q.options = obj;
-                                }
                                 return q;
                             });
                             local[uKey] = [...(local[uKey] || []), ...norm];
+                            // 本地庫同步去重
                             const map = new Map();
                             local[uKey].forEach(q => { if(q && q.id) map.set(q.id, q); });
                             local[uKey] = Array.from(map.values());
@@ -257,7 +247,7 @@
                         }
                     });
                     localStorage.setItem('local_custom_bank', JSON.stringify(local));
-                    return next; 
+                    return { ...next }; 
                 });
             };
 
@@ -269,12 +259,13 @@
                         setGeneratedJson("");
                         showToast("同步成功！Dashboard 已更新");
                     } else throw new Error();
-                } catch(e) { showToast("解析失敗"); }
+                } catch(e) { showToast("數據解析失敗"); }
             };
 
             const startPractice = () => {
-                const pool = selThemes.flatMap(t => masterBank[t] || []).filter(q => q && q.id && q.type === selType && !masteredIds.has(q.id));
-                const uniquePool = Array.from(new Map(pool.map(q => [q.id, q])).values());
+                const rawPool = selThemes.flatMap(t => masterBank[t] || [])
+                                 .filter(q => q && q.id && q.type === selType && !masteredIds.has(q.id));
+                const uniquePool = Array.from(new Map(rawPool.map(q => [q.id, q])).values());
                 if (uniquePool.length) {
                     setQueue([...uniquePool].sort(() => Math.random() - 0.5));
                     setCurrentIndex(0); setQuizStep('practice'); setSessionResults({}); setTempAnswer('');
@@ -288,12 +279,12 @@
                     localStorage.setItem('mastered_ids', JSON.stringify(Array.from(next)));
                     return next;
                 });
+                showToast("熟悉度已更新");
             };
 
             const handleNext = () => {
-                if (!queue[currentIndex]) return;
+                if (queue.length === 0) return;
                 const curQ = queue[currentIndex];
-                const res = sessionResults[curQ.id];
                 const isMastered = masteredIds.has(curQ.id);
 
                 if (isMastered) {
@@ -309,7 +300,7 @@
                 }
 
                 if (queue.length <= 1 && isMastered) {
-                    showToast("全部題目已掌握！");
+                    showToast("單元練習結束！");
                     setQuizStep('setup');
                 } else {
                     setTempAnswer('');
@@ -344,49 +335,10 @@
                 } catch (e) { return null; }
             };
 
-            const exportPDF = () => {
-                if (!reportRef.current) return;
-                const element = reportRef.current;
-                element.classList.add('pdf-mode');
-                const opt = { margin: 8, filename: 'Assessment_Report.pdf', image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } };
-                html2pdf().set(opt).from(element).save().then(() => element.classList.remove('pdf-mode'));
-            };
-
-            const renderFeedback = useCallback((text, isErq, original, expl) => {
-                if (!text && !expl) return null;
-                const markers = isErq ? ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar"] : ["Key Concept", "Pitfall", "Core Fact", "Deep Analysis"];
-                let found = [];
-                markers.forEach(m => {
-                    const reg = new RegExp(`(?:\\*\\*|#+\\s*)?${m}(?:\\*\\*|:)?`, 'gi');
-                    let match;
-                    while ((match = reg.exec(text)) !== null) found.push({ name: m, index: match.index, rawLen: match[0].length });
-                });
-                found.sort((a,b) => a.index - b.index);
-
-                let cards = [];
-                if (isErq && original) cards.push(<div key="user" className="themed-card card-slate"><span className="badge-mini bg-slate-500 text-white">Your Response</span><div className="font-semibold text-slate-600 italic leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(original) }} /></div>);
-                if (!isErq && expl) cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini bg-emerald-600 text-white">Knowledge Briefing</span><div className="font-semibold text-emerald-800" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
-
-                found.forEach((p, i) => {
-                    const content = text.substring(p.index + p.rawLen, (i + 1 < found.length) ? found[i+1].index : text.length).trim();
-                    let color = "card-blue", label = p.name;
-                    if (isErq) {
-                        if (/Mark/i.test(p.name)) { label="Analysis"; color="card-blue"; }
-                        else if (/Gap/i.test(p.name)) { label="Gaps"; color="card-rose"; }
-                        else if (/Pathway/i.test(p.name)) { label="Pathway"; color="card-amber"; }
-                        else if (/Exemplar/i.test(p.name)) { label="Exemplar"; color="card-emerald"; }
-                    } else { label = p.name.replace(" Analysis", ""); }
-                    
-                    if (content.length > 2) cards.push(<div key={p.name+i} className={`themed-card ${color}`}><span className="badge-mini bg-slate-800 text-white">{label}</span><div className="font-medium text-slate-700 indent-content" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} /></div>);
-                });
-                if (!cards.length) cards.push(<div key="fb" className="themed-card card-blue"><span className="badge-mini">AI Feedback</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(text) }} /></div>);
-                return cards;
-            }, []);
-
             useEffect(() => {
                 const render = () => { if (window.renderMathInElement) renderMathInElement(document.body, { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}], throwOnError: false }); };
                 render();
-                setTimeout(render, 450); // 防崩潰渲染循環
+                setTimeout(render, 450); // 防崩潰補償渲染
             }, [quizStep, currentIndex, sessionResults, tab, contentFontSize, generatedJson]);
 
             const cur = queue[currentIndex];
@@ -401,26 +353,28 @@
                                 <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm active:scale-95"><AppIcon name="House" size={24} /></button>
                             )}
                             {tab === 'quiz' && quizStep === 'practice' && (
-                                <div className="ml-2 flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-100">
+                                <div className="ml-2 bg-slate-50 px-2 py-1.5 rounded-xl border border-slate-100 flex items-center gap-1">
                                     <span className="text-[11px] font-black uppercase text-slate-400">Q {currentIndex + 1} / {queue.length}</span>
-                                    <button onClick={handleNext} className="next-nav-btn shadow-sm active:scale-95"><AppIcon name="NextArrow" size={18} /></button>
                                 </div>
                             )}
                         </div>
                         
                         <h1 className="font-black text-slate-900 italic text-sm uppercase tracking-widest">IB Bio Master Pro</h1>
                         
-                        <div className="flex items-center gap-3">
-                            {tab === 'quiz' && quizStep === 'practice' && (
+                        <div className="flex items-center gap-2">
+                            {tab === 'quiz' && quizStep === 'practice' && cur && (
                                 <div className="mastery-container">
-                                    <span className="mastery-label-text">{masteredIds.has(cur?.id) ? "熟悉" : ""}</span>
-                                    <button onClick={() => toggleMastery(cur?.id)} className={`mastery-toggle-btn shadow-sm active:scale-95 transition-colors ${masteredIds.has(cur?.id) ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                                        <AppIcon name="Star" size={20} fill={masteredIds.has(cur?.id) ? "white" : "none"} />
+                                    <span className="mastery-label-text">{masteredIds.has(cur.id) ? "熟悉" : ""}</span>
+                                    <button onClick={() => toggleMastery(cur.id)} className={`mastery-toggle-btn shadow-sm active:scale-95 transition-colors ${masteredIds.has(cur.id) ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                        <AppIcon name="Star" size={20} fill={masteredIds.has(cur.id) ? "white" : "none"} />
                                     </button>
                                 </div>
                             )}
                             {tab === 'quiz' && quizStep === 'practice' && (
                                 <button onClick={cycleFontSize} className="font-cycle-btn shadow-sm active:scale-95">Aa</button>
+                            )}
+                            {tab === 'quiz' && quizStep === 'practice' && (
+                                <button onClick={handleNext} className="next-nav-btn shadow-sm active:scale-95"><AppIcon name="NextArrow" size={20} /></button>
                             )}
                         </div>
                     </header>
@@ -431,7 +385,7 @@
                                 <div className="space-y-4 animate-up">
                                     <div className="bg-slate-900 rounded-3xl p-6 text-white text-center shadow-lg">
                                         <div className="grid grid-cols-2 gap-3 mb-6">
-                                            <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-blue-400">{stats.total}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Total Qs</p></div>
+                                            <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-blue-400">{stats.total}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Questions</p></div>
                                             <div className="bg-white/10 p-3 rounded-2xl"><p className="text-xl font-black text-emerald-400">{stats.mastered}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Mastered</p></div>
                                         </div>
                                         <div className="grid grid-cols-4 gap-2">
@@ -443,9 +397,9 @@
                                             ))}
                                         </div>
                                     </div>
-
+                                    {/* Generator */}
                                     <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-4">
-                                        <h2 className="font-black text-xs uppercase italic text-slate-400 flex items-center gap-2"><AppIcon name="Sparkles" size={12} /> AI Bank Generator</h2>
+                                        <h2 className="font-black text-xs uppercase italic text-slate-400 flex items-center gap-2"><AppIcon name="Sparkles" size={12} /> AI Generator</h2>
                                         <div className="space-y-3">
                                             <div className="flex gap-2 p-1 rounded-xl bg-slate-50">
                                                 {THEMES.map(t=>(<button key={t.id} onClick={()=>setBuildTheme(t.id)} className={`flex-1 py-1.5 rounded-lg font-black text-xs transition-all ${buildTheme===t.id ? 'bg-white shadow-md' : 'text-slate-400'}`} style={{ color: buildTheme===t.id ? t.color : 'inherit' }}>{t.id}</button>))}
@@ -453,7 +407,7 @@
                                             <div className="flex gap-1">
                                                 {[{id:'mixed',n:'綜合'}, {id:'mcq',n:'選擇'}, {id:'erq',n:'論述'}].map(m=>(<button key={m.id} onClick={()=>setBuildRatio(m.id)} className={`flex-1 py-1.5 rounded-lg font-black text-[10px] border transition-all ${buildRatio===m.id ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-400 border-slate-100'}`}>{m.n}</button>))}
                                             </div>
-                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 ${buildRatio} questions for Unit ${buildTheme}. Output JSON object { "${buildTheme}": [ ... ] }. MCQ MUST have detailed "explanation" and "prefetchedInsight". NO bolding symbols in output.`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] italic shadow-md active:scale-95">{loading ? 'AI Working...' : 'Generate New Questions'}</button>
+                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 ${buildRatio} questions for Unit ${buildTheme}. Output JSON object { "${buildTheme}": [ ... ] }. MCQ MUST have explanation & prefetchedInsight. NO markdown symbols.`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] italic shadow-md active:scale-95">{loading ? 'AI Working...' : 'Generate New Questions'}</button>
                                         </div>
                                         {generatedJson && (
                                             <div className="mt-4 pt-4 border-t space-y-2">
@@ -498,25 +452,17 @@
                                                         </div>
                                                     ) : (
                                                         <div className="space-y-3">
-                                                            <textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-50 border-2 rounded-2xl min-h-[160px] outline-none font-medium text-slate-800" placeholder="Input analytical response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />
+                                                            <textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-50 border-2 rounded-2xl min-h-[160px] outline-none font-medium" placeholder="Input analytical response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />
                                                             {!sessionResults[cur.id] && <button onClick={submitErq} disabled={!tempAnswer.trim()||loading} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase italic tracking-widest shadow-md">{loading?'Analyzing...':'Submit Response'}</button>}
                                                         </div>
                                                     )}
                                                 </div>
-
                                                 {sessionResults[cur.id] && (
-                                                    <div id="report-content" ref={reportRef} className="space-y-1 mt-4">
+                                                    <div className="space-y-1 mt-4">
                                                         <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-sm no-animation">
                                                             <div className="flex justify-between items-center mb-5">
                                                                 <span className="text-[10px] font-black text-slate-400 uppercase italic tracking-widest">{cur.type === 'MCQ' ? 'Knowledge Briefing' : 'Assessment Report'}</span>
-                                                                {cur.type === 'ERQ' && <button onClick={exportPDF} className="text-[11px] font-black text-blue-600 flex items-center gap-1 uppercase hover:underline"><AppIcon name="Download" size={16} /> Get PDF</button>}
                                                             </div>
-                                                            {cur.type === 'ERQ' && (
-                                                                <div className="mb-6 pb-4 border-b border-slate-100">
-                                                                    <span className="badge-mini bg-slate-900 text-white">Source Question</span>
-                                                                    <div className="font-black text-slate-800 italic leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
-                                                                </div>
-                                                            )}
                                                             {cur.type === 'MCQ' 
                                                                 ? renderFeedback(cur.prefetchedInsight, false, "", cur.explanation) 
                                                                 : renderFeedback(sessionResults[cur.id].feedback, true, sessionResults[cur.id].answer)
@@ -527,7 +473,7 @@
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="p-20 text-center animate-pulse text-slate-300 font-black">SYNCING...</div>
+                                        <div className="p-20 text-center animate-pulse text-slate-300 font-black italic">QUEUE PREPARING...</div>
                                     )}
                                 </div>
                             )}
@@ -537,7 +483,7 @@
                                     <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-6">
                                         <div className="p-4 bg-slate-900 rounded-2xl text-white space-y-2">
                                             <p className="text-[9px] font-black uppercase text-blue-400">Gemini AI Access</p>
-                                            <input type="password" placeholder="請輸入有效 API Key 以開始使用" className="w-full p-3 bg-white/10 border-none rounded-lg text-sm text-blue-100 placeholder:text-blue-300/40" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} />
+                                            <input type="password" placeholder="請輸入 API Key 以開始使用" className="w-full p-3 bg-white/10 border-none rounded-lg text-sm text-blue-100 placeholder:text-blue-300/40" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} />
                                         </div>
                                         <button onClick={()=>{if(confirm("確定要重置數據嗎？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest">Reset All Data</button>
                                     </div>
