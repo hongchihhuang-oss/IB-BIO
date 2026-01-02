@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master | 最終穩定純淨版</title>
+    <title>IB Bio Master | 物理重繪加固版</title>
     
     <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -33,7 +33,7 @@
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #2563eb; }
         
-        /* 質感報告卡片樣式 */
+        /* 質感報告卡片 */
         .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: white; margin-bottom: 1.1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .card-blue { border-color: #2563eb; background: #f0f7ff; }
         .card-rose { border-color: #e11d48; background: #fff1f2; }
@@ -41,7 +41,10 @@
         .card-emerald { border-color: #10b981; background: #ecfdf5; }
         .card-slate { border-color: #64748b; background: #f8fafc; }
 
-        .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 8px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; background: #1e293b; color: white; }
+        .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 8px; display: inline-block; text-transform: uppercase; background: #1e293b; color: white; }
+        
+        /* 採用您的建議：為特殊文字加上淡灰色背景 */
+        .science-term { background: #f1f5f9; padding: 0 6px; border-radius: 4px; font-weight: 600; color: #0f172a; border-bottom: 1px solid #e2e8f0; display: inline-block; line-height: 1.2; }
         
         .math-container { line-height: 1.8; word-break: break-word; margin-bottom: 0.75rem; }
         .indent-content { padding-left: 1.25rem; border-left: 3.5px solid rgba(0,0,0,0.05); margin-top: 0.75rem; color: #334155; }
@@ -81,7 +84,7 @@
             { id: "D", name: "Evolution", color: "#f59e0b", bg: "#fffbeb" }
         ];
 
-        // --- 元件圖示 ---
+        // --- 圖示元件 ---
         const AppIcon = ({ name, size = 18, color = "currentColor", fill = "none", strokeWidth = "2.5" }) => {
             const icons = {
                 Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
@@ -91,30 +94,32 @@
                 House: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3.5" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
                 Star: <svg width={size} height={size} fill={fill} stroke={color} strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,
                 NextArrow: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="4.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>,
-                Download: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Download: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>,
+                Sparkles: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 3l.94 2.06L8 6l-2.06.94L5 9l-.94-2.06L2 6l2.06-.94L5 3zm14 15l.94 2.06L22 21l-2.06.94L19 24l-.94-2.06L16 21l2.06-.94L19 18zm4.5-10.5l1.09 2.41L27 11l-2.41 1.09L23.5 14.5l-1.09-2.41L20 11l2.41-1.09L23.5 7.5z"/></svg>
             };
             return icons[name] || null;
         };
 
-        // --- 核心修復：極簡清理引擎，徹底廢除隔離機制，保證不產生 SHIELD 亂碼 ---
+        // --- 核心修復：物理重繪機制 ---
+        // 1. 徹底移除隔離保護，改用您的「灰色背景物理區分法」
         const bioCompiler = (raw) => {
             let text = String(raw || "");
             if (!text) return "";
             
-            // 1. 不再進行任何隔離保護，直接清理 Markdown 符號。保留底線與錢字號。
-            text = text.replace(/\\text\{([^}]+)\}/g, "$1") 
-                       .replace(/\\text\s+/g, "")
-                       .replace(/(\*\*|__)/g, "")
-                       .replace(/#+\s?/g, "")
-                       .replace(/Supplement for:.*?\n/gi, "")
-                       .replace(/---/g, "");
+            // 清理基礎 Markdown
+            text = text.replace(/(\*\*|__)/g, "").replace(/#+\s?/g, "").replace(/Supplement for:.*?\n/gi, "").replace(/---/g, "");
 
-            const lines = text.split('\n');
+            // 針對科學標記與 $ 內容包裝成獨立標籤，並賦予灰色背景以觸發重繪
+            // 同時處理您提到的 ATP, Rubisco 等術語
+            const pattern = /(\$[^\$]+\$|Vmax|Km|ATP|Rubisco|Na\+|K\+|H\+|Ca2\+)/g;
+            const parts = text.split(pattern);
+            
             let finalHTML = [];
             let inTable = false;
             let tableData = [];
 
-            lines.forEach((l) => {
+            const lineChunks = text.split('\n');
+            lineChunks.forEach((l) => {
                 const line = l.trim();
                 if (!line) return;
 
@@ -129,7 +134,10 @@
                         finalHTML.push(`<table class="bio-table"><thead><tr>${tableData[0].map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${tableData.slice(1).map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
                         inTable = false; tableData = [];
                     }
-                    finalHTML.push(`<div class="mb-3 math-container">${line}</div>`);
+                    
+                    // 關鍵修復：將術語包裹在 gray background span 中
+                    const styledLine = line.replace(pattern, (match) => `<span class="science-term">${match}</span>`);
+                    finalHTML.push(`<div class="mb-3 math-container">${styledLine}</div>`);
                 }
             });
             return finalHTML.join('');
@@ -154,25 +162,21 @@
             const [buildTheme, setBuildTheme] = useState('A');
             const [buildRatio, setBuildRatio] = useState('mixed'); 
 
-            // 當前題目安全讀取
             const cur = useMemo(() => (queue && queue.length > 0) ? queue[currentIndex] : null, [queue, currentIndex]);
 
-            // --- 核心修復：強制同步渲染 (解決要點擊才變正確的問題) ---
+            // --- 物理渲染同步：解決「點擊才變正確」的問題 ---
             useLayoutEffect(() => {
                 const triggerKaTeX = () => {
                     if (window.renderMathInElement) {
                         renderMathInElement(document.body, {
-                            delimiters: [
-                                {left: '$$', right: '$$', display: true},
-                                {left: '$', right: '$', display: false}
-                            ],
+                            delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}],
                             throwOnError: false
                         });
                     }
                 };
                 triggerKaTeX();
-                // 異步多重掃描，確保動態文字內容就緒（解決點擊後才正確的延遲）
-                const t1 = setTimeout(triggerKaTeX, 50);
+                // 異步多重掃描，確保第一秒內容就緒
+                const t1 = setTimeout(triggerKaTeX, 20);
                 const t2 = setTimeout(triggerKaTeX, 350);
                 return () => { clearTimeout(t1); clearTimeout(t2); };
             }, [quizStep, currentIndex, sessionResults, tab, contentFontSize]);
@@ -207,8 +211,8 @@
                 const uniqueMap = new Map();
                 Object.values(masterBank).flat().forEach(q => { if (q && q.id) uniqueMap.set(q.id, q); });
                 const all = Array.from(uniqueMap.values());
-                const count = (tid) => all.filter(q => q.theme === tid || String(q.id).startsWith(tid)).length;
-                return { total: all.length, mastered: masteredIds.size, A: count('A'), B: count('B'), C: count('C'), D: count('D') };
+                const countByTheme = (tid) => all.filter(q => q.theme === tid || String(q.id).startsWith(tid)).length;
+                return { total: all.length, mastered: masteredIds.size, A: countByTheme('A'), B: countByTheme('B'), C: countByTheme('C'), D: countByTheme('D') };
             }, [masterBank, masteredIds]);
 
             const cycleFontSize = useCallback(() => {
@@ -222,11 +226,11 @@
                 const element = document.getElementById('report-content');
                 if (!element) return;
                 element.classList.add('pdf-mode');
-                const opt = { margin: 10, filename: 'Assessment_Report.pdf', image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } };
+                const opt = { margin: 10, filename: 'Assessment_Report.pdf', image:{type:'jpeg',quality:1}, html2canvas:{scale:2}, jsPDF:{unit:'mm',format:'a4'} };
                 html2pdf().set(opt).from(element).save().then(() => element.classList.remove('pdf-mode'));
             }, []);
 
-            // --- 報告精密切割 (鎖定關鍵字法) ---
+            // --- 報告精密切割 (解決錯位) ---
             const renderFeedback = useCallback((text, isErq, original, expl, prefetched) => {
                 if (!text && !expl && !prefetched) return null;
                 const markers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar", "Key Concept", "Pitfall", "Fact", "Deep Analysis"];
@@ -237,17 +241,9 @@
                 
                 if (!isErq) {
                     if (expl) cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini bg-emerald-600 text-white">Correct Answer Detail: {cur?.answer}</span><div className="font-semibold text-emerald-800" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
-                    if (prefetched) {
-                        const subM = ["Key Concept", "Deep Analysis", "Fact", "Pitfall"];
-                        subM.forEach(sm => {
-                            const stReg = new RegExp(`${sm}:?\\s?([\\s\\S]*?)(?=${subM.join(':|')}:|$)`, 'i');
-                            const stMatch = prefetched.match(stReg);
-                            if (stMatch && stMatch[1].trim().length > 5) cards.push(<div key={sm} className="themed-card card-blue"><span className="badge-mini bg-blue-800 text-white">{sm}</span><div className="font-medium text-slate-700 indent-content" dangerouslySetInnerHTML={{ __html: bioCompiler(stMatch[1]) }} /></div>);
-                        });
-                    }
                 }
 
-                // 物理定位切割法，確保區塊內容絕對準確
+                // 物理定位切割法
                 let segments = [];
                 markers.forEach(m => {
                     const idx = fullText.indexOf(m);
@@ -258,19 +254,16 @@
                 segments.forEach((seg, i) => {
                     const nextStart = (i + 1 < segments.length) ? segments[i+1].start : fullText.length;
                     const content = fullText.substring(seg.start + seg.len, nextStart).replace(/^[:\s\*-]+/, "").trim();
-                    
                     let color = "card-blue", label = seg.name;
                     if (isErq) {
                         if (seg.name.includes("Mark")) { color="card-emerald"; label="Mark Scheme"; }
                         else if (seg.name.includes("Gap")) { color="card-rose"; label="Gaps"; }
-                        else if (seg.name.includes("Level")) { color="card-amber"; label="To Level 7"; }
+                        else if (seg.name.includes("Level")) { color="card-amber"; label="To L7"; }
                     }
-                    if (content.length > 2) {
-                        cards.push(<div key={seg.name+i} className={`themed-card ${color}`}><span className="badge-mini bg-slate-800 text-white">{label}</span><div className="font-medium text-slate-700 indent-content" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} /></div>);
-                    }
+                    if (content.length > 2) cards.push(<div key={seg.name+i} className={`themed-card ${color}`}><span className="badge-mini bg-slate-800 text-white">{label}</span><div className="font-medium text-slate-700 indent-content" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} /></div>);
                 });
 
-                if (cards.length === 0 && fullText.length > 10) cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini">AI Evaluation</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(fullText) }} /></div>);
+                if (cards.length === 0 && fullText.length > 10) cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini">AI Analysis</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(fullText) }} /></div>);
                 return cards;
             }, [cur]);
 
@@ -334,7 +327,7 @@
             const submitErq = async () => {
                 if (!tempAnswer.trim()) return;
                 setLoading(true);
-                const fb = await askAI(`Question: "${cur.question}"\nStudent Answer: "${tempAnswer}"\nProvide evaluation with these EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Detailed content.`, "Senior IB Bio Moderator.");
+                const fb = await askAI(`Question: "${cur.question}"\nStudent Answer: "${tempAnswer}"\nEvaluate using these EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Detailed content.`, "Senior IB Bio Moderator.");
                 if (fb) setSessionResults(prev => ({ ...prev, [cur.id]: { answer: tempAnswer, feedback: fb } }));
                 setLoading(false);
             };
@@ -365,7 +358,7 @@
                     {statusMsg && <div className="toast-msg">{statusMsg}</div>}
                     <header className="header-fixed flex items-center justify-between px-4 py-3">
                         <div className="flex items-center gap-2">
-                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm"><AppIcon name="House" size={24} /></button>}
+                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm active:scale-95"><AppIcon name="House" size={24} /></button>}
                             {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-50 px-2 py-1.5 rounded-xl border border-slate-100 flex items-center gap-1"><span className="text-[11px] font-black uppercase text-slate-400">Q {currentIndex + 1} / {queue.length}</span></div>}
                         </div>
                         <h1 className="font-black text-slate-900 italic text-sm uppercase tracking-widest">IB Bio Master Pro</h1>
@@ -406,7 +399,7 @@
                                         <div className="space-y-3">
                                             <div className="flex gap-2 p-1 rounded-xl bg-slate-50">{THEMES.map(t=>(<button key={t.id} onClick={()=>setBuildTheme(t.id)} className={`flex-1 py-1.5 rounded-lg font-black text-xs transition-all ${buildTheme===t.id ? 'bg-white shadow-md' : 'text-slate-400'}`} style={{ color: buildTheme===t.id ? t.color : 'inherit' }}>{t.id}</button>))}</div>
                                             <div className="flex gap-1">{[{id:'mixed',n:'綜合'}, {id:'mcq',n:'選擇'}, {id:'erq',n:'論述'}].map(m=>(<button key={m.id} onClick={()=>setBuildRatio(m.id)} className={`flex-1 py-1.5 rounded-lg font-black text-[10px] border transition-all ${buildRatio===m.id ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-400 border-slate-100'}`}>{m.n}</button>))}</div>
-                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 IB bio questions for Unit ${buildTheme}. Output JSON { "${buildTheme}": [ ... ] }. Include ERQ. MCQ 4 options A, B, C, D. EACH needs answer, explanation. Use plain text like Vmax, Km and ATP.`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase text-[10px] shadow-md">{loading ? 'AI Working...' : 'Generate 10 New Questions'}</button>
+                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 IB bio questions for Unit ${buildTheme} (${buildRatio}). Output JSON: { "${buildTheme}": [ ... ] }. Include ERQ. MCQ 4 options A, B, C, D. EACH needs answer, explanation. Use plain text like Vmax, Km and Rubisco.`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase text-[10px] shadow-md">{loading ? 'AI Working...' : 'Generate 10 New Questions'}</button>
                                         </div>
                                         {generatedJson && (
                                             <div className="mt-4 pt-4 border-t space-y-2">
@@ -476,8 +469,8 @@
                             {tab === 'config' && (
                                 <div className="space-y-4 animate-up">
                                     <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-6">
-                                        <div className="p-4 bg-slate-900 rounded-2xl text-white space-y-2"><p className="text-[9px] font-black uppercase text-blue-400">Gemini AI Access</p><input type="password" placeholder="請輸入 API Key" className="w-full p-3 bg-white/10 border-none rounded-lg text-sm text-blue-100" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} /></div>
-                                        <button onClick={()=>{if(confirm("重置數據嗎？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest">Reset All Data</button>
+                                        <div className="p-4 bg-slate-900 rounded-2xl text-white space-y-2"><p className="text-[9px] font-black uppercase text-blue-400">Gemini AI Access</p><input type="password" placeholder="輸入 API Key" className="w-full p-3 bg-white/10 border-none rounded-lg text-sm text-blue-100" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} /></div>
+                                        <button onClick={()=>{if(confirm("確定要重置嗎？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest">Reset All Data</button>
                                     </div>
                                 </div>
                             )}
