@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master | 物理重繪加固版</title>
+    <title>IB Bio Master | 最終渲染同步加固版</title>
     
     <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
-    <!-- html2pdf 匯出 -->
+    <!-- html2pdf 匯出功能 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -43,18 +43,17 @@
 
         .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 8px; display: inline-block; text-transform: uppercase; background: #1e293b; color: white; }
         
-        /* 採用您的建議：為特殊文字加上淡灰色背景 */
-        .science-term { background: #f1f5f9; padding: 0 6px; border-radius: 4px; font-weight: 600; color: #0f172a; border-bottom: 1px solid #e2e8f0; display: inline-block; line-height: 1.2; }
-        
         .math-container { line-height: 1.8; word-break: break-word; margin-bottom: 0.75rem; }
         .indent-content { padding-left: 1.25rem; border-left: 3.5px solid rgba(0,0,0,0.05); margin-top: 0.75rem; color: #334155; }
 
         .animate-up { animation: slideUp 0.3s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* MCQ 選項樣式 */
         .option-label { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; background: #f1f5f9; color: #1e293b; border: 2.5px solid #cbd5e1; flex-shrink: 0; }
         .selected-label { background: #1e293b; color: white; border-color: #1e293b; }
 
+        /* 控制項 */
         .font-cycle-btn { background: #eff6ff; padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #2563eb; border: 2px solid #dbeafe; transition: 0.2s; }
         .back-nav-btn { color: #2563eb; padding: 10px; border-radius: 14px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; }
         .next-nav-btn { color: #2563eb; padding: 10px; border-radius: 12px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
@@ -65,7 +64,7 @@
 
         .bio-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85em; background: white; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; }
         .bio-table th { background: #f8fafc; padding: 10px; text-align: left; font-weight: 800; border-bottom: 2px solid #e2e8f0; }
-        .bio-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
+        .bio-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; color: #334155; line-height: 1.5; }
         
         .pdf-mode { font-size: 11px !important; line-height: 1.25 !important; }
         .pdf-mode .themed-card { margin-bottom: 0.5rem !important; padding: 0.8rem 1rem !important; border: 1px solid #eee; border-left-width: 6px; box-shadow: none !important; break-inside: avoid; }
@@ -84,7 +83,7 @@
             { id: "D", name: "Evolution", color: "#f59e0b", bg: "#fffbeb" }
         ];
 
-        // --- 圖示元件 ---
+        // --- 元件圖示 ---
         const AppIcon = ({ name, size = 18, color = "currentColor", fill = "none", strokeWidth = "2.5" }) => {
             const icons = {
                 Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
@@ -100,26 +99,27 @@
             return icons[name] || null;
         };
 
-        // --- 核心修復：物理重繪機制 ---
-        // 1. 徹底移除隔離保護，改用您的「灰色背景物理區分法」
+        // --- 核心處理：徹底根除佔位符亂碼，還原純文字與 KaTeX 兼容 ---
         const bioCompiler = (raw) => {
             let text = String(raw || "");
             if (!text) return "";
             
-            // 清理基礎 Markdown
-            text = text.replace(/(\*\*|__)/g, "").replace(/#+\s?/g, "").replace(/Supplement for:.*?\n/gi, "").replace(/---/g, "");
+            // 1. 強制移除任何可能的 SHIELD 標記，回歸原始文字
+            text = text.replace(/LATEX_PROTECT_\d+/g, "")
+                       .replace(/LATEX_RESTORE_\d+/g, "")
+                       .replace(/LATEX_SHIELD_\d+/g, "")
+                       .replace(/\\text\{([^}]+)\}/g, "$1") 
+                       .replace(/(\*\*|__)/g, "")
+                       .replace(/#+\s?/g, "")
+                       .replace(/Supplement for:.*?\n/gi, "")
+                       .replace(/---/g, "");
 
-            // 針對科學標記與 $ 內容包裝成獨立標籤，並賦予灰色背景以觸發重繪
-            // 同時處理您提到的 ATP, Rubisco 等術語
-            const pattern = /(\$[^\$]+\$|Vmax|Km|ATP|Rubisco|Na\+|K\+|H\+|Ca2\+)/g;
-            const parts = text.split(pattern);
-            
+            const lines = text.split('\n');
             let finalHTML = [];
             let inTable = false;
             let tableData = [];
 
-            const lineChunks = text.split('\n');
-            lineChunks.forEach((l) => {
+            lines.forEach((l) => {
                 const line = l.trim();
                 if (!line) return;
 
@@ -134,10 +134,7 @@
                         finalHTML.push(`<table class="bio-table"><thead><tr>${tableData[0].map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${tableData.slice(1).map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
                         inTable = false; tableData = [];
                     }
-                    
-                    // 關鍵修復：將術語包裹在 gray background span 中
-                    const styledLine = line.replace(pattern, (match) => `<span class="science-term">${match}</span>`);
-                    finalHTML.push(`<div class="mb-3 math-container">${styledLine}</div>`);
+                    finalHTML.push(`<div class="mb-3 math-container">${line}</div>`);
                 }
             });
             return finalHTML.join('');
@@ -164,22 +161,43 @@
 
             const cur = useMemo(() => (queue && queue.length > 0) ? queue[currentIndex] : null, [queue, currentIndex]);
 
-            // --- 物理渲染同步：解決「點擊才變正確」的問題 ---
+            // --- 強力修復：自動觀測渲染補償機制 ---
+            // 使用 MutationObserver 盯著 DOM，一旦題目文字出現，立即重畫 KaTeX
             useLayoutEffect(() => {
                 const triggerKaTeX = () => {
                     if (window.renderMathInElement) {
                         renderMathInElement(document.body, {
-                            delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}],
+                            delimiters: [
+                                {left: '$$', right: '$$', display: true},
+                                {left: '$', right: '$', display: false}
+                            ],
                             throwOnError: false
                         });
                     }
                 };
+
+                // 立即觸發
                 triggerKaTeX();
-                // 異步多重掃描，確保第一秒內容就緒
-                const t1 = setTimeout(triggerKaTeX, 20);
-                const t2 = setTimeout(triggerKaTeX, 350);
-                return () => { clearTimeout(t1); clearTimeout(t2); };
-            }, [quizStep, currentIndex, sessionResults, tab, contentFontSize]);
+                
+                // 採用觀察者模式：監控文字內容變動
+                const observer = new MutationObserver(() => {
+                    triggerKaTeX();
+                });
+                
+                observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+                
+                // 保險機制：多重掃描
+                const timers = [
+                    setTimeout(triggerKaTeX, 50),
+                    setTimeout(triggerKaTeX, 150),
+                    setTimeout(triggerKaTeX, 400)
+                ];
+
+                return () => {
+                    observer.disconnect();
+                    timers.forEach(clearTimeout);
+                };
+            }, [quizStep, currentIndex, sessionResults, tab, contentFontSize, cur]);
 
             // --- 數據載入 ---
             const loadAllBanks = useCallback(async () => {
@@ -211,26 +229,26 @@
                 const uniqueMap = new Map();
                 Object.values(masterBank).flat().forEach(q => { if (q && q.id) uniqueMap.set(q.id, q); });
                 const all = Array.from(uniqueMap.values());
-                const countByTheme = (tid) => all.filter(q => q.theme === tid || String(q.id).startsWith(tid)).length;
-                return { total: all.length, mastered: masteredIds.size, A: countByTheme('A'), B: countByTheme('B'), C: countByTheme('C'), D: countByTheme('D') };
+                const count = (tid) => all.filter(q => q.theme === tid || String(q.id).startsWith(tid)).length;
+                return { total: all.length, mastered: masteredIds.size, A: count('A'), B: count('B'), C: count('C'), D: count('D') };
             }, [masterBank, masteredIds]);
 
             const cycleFontSize = useCallback(() => {
                 const sizes = [14, 16, 19, 23];
-                const nextSize = sizes[(sizes.indexOf(contentFontSize) + 1) % sizes.length];
-                setContentFontSize(nextSize);
-                localStorage.setItem('contentFontSize', String(nextSize));
+                const next = sizes[(sizes.indexOf(contentFontSize) + 1) % sizes.length];
+                setContentFontSize(next);
+                localStorage.setItem('contentFontSize', String(next));
             }, [contentFontSize]);
 
             const exportPDF = useCallback(() => {
-                const element = document.getElementById('report-content');
-                if (!element) return;
-                element.classList.add('pdf-mode');
-                const opt = { margin: 10, filename: 'Assessment_Report.pdf', image:{type:'jpeg',quality:1}, html2canvas:{scale:2}, jsPDF:{unit:'mm',format:'a4'} };
-                html2pdf().set(opt).from(element).save().then(() => element.classList.remove('pdf-mode'));
+                const el = document.getElementById('report-content');
+                if (!el) return;
+                el.classList.add('pdf-mode');
+                const opt = { margin: 10, filename: 'Assessment_Report.pdf', image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } };
+                html2pdf().set(opt).from(el).save().then(() => el.classList.remove('pdf-mode'));
             }, []);
 
-            // --- 報告精密切割 (解決錯位) ---
+            // --- 報告精密切割 (鎖定關鍵字索引) ---
             const renderFeedback = useCallback((text, isErq, original, expl, prefetched) => {
                 if (!text && !expl && !prefetched) return null;
                 const markers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar", "Key Concept", "Pitfall", "Fact", "Deep Analysis"];
@@ -243,22 +261,21 @@
                     if (expl) cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini bg-emerald-600 text-white">Correct Answer Detail: {cur?.answer}</span><div className="font-semibold text-emerald-800" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
                 }
 
-                // 物理定位切割法
-                let segments = [];
+                let segs = [];
                 markers.forEach(m => {
                     const idx = fullText.indexOf(m);
-                    if (idx !== -1) segments.push({ name: m, start: idx, len: m.length });
+                    if (idx !== -1) segs.push({ name: m, start: idx, len: m.length });
                 });
-                segments.sort((a,b) => a.start - b.start);
+                segs.sort((a,b) => a.start - b.start);
 
-                segments.forEach((seg, i) => {
-                    const nextStart = (i + 1 < segments.length) ? segments[i+1].start : fullText.length;
-                    const content = fullText.substring(seg.start + seg.len, nextStart).replace(/^[:\s\*-]+/, "").trim();
-                    let color = "card-blue", label = seg.name;
+                segs.forEach((s, i) => {
+                    const nextStart = (i + 1 < segs.length) ? segs[i+1].start : fullText.length;
+                    const content = fullText.substring(s.start + s.len, nextStart).replace(/^[:\s\*-]+/, "").trim();
+                    let color = "card-blue", label = s.name;
                     if (isErq) {
-                        if (seg.name.includes("Mark")) { color="card-emerald"; label="Mark Scheme"; }
-                        else if (seg.name.includes("Gap")) { color="card-rose"; label="Gaps"; }
-                        else if (seg.name.includes("Level")) { color="card-amber"; label="To L7"; }
+                        if (s.name.includes("Mark")) { color="card-emerald"; label="Mark Scheme"; }
+                        else if (s.name.includes("Gap")) { color="card-rose"; label="Gaps"; }
+                        else if (s.name.includes("Level")) { color="card-amber"; label="Steps to L7"; }
                     }
                     if (content.length > 2) cards.push(<div key={seg.name+i} className={`themed-card ${color}`}><span className="badge-mini bg-slate-800 text-white">{label}</span><div className="font-medium text-slate-700 indent-content" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} /></div>);
                 });
@@ -280,10 +297,9 @@
                                 q.theme = uKey;
                                 q.type = (q.options && Object.keys(q.options).length >= 2) ? 'MCQ' : 'ERQ';
                                 if (q.type === 'MCQ') {
-                                    const rawVals = Object.values(q.options).slice(0, 4);
-                                    const cleanOpts = {};
-                                    ['A','B','C','D'].forEach((l, i) => { if (rawVals[i]) cleanOpts[l] = rawVals[i]; });
-                                    q.options = cleanOpts;
+                                    const raw = Object.values(q.options).slice(0, 4);
+                                    const cl = {}; ['A','B','C','D'].forEach((l, i) => { if (raw[i]) cl[l] = raw[i]; });
+                                    q.options = cl;
                                     const a = String(q.answer).toUpperCase();
                                     q.answer = a.includes('0') ? 'A' : (a.includes('1') ? 'B' : (a.includes('2') ? 'C' : (a.includes('3') ? 'D' : a)));
                                 }
@@ -327,7 +343,7 @@
             const submitErq = async () => {
                 if (!tempAnswer.trim()) return;
                 setLoading(true);
-                const fb = await askAI(`Question: "${cur.question}"\nStudent Answer: "${tempAnswer}"\nEvaluate using these EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Detailed content.`, "Senior IB Bio Moderator.");
+                const fb = await askAI(`Question: "${cur.question}"\nStudent Answer: "${tempAnswer}"\nEvaluate using these EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar.`, "Senior IB Bio Moderator.");
                 if (fb) setSessionResults(prev => ({ ...prev, [cur.id]: { answer: tempAnswer, feedback: fb } }));
                 setLoading(false);
             };
@@ -358,7 +374,7 @@
                     {statusMsg && <div className="toast-msg">{statusMsg}</div>}
                     <header className="header-fixed flex items-center justify-between px-4 py-3">
                         <div className="flex items-center gap-2">
-                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm active:scale-95"><AppIcon name="House" size={24} /></button>}
+                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm"><AppIcon name="House" size={24} /></button>}
                             {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-50 px-2 py-1.5 rounded-xl border border-slate-100 flex items-center gap-1"><span className="text-[11px] font-black uppercase text-slate-400">Q {currentIndex + 1} / {queue.length}</span></div>}
                         </div>
                         <h1 className="font-black text-slate-900 italic text-sm uppercase tracking-widest">IB Bio Master Pro</h1>
@@ -399,7 +415,7 @@
                                         <div className="space-y-3">
                                             <div className="flex gap-2 p-1 rounded-xl bg-slate-50">{THEMES.map(t=>(<button key={t.id} onClick={()=>setBuildTheme(t.id)} className={`flex-1 py-1.5 rounded-lg font-black text-xs transition-all ${buildTheme===t.id ? 'bg-white shadow-md' : 'text-slate-400'}`} style={{ color: buildTheme===t.id ? t.color : 'inherit' }}>{t.id}</button>))}</div>
                                             <div className="flex gap-1">{[{id:'mixed',n:'綜合'}, {id:'mcq',n:'選擇'}, {id:'erq',n:'論述'}].map(m=>(<button key={m.id} onClick={()=>setBuildRatio(m.id)} className={`flex-1 py-1.5 rounded-lg font-black text-[10px] border transition-all ${buildRatio===m.id ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-400 border-slate-100'}`}>{m.n}</button>))}</div>
-                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 IB bio questions for Unit ${buildTheme} (${buildRatio}). Output JSON: { "${buildTheme}": [ ... ] }. Include ERQ. MCQ 4 options A, B, C, D. EACH needs answer, explanation. Use plain text like Vmax, Km and Rubisco.`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase text-[10px] shadow-md">{loading ? 'AI Working...' : 'Generate 10 New Questions'}</button>
+                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 IB bio questions for Unit ${buildTheme} (${buildRatio}). Output JSON object { "${buildTheme}": [ ... ] }. Include ERQ. MCQ 4 options A, B, C, D. EACH needs answer, explanation. Use plain text like Vmax, Km and Rubisco.`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase text-[10px] shadow-md">{loading ? 'AI Working...' : 'Generate 10 New Questions'}</button>
                                         </div>
                                         {generatedJson && (
                                             <div className="mt-4 pt-4 border-t space-y-2">
