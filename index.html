@@ -33,7 +33,7 @@
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #2563eb; }
         
-        /* 質感報告卡片 */
+        /* 質感報告卡片樣式 */
         .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: white; margin-bottom: 1.1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .card-blue { border-color: #2563eb; background: #f0f7ff; }
         .card-rose { border-color: #e11d48; background: #fff1f2; }
@@ -64,7 +64,7 @@
 
         .bio-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85em; background: white; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; }
         .bio-table th { background: #f8fafc; padding: 10px; text-align: left; font-weight: 800; border-bottom: 2px solid #e2e8f0; }
-        .bio-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; color: #334155; line-height: 1.5; }
+        .bio-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
         
         .pdf-mode { font-size: 11px !important; line-height: 1.25 !important; }
         .pdf-mode .themed-card { margin-bottom: 0.5rem !important; padding: 0.8rem 1rem !important; border: 1px solid #eee; border-left-width: 6px; box-shadow: none !important; break-inside: avoid; }
@@ -83,7 +83,7 @@
             { id: "D", name: "Evolution", color: "#f59e0b", bg: "#fffbeb" }
         ];
 
-        // --- 元件圖示 ---
+        // --- 圖示元件 ---
         const AppIcon = ({ name, size = 18, color = "currentColor", fill = "none", strokeWidth = "2.5" }) => {
             const icons = {
                 Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
@@ -104,7 +104,7 @@
             let text = String(raw || "");
             if (!text) return "";
             
-            // 1. 強制移除任何可能的 SHIELD 標記，回歸原始文字
+            // 強制移除任何可能的 SHIELD 標記，回歸原始文字
             text = text.replace(/LATEX_PROTECT_\d+/g, "")
                        .replace(/LATEX_RESTORE_\d+/g, "")
                        .replace(/LATEX_SHIELD_\d+/g, "")
@@ -149,6 +149,7 @@
             const [quizStep, setQuizStep] = useState('setup'); 
             const [queue, setQueue] = useState([]);
             const [currentIndex, setCurrentIndex] = useState(0);
+            const [sessionProgress, setSessionProgress] = useState(1); // 修復：追蹤目前題號
             const [sessionResults, setSessionResults] = useState({});
             const [tempAnswer, setTempAnswer] = useState('');
             const [loading, setLoading] = useState(false);
@@ -161,42 +162,21 @@
 
             const cur = useMemo(() => (queue && queue.length > 0) ? queue[currentIndex] : null, [queue, currentIndex]);
 
-            // --- 強力修復：自動觀測渲染補償機制 ---
-            // 使用 MutationObserver 盯著 DOM，一旦題目文字出現，立即重畫 KaTeX
+            // --- 修復：自動觀測渲染補償機制 ---
             useLayoutEffect(() => {
                 const triggerKaTeX = () => {
                     if (window.renderMathInElement) {
                         renderMathInElement(document.body, {
-                            delimiters: [
-                                {left: '$$', right: '$$', display: true},
-                                {left: '$', right: '$', display: false}
-                            ],
+                            delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}],
                             throwOnError: false
                         });
                     }
                 };
-
-                // 立即觸發
                 triggerKaTeX();
-                
-                // 採用觀察者模式：監控文字內容變動
-                const observer = new MutationObserver(() => {
-                    triggerKaTeX();
-                });
-                
+                const observer = new MutationObserver(() => triggerKaTeX());
                 observer.observe(document.body, { childList: true, subtree: true, characterData: true });
-                
-                // 保險機制：多重掃描
-                const timers = [
-                    setTimeout(triggerKaTeX, 50),
-                    setTimeout(triggerKaTeX, 150),
-                    setTimeout(triggerKaTeX, 400)
-                ];
-
-                return () => {
-                    observer.disconnect();
-                    timers.forEach(clearTimeout);
-                };
+                const timers = [setTimeout(triggerKaTeX, 50), setTimeout(triggerKaTeX, 150), setTimeout(triggerKaTeX, 400)];
+                return () => { observer.disconnect(); timers.forEach(clearTimeout); };
             }, [quizStep, currentIndex, sessionResults, tab, contentFontSize, cur]);
 
             // --- 數據載入 ---
@@ -235,9 +215,9 @@
 
             const cycleFontSize = useCallback(() => {
                 const sizes = [14, 16, 19, 23];
-                const next = sizes[(sizes.indexOf(contentFontSize) + 1) % sizes.length];
-                setContentFontSize(next);
-                localStorage.setItem('contentFontSize', String(next));
+                const nextSize = sizes[(sizes.indexOf(contentFontSize) + 1) % sizes.length];
+                setContentFontSize(nextSize);
+                localStorage.setItem('contentFontSize', String(nextSize));
             }, [contentFontSize]);
 
             const exportPDF = useCallback(() => {
@@ -252,13 +232,16 @@
             const renderFeedback = useCallback((text, isErq, original, expl, prefetched) => {
                 if (!text && !expl && !prefetched) return null;
                 const markers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar", "Key Concept", "Pitfall", "Fact", "Deep Analysis"];
-                const fullText = String(text || "");
+                
                 const cards = [];
-
                 if (isErq && original) cards.push(<div key="user" className="themed-card card-slate"><span className="badge-mini bg-slate-500 text-white">Your Response</span><div className="font-semibold text-slate-600 italic leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(original) }} /></div>);
                 
-                if (!isErq) {
-                    if (expl) cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini bg-emerald-600 text-white">Correct Answer Detail: {cur?.answer}</span><div className="font-semibold text-emerald-800" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
+                // 修復：MCQ 與 ERQ 統一採用多區塊渲染引擎
+                const mainText = text || prefetched || "";
+                const fullText = String(mainText);
+
+                if (!isErq && expl) {
+                    cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini bg-emerald-600 text-white">Correct Answer Detail: {cur?.answer}</span><div className="font-semibold text-emerald-800" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
                 }
 
                 let segs = [];
@@ -277,10 +260,10 @@
                         else if (s.name.includes("Gap")) { color="card-rose"; label="Gaps"; }
                         else if (s.name.includes("Level")) { color="card-amber"; label="Steps to L7"; }
                     }
-                    if (content.length > 2) cards.push(<div key={seg.name+i} className={`themed-card ${color}`}><span className="badge-mini bg-slate-800 text-white">{label}</span><div className="font-medium text-slate-700 indent-content" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} /></div>);
+                    if (content.length > 2) cards.push(<div key={s.name+i} className={`themed-card ${color}`}><span className="badge-mini bg-slate-800 text-white">{label}</span><div className="font-medium text-slate-700 indent-content" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} /></div>);
                 });
 
-                if (cards.length === 0 && fullText.length > 10) cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini">AI Analysis</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(fullText) }} /></div>);
+                if (cards.length === 0 && fullText.length > 10) cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini">AI Evaluation</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(fullText) }} /></div>);
                 return cards;
             }, [cur]);
 
@@ -297,9 +280,10 @@
                                 q.theme = uKey;
                                 q.type = (q.options && Object.keys(q.options).length >= 2) ? 'MCQ' : 'ERQ';
                                 if (q.type === 'MCQ') {
-                                    const raw = Object.values(q.options).slice(0, 4);
-                                    const cl = {}; ['A','B','C','D'].forEach((l, i) => { if (raw[i]) cl[l] = raw[i]; });
-                                    q.options = cl;
+                                    const rawVals = Object.values(q.options).slice(0, 4);
+                                    const cleanOpts = {};
+                                    ['A','B','C','D'].forEach((l, i) => { if (rawVals[i]) cleanOpts[l] = rawVals[i]; });
+                                    q.options = cleanOpts;
                                     const a = String(q.answer).toUpperCase();
                                     q.answer = a.includes('0') ? 'A' : (a.includes('1') ? 'B' : (a.includes('2') ? 'C' : (a.includes('3') ? 'D' : a)));
                                 }
@@ -318,7 +302,7 @@
                 const uniquePool = Array.from(new Map(pool.map(q => [q.id, q])).values());
                 if (uniquePool.length) {
                     setQueue([...uniquePool].sort(() => Math.random() - 0.5));
-                    setCurrentIndex(0); setQuizStep('practice'); setSessionResults({}); setTempAnswer('');
+                    setCurrentIndex(0); setQuizStep('practice'); setSessionResults({}); setTempAnswer(''); setSessionProgress(1); // 重置序號
                 } else showToast("目前無可用題目");
             };
 
@@ -331,8 +315,13 @@
                 } else {
                     setQueue(prev => { const n = [...prev]; n.push(n.splice(currentIndex, 1)[0]); return n; });
                 }
+                
+                // 更新題號與結束判斷
                 if (queue.length <= 1 && masteredIds.has(curId)) { showToast("完成練習！"); setQuizStep('setup'); }
-                else { setTempAnswer(''); }
+                else { 
+                    setTempAnswer('');
+                    setSessionProgress(p => p + 1); // 修復：正確累加題號
+                }
             };
 
             const submitMcq = (k, ans) => {
@@ -343,7 +332,7 @@
             const submitErq = async () => {
                 if (!tempAnswer.trim()) return;
                 setLoading(true);
-                const fb = await askAI(`Question: "${cur.question}"\nStudent Answer: "${tempAnswer}"\nEvaluate using these EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar.`, "Senior IB Bio Moderator.");
+                const fb = await askAI(`Question: "${cur.question}"\nStudent Answer: "${tempAnswer}"\nEvaluate using these EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Detailed content.`, "Senior IB Bio Moderator.");
                 if (fb) setSessionResults(prev => ({ ...prev, [cur.id]: { answer: tempAnswer, feedback: fb } }));
                 setLoading(false);
             };
@@ -374,8 +363,8 @@
                     {statusMsg && <div className="toast-msg">{statusMsg}</div>}
                     <header className="header-fixed flex items-center justify-between px-4 py-3">
                         <div className="flex items-center gap-2">
-                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm"><AppIcon name="House" size={24} /></button>}
-                            {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-50 px-2 py-1.5 rounded-xl border border-slate-100 flex items-center gap-1"><span className="text-[11px] font-black uppercase text-slate-400">Q {currentIndex + 1} / {queue.length}</span></div>}
+                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm active:scale-95"><AppIcon name="House" size={24} /></button>}
+                            {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-50 px-2 py-1.5 rounded-xl border border-slate-100 flex items-center gap-1"><span className="text-[11px] font-black uppercase text-slate-400">Q {sessionProgress} / {queue.length}</span></div>}
                         </div>
                         <h1 className="font-black text-slate-900 italic text-sm uppercase tracking-widest">IB Bio Master Pro</h1>
                         <div className="flex items-center gap-2">
@@ -464,7 +453,7 @@
                                                     <div id="report-content" className="space-y-1 mt-4">
                                                         <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-sm no-animation">
                                                             <div className="flex justify-between items-center mb-5">
-                                                                <span className="text-[10px] font-black text-slate-400 uppercase italic tracking-widest">{cur.type === 'MCQ' ? 'Knowledge Briefing' : 'Assessment Report'}</span>
+                                                                <span className="text-[10px] font-black text-slate-400 uppercase italic tracking-widest">{cur.type === 'MCQ' ? 'Assessment Report' : 'Analytical Feedback'}</span>
                                                                 {cur.type === 'ERQ' && <button onClick={exportPDF} className="text-[11px] font-black text-blue-600 flex items-center gap-1 uppercase hover:underline"><AppIcon name="Download" size={16} /> Get PDF</button>}
                                                             </div>
                                                             {cur.type === 'MCQ' 
