@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master | 最終穩定加固版</title>
+    <title>IB Bio Master | 專業穩定加固版</title>
     
     <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -24,17 +24,17 @@
         :root { --primary: #2563eb; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; color: #1e293b; margin: 0; overflow: hidden; height: 100vh; }
         
-        .app-container { height: 100vh; width: 100%; max-width: 780px; margin: 0 auto; background: white; display: flex; flex-direction: column; position: relative; }
+        .app-container { height: 100vh; width: 100%; max-width: 780px; margin: 0 auto; background: white; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 50px rgba(0,0,0,0.04); }
         .header-fixed { border-bottom: 1px solid #f1f5f9; flex-shrink: 0; background: white; padding: 12px 0; }
-        .main-scroll { flex: 1; overflow-y: auto; padding: 1.25rem; }
+        .main-scroll { flex: 1; overflow-y: auto; padding: 1.2rem; }
         .content-buffer { padding-bottom: 95px; width: 100%; }
 
-        .glass-nav { background: white; border-top: 1px solid #f1f5f9; height: 75px; flex-shrink: 0; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.02); }
+        .glass-nav { background: white; border-top: 1px solid #f1f5f9; height: 75px; flex-shrink: 0; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -4px 15px rgba(0,0,0,0.02); }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #2563eb; }
         
-        /* 報告與卡片質感 */
-        .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: white; margin-bottom: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        /* 質感卡片與報告 */
+        .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: white; margin-bottom: 1.2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
         .card-blue { border-color: #2563eb; background: #f0f7ff; }
         .card-rose { border-color: #e11d48; background: #fff1f2; }
         .card-amber { border-color: #f59e0b; background: #fffbeb; }
@@ -44,16 +44,16 @@
         .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 10px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; background: #1e293b; color: white; }
         
         .math-container { line-height: 1.8; word-break: break-word; margin-bottom: 0.75rem; }
-        .indent-content { padding-left: 1.25rem; border-left: 3.5px solid rgba(0,0,0,0.05); margin-top: 0.7rem; color: #334155; }
+        .indent-content { padding-left: 1.25rem; border-left: 3.5px solid rgba(0,0,0,0.05); margin-top: 0.8rem; color: #334155; }
 
-        .animate-up { animation: slideUp 0.35s ease-out forwards; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-up { animation: slideUp 0.4s ease-out forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
         /* MCQ 選項 */
         .option-label { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; background: #f1f5f9; color: #1e293b; border: 2.5px solid #cbd5e1; transition: 0.2s; flex-shrink: 0; }
         .selected-label { background: #1e293b; color: white; border-color: #1e293b; }
 
-        /* 控制項 (彩色且放大) */
+        /* 彩色化控制按鈕 */
         .font-cycle-btn { background: #eff6ff; padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #2563eb; border: 2px solid #dbeafe; transition: 0.2s; box-shadow: 0 2px 5px rgba(37, 99, 235, 0.1); }
         .back-nav-btn { color: #2563eb; padding: 10px; border-radius: 14px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; display: flex; align-items: center; }
         .next-nav-btn { color: #2563eb; padding: 8px; border-radius: 12px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
@@ -62,12 +62,9 @@
         .mastery-label-text { font-size: 13px; font-weight: 800; color: #94a3b8; }
         .mastery-toggle-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
-        .bio-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9em; background: white; border-radius: 12px; overflow: hidden; }
+        .bio-table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.9em; background: white; border-radius: 12px; overflow: hidden; border: 1px solid #f1f5f9; }
         .bio-table th { background: #f8fafc; padding: 12px; text-align: left; font-weight: 800; border-bottom: 2px solid #e2e8f0; color: #64748b; }
         .bio-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
-        
-        .pdf-mode { font-size: 11px !important; line-height: 1.25 !important; }
-        .pdf-mode .themed-card { margin-bottom: 0.4rem !important; padding: 0.8rem 1rem !important; border-width: 1px !important; border-left-width: 6px !important; box-shadow: none !important; break-inside: avoid; }
     </style>
 </head>
 <body>
@@ -92,19 +89,19 @@
                 Config: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>,
                 Check: <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>,
                 Sparkles: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth={strokeWidth} viewBox="0 0 24 24"><path d="M5 3l.94 2.06L8 6l-2.06.94L5 9l-.94-2.06L2 6l2.06-.94L5 3zm14 15l.94 2.06L22 21l-2.06.94L19 24l-.94-2.06L16 21l2.06-.94L19 18zm4.5-10.5l1.09 2.41L27 11l-2.41 1.09L23.5 14.5l-1.09-2.41L20 11l2.41-1.09L23.5 7.5z"/></svg>,
-                House: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
+                House: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3.5" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
                 Star: <svg width={size} height={size} fill={fill} stroke={color} strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,
-                Download: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>,
-                NextArrow: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="4" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                NextArrow: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="4.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>,
+                Download: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             };
             return icons[name] || null;
         };
 
-        // --- 強力純淨化：絕對保留 LaTeX 語法結構 ($ \ _ { } ^) ---
+        // --- 強力純淨化：絕對保留 LaTeX 符號與底線 ---
         const cleanRawText = (text) => {
             if (!text) return "";
             return text
-                .replace(/(\*\*|__|\*|#+|~+|`+)/g, "") // 移除 Markdown 符號，保留底線和花括號
+                .replace(/(\*\*|__|\*|#+|~+|`+)/g, "") // 移除 Markdown，但絕對不移除 _ 和 { }
                 .replace(/Supplement for:.*?\n/gi, "")
                 .replace(/---/g, "")
                 .trim();
@@ -114,9 +111,13 @@
             let text = cleanRawText(input);
             if (!text) return "";
             
-            // 處理常見化學符號轉化
-            const chemPattern = /\b(Na\+|K\+|H\+|Ca2\+|Mg2\+|Cl-|NO2-|NO3-|NH4\+|CO2|H2O|O2|C6H12O6|ATP|ADP|NAD\+|NADH|RuBP|Rubisco|q2|p2|2pq)\b/g;
-            text = text.replace(chemPattern, (match) => `$\\text{${match}}$`);
+            // 處理常見化學與酶科學標籤，自動 LaTeX 化提高渲染穩定性
+            const chemPattern = /\b(Na\+|K\+|H\+|Ca2\+|Mg2\+|Cl-|NO2-|NO3-|NH4\+|CO2|H2O|O2|C6H12O6|ATP|ADP|NAD\+|NADH|RuBP|Rubisco|q2|p2|2pq|Vmax|Km)\b/g;
+            text = text.replace(chemPattern, (match) => {
+                if (match === "Vmax") return "$V_{max}$";
+                if (match === "Km") return "$K_m$";
+                return `$\\text{${match}}$`;
+            });
 
             const lines = text.split('\n');
             let finalHTML = [];
@@ -126,7 +127,6 @@
             lines.forEach((l) => {
                 const line = l.trim();
                 if (!line) return;
-
                 if (line.includes('|')) {
                     const cells = line.split('|').filter(c => c.trim().length > 0).map(c => c.trim());
                     if (cells.length > 0 && !line.includes(':---')) {
@@ -168,24 +168,24 @@
 
             const reportRef = useRef(null);
 
-            // --- AI Key 自動導航偵測 (修正問題) ---
+            // --- AI Key 自動跳轉邏輯 ---
             useEffect(() => {
                 if (userApiKey && userApiKey.trim().length > 10 && tab === 'config') {
                     setTab('home');
-                    showToast("AI Key 已啟動，返回首頁");
+                    showToast("AI 功能就緒");
                 } else if (!userApiKey && tab !== 'config') {
                     setTab('config');
                 }
             }, [userApiKey]);
 
-            // --- 精確題數統計 (去重引擎) ---
+            // --- 精確去重統計引擎 (對齊 82 題) ---
             const stats = useMemo(() => {
-                const globalUniqueMap = new Map();
+                const uniqueQuestionsMap = new Map();
                 Object.values(masterBank).flat().forEach(q => {
-                    if (q && q.id) globalUniqueMap.set(q.id, q);
+                    if (q && q.id) uniqueQuestionsMap.set(q.id, q);
                 });
 
-                const allUnique = Array.from(globalUniqueMap.values());
+                const allUnique = Array.from(uniqueQuestionsMap.values());
                 const countByTheme = (id) => allUnique.filter(q => q.theme === id || q.id.startsWith(id)).length;
 
                 return {
@@ -208,10 +208,7 @@
                             const data = await res.json();
                             Object.keys(data).forEach(k => {
                                 const u = k.toUpperCase().replace('THEME ', '').trim();
-                                if (pool[u]) {
-                                    const exist = new Set(pool[u].map(q => q.id));
-                                    pool[u] = [...pool[u], ...(data[k] || [])];
-                                }
+                                if (pool[u]) pool[u] = [...pool[u], ...(data[k] || [])];
                             });
                         }
                     } catch (e) {}
@@ -219,10 +216,7 @@
                 const local = JSON.parse(localStorage.getItem('local_custom_bank') || '{}');
                 Object.keys(local).forEach(u => {
                     const id = u.toUpperCase().replace('THEME ', '').trim();
-                    if (pool[id]) {
-                        const exist = new Set(pool[id].map(q => q.id));
-                        pool[id] = [...pool[id], ...(local[u] || [])];
-                    }
+                    if (pool[id]) pool[id] = [...pool[id], ...(local[u] || [])];
                 });
                 setMasterBank(pool);
             }, []);
@@ -256,11 +250,9 @@
                                 return q;
                             });
                             local[uKey] = [...(local[uKey] || []), ...norm];
-                            // 本地庫去重
                             const map = new Map();
                             local[uKey].forEach(q => { if(q && q.id) map.set(q.id, q); });
                             local[uKey] = Array.from(map.values());
-                            // 立即同步更新
                             next[uKey] = [...next[uKey], ...norm];
                         }
                     });
@@ -275,15 +267,14 @@
                     if (match) {
                         importToBank(JSON.parse(match[0]));
                         setGeneratedJson("");
-                        showToast("同步成功！庫存已更新");
+                        showToast("同步成功！Dashboard 已更新");
                     } else throw new Error();
                 } catch(e) { showToast("解析失敗"); }
             };
 
             const startPractice = () => {
-                const rawPool = selThemes.flatMap(t => masterBank[t] || [])
-                                 .filter(q => q && q.id && q.type === selType && !masteredIds.has(q.id));
-                const uniquePool = Array.from(new Map(rawPool.map(q => [q.id, q])).values());
+                const pool = selThemes.flatMap(t => masterBank[t] || []).filter(q => q && q.id && q.type === selType && !masteredIds.has(q.id));
+                const uniquePool = Array.from(new Map(pool.map(q => [q.id, q])).values());
                 if (uniquePool.length) {
                     setQueue([...uniquePool].sort(() => Math.random() - 0.5));
                     setCurrentIndex(0); setQuizStep('practice'); setSessionResults({}); setTempAnswer('');
@@ -306,22 +297,15 @@
                 const isMastered = masteredIds.has(curQ.id);
 
                 if (isMastered) {
-                    // 若標記為熟悉，從隊列移除，絕對不重複
                     setQueue(prev => prev.filter(q => q.id !== curQ.id));
-                    if (currentIndex >= queue.length - 1 && queue.length > 1) {
-                         setCurrentIndex(0);
-                    }
-                } else if (res) {
-                    // 若答對或答過但未熟悉：移到隊列最末端 (Spaced Repetition)
+                    if (currentIndex >= queue.length - 1 && queue.length > 1) setCurrentIndex(0);
+                } else {
                     setQueue(prev => {
                         const next = [...prev];
                         const target = next.splice(currentIndex, 1)[0];
                         next.push(target);
                         return next;
                     });
-                } else {
-                    // 沒答題按 Next，直接下一個
-                    setCurrentIndex(p => (p + 1) % queue.length);
                 }
 
                 if (queue.length <= 1 && isMastered) {
@@ -380,7 +364,7 @@
                 found.sort((a,b) => a.index - b.index);
 
                 let cards = [];
-                if (isErq && original) cards.push(<div key="user" className="themed-card card-slate"><span className="badge-mini bg-slate-500 text-white">Original Response</span><div className="font-semibold text-slate-600 italic leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(original) }} /></div>);
+                if (isErq && original) cards.push(<div key="user" className="themed-card card-slate"><span className="badge-mini bg-slate-500 text-white">Your Response</span><div className="font-semibold text-slate-600 italic leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(original) }} /></div>);
                 if (!isErq && expl) cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini bg-emerald-600 text-white">Knowledge Briefing</span><div className="font-semibold text-emerald-800" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
 
                 found.forEach((p, i) => {
@@ -402,8 +386,10 @@
             useEffect(() => {
                 const render = () => { if (window.renderMathInElement) renderMathInElement(document.body, { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}], throwOnError: false }); };
                 render();
-                setTimeout(render, 450); // 防崩潰延遲渲染
+                setTimeout(render, 450); // 防崩潰渲染循環
             }, [quizStep, currentIndex, sessionResults, tab, contentFontSize, generatedJson]);
+
+            const cur = queue[currentIndex];
 
             return (
                 <div className="app-container">
@@ -421,7 +407,9 @@
                                 </div>
                             )}
                         </div>
+                        
                         <h1 className="font-black text-slate-900 italic text-sm uppercase tracking-widest">IB Bio Master Pro</h1>
+                        
                         <div className="flex items-center gap-3">
                             {tab === 'quiz' && quizStep === 'practice' && (
                                 <div className="mastery-container">
@@ -465,7 +453,7 @@
                                             <div className="flex gap-1">
                                                 {[{id:'mixed',n:'綜合'}, {id:'mcq',n:'選擇'}, {id:'erq',n:'論述'}].map(m=>(<button key={m.id} onClick={()=>setBuildRatio(m.id)} className={`flex-1 py-1.5 rounded-lg font-black text-[10px] border transition-all ${buildRatio===m.id ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-400 border-slate-100'}`}>{m.n}</button>))}
                                             </div>
-                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 ${buildRatio} questions for Unit ${buildTheme}. Output JSON object { "${buildTheme}": [ ... ] }. MCQ MUST have explanation & prefetchedInsight. NO markdown symbols.`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] italic shadow-md active:scale-95">{loading ? 'AI Working...' : 'Generate New Questions'}</button>
+                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 ${buildRatio} questions for Unit ${buildTheme}. Output JSON object { "${buildTheme}": [ ... ] }. MCQ MUST have detailed "explanation" and "prefetchedInsight". NO bolding symbols in output.`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] italic shadow-md active:scale-95">{loading ? 'AI Working...' : 'Generate New Questions'}</button>
                                         </div>
                                         {generatedJson && (
                                             <div className="mt-4 pt-4 border-t space-y-2">
@@ -539,7 +527,7 @@
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="p-20 text-center animate-pulse text-slate-300 font-black">SYNCING QUEUE...</div>
+                                        <div className="p-20 text-center animate-pulse text-slate-300 font-black">SYNCING...</div>
                                     )}
                                 </div>
                             )}
