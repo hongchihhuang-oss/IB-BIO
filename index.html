@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master | 穩定修復版</title>
+    <title>IB Bio Master | 最終穩定修復版</title>
     
-    <!-- 核心資源 -->
+    <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
-    <!-- html2pdf 匯出 -->
+    <!-- html2pdf 匯出功能 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -33,7 +33,7 @@
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #2563eb; }
         
-        /* 質感報告樣式 */
+        /* 質感報告樣式還原 */
         .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: white; margin-bottom: 1.1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .card-blue { border-color: #2563eb; background: #f0f7ff; }
         .card-rose { border-color: #e11d48; background: #fff1f2; }
@@ -41,7 +41,7 @@
         .card-emerald { border-color: #10b981; background: #ecfdf5; }
         .card-slate { border-color: #64748b; background: #f8fafc; }
 
-        .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 8px; display: inline-block; text-transform: uppercase; background: #1e293b; color: white; }
+        .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 8px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; background: #1e293b; color: white; }
         
         .math-container { line-height: 1.75; word-break: break-word; margin-bottom: 0.8rem; }
         .indent-content { padding-left: 1.25rem; border-left: 3.5px solid rgba(0,0,0,0.05); margin-top: 0.75rem; color: #334155; }
@@ -49,9 +49,11 @@
         .animate-up { animation: slideUp 0.3s ease-out forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* MCQ 選項樣式 */
         .option-label { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; background: #f1f5f9; color: #1e293b; border: 2.5px solid #cbd5e1; flex-shrink: 0; }
         .selected-label { background: #1e293b; color: white; border-color: #1e293b; }
 
+        /* 控制項按鈕 */
         .font-cycle-btn { background: #eff6ff; padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #2563eb; border: 2px solid #dbeafe; transition: 0.2s; }
         .back-nav-btn { color: #2563eb; padding: 10px; border-radius: 14px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; }
         .next-nav-btn { color: #2563eb; padding: 10px; border-radius: 12px; background: #f0f7ff; border: 2px solid #dbeafe; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
@@ -61,8 +63,8 @@
         .mastery-toggle-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
         .bio-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85em; background: white; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; }
-        .bio-table th { background: #f8fafc; padding: 10px; text-align: left; font-weight: 800; border-bottom: 2px solid #e2e8f0; }
-        .bio-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
+        .bio-table th { background: #f8fafc; padding: 12px; text-align: left; font-weight: 800; border-bottom: 2px solid #e2e8f0; }
+        .bio-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
         
         .pdf-mode { font-size: 11px !important; line-height: 1.25 !important; }
         .pdf-mode .themed-card { margin-bottom: 0.5rem !important; padding: 0.8rem 1rem !important; border: 1px solid #eee; border-left-width: 6px; box-shadow: none !important; break-inside: avoid; }
@@ -81,7 +83,7 @@
             { id: "D", name: "Evolution", color: "#f59e0b", bg: "#fffbeb" }
         ];
 
-        // --- 元件圖示 ---
+        // --- 元件圖示 (先於 App 定義) ---
         const AppIcon = ({ name, size = 18, color = "currentColor", fill = "none", strokeWidth = "2.5" }) => {
             const icons = {
                 Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
@@ -97,12 +99,12 @@
             return icons[name] || null;
         };
 
-        // --- 極簡編譯：原樣呈現，避開所有保護佔位符 ---
+        // --- 修復：極簡處理，徹底放棄任何佔位符邏輯 ---
         const bioCompiler = (raw) => {
             let text = String(raw || "");
             if (!text) return "";
             
-            // 僅處理 Markdown 符號與 LaTeX 內部的 text 標籤簡化
+            // 僅處理 Markdown 語法，絕不進行佔位符隔離
             text = text.replace(/\\text\{([^}]+)\}/g, "$1") 
                        .replace(/\\text\s+/g, "")
                        .replace(/(\*\*|__)/g, "")
@@ -118,7 +120,6 @@
             lines.forEach((l) => {
                 const line = l.trim();
                 if (!line) return;
-
                 if (line.includes('|')) {
                     const cells = line.split('|').filter(c => c.trim().length > 0).map(c => c.trim());
                     if (cells.length > 0 && !line.includes(':---')) {
@@ -157,7 +158,7 @@
 
             const cur = useMemo(() => (queue && queue.length > 0) ? queue[currentIndex] : null, [queue, currentIndex]);
 
-            // --- 物理強制渲染邏輯：解決點擊紅框才變正確的問題 ---
+            // --- 修復：強制同步渲染 (解決要點擊才變正確的問題) ---
             useLayoutEffect(() => {
                 const triggerKaTeX = () => {
                     if (window.renderMathInElement) {
@@ -171,8 +172,9 @@
                     }
                 };
                 triggerKaTeX();
+                // 異步多重掃描，確保動態文字內容就緒
                 const t1 = setTimeout(triggerKaTeX, 50);
-                const t2 = setTimeout(triggerKaTeX, 350); // 確保異步內容加載後也會掃描
+                const t2 = setTimeout(triggerKaTeX, 350);
                 return () => { clearTimeout(t1); clearTimeout(t2); };
             }, [quizStep, currentIndex, sessionResults, tab, contentFontSize]);
 
@@ -218,14 +220,14 @@
             }, [contentFontSize]);
 
             const exportPDF = useCallback(() => {
-                const el = document.getElementById('report-content');
-                if (!el) return;
-                el.classList.add('pdf-mode');
+                const element = document.getElementById('report-content');
+                if (!element) return;
+                element.classList.add('pdf-mode');
                 const opt = { margin: 10, filename: 'Assessment_Report.pdf', image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } };
-                html2pdf().set(opt).from(el).save().then(() => el.classList.remove('pdf-mode'));
+                html2pdf().set(opt).from(element).save().then(() => element.classList.remove('pdf-mode'));
             }, []);
 
-            // --- 修復報告切割 (鎖定標題法) ---
+            // --- 報告精密切割 (鎖定關鍵字法) ---
             const renderFeedback = useCallback((text, isErq, original, expl, prefetched) => {
                 if (!text && !expl && !prefetched) return null;
                 const markers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar", "Key Concept", "Pitfall", "Fact", "Deep Analysis"];
@@ -257,7 +259,7 @@
                     if (content.length > 2) cards.push(<div key={seg.name+i} className={`themed-card ${color}`}><span className="badge-mini bg-slate-800 text-white">{label}</span><div className="font-medium text-slate-700 indent-content" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} /></div>);
                 });
 
-                if (cards.length === 0 && fullText.length > 5) cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini">AI Analysis</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(fullText) }} /></div>);
+                if (cards.length === 0 && fullText.length > 10) cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini">AI Evaluation</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(fullText) }} /></div>);
                 return cards;
             }, [cur]);
 
@@ -275,8 +277,8 @@
                                 q.type = (q.options && Object.keys(q.options).length >= 2) ? 'MCQ' : 'ERQ';
                                 if (q.type === 'MCQ') {
                                     const raw = Object.values(q.options).slice(0, 4);
-                                    const cl = {}; ['A','B','C','D'].forEach((l, i) => { if (raw[i]) cl[l] = raw[i]; });
-                                    q.options = cl;
+                                    const clean = {}; ['A','B','C','D'].forEach((l, i) => { if (raw[i]) clean[l] = raw[i]; });
+                                    q.options = clean;
                                     const a = String(q.answer).toUpperCase();
                                     q.answer = a.includes('0') ? 'A' : (a.includes('1') ? 'B' : (a.includes('2') ? 'C' : (a.includes('3') ? 'D' : a)));
                                 }
@@ -301,24 +303,27 @@
 
             const handleNext = () => {
                 if (!queue || queue.length === 0) return;
-                if (masteredIds.has(cur?.id)) {
-                    const nQ = queue.filter(q => q.id !== cur.id); setQueue(nQ);
-                    if (currentIndex >= nQ.length && nQ.length > 0) setCurrentIndex(0);
+                const curId = cur?.id;
+                if (!curId) return;
+                if (masteredIds.has(curId)) {
+                    const newQueue = queue.filter(q => q.id !== curId); setQueue(newQueue);
+                    if (currentIndex >= newQueue.length && newQueue.length > 0) setCurrentIndex(0);
                 } else {
                     setQueue(prev => { const n = [...prev]; n.push(n.splice(currentIndex, 1)[0]); return n; });
                 }
-                if (queue.length <= 1 && masteredIds.has(cur?.id)) { showToast("完成練習！"); setQuizStep('setup'); }
+                if (queue.length <= 1 && masteredIds.has(curId)) { showToast("完成練習！"); setQuizStep('setup'); }
                 else { setTempAnswer(''); }
             };
 
             const submitMcq = (k, ans) => {
+                if (!cur) return;
                 setSessionResults(prev => ({ ...prev, [cur.id]: { answer: k, isCorrect: String(k).toUpperCase() === String(ans).toUpperCase() } }));
             };
 
             const submitErq = async () => {
                 if (!tempAnswer.trim()) return;
                 setLoading(true);
-                const fb = await askAI(`Question: "${cur.question}"\nStudent Answer: "${tempAnswer}"\nProvide evaluation with these EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Detailed content.`, "Senior IB Bio Moderator.");
+                const fb = await askAI(`Question: "${cur.question}"\nStudent Answer: "${tempAnswer}"\nProvide evaluation with these EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar.`, "Senior IB Bio Moderator.");
                 if (fb) setSessionResults(prev => ({ ...prev, [cur.id]: { answer: tempAnswer, feedback: fb } }));
                 setLoading(false);
             };
@@ -350,7 +355,7 @@
                     <header className="header-fixed flex items-center justify-between px-4 py-3">
                         <div className="flex items-center gap-2">
                             {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm"><AppIcon name="House" size={24} /></button>}
-                            {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-50 px-2 py-1.5 rounded-xl border border-slate-100 flex items-center gap-1"><span className="text-[11px] font-black uppercase text-slate-400">Q {currentIndex + 1} / {queue.length}</span></div>}
+                            {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-100 flex items-center gap-1"><span className="text-[11px] font-black uppercase text-slate-400">Q {currentIndex + 1} / {queue.length}</span></div>}
                         </div>
                         <h1 className="font-black text-slate-900 italic text-sm uppercase tracking-widest">IB Bio Master Pro</h1>
                         <div className="flex items-center gap-2">
@@ -430,7 +435,7 @@
                                                         </div>
                                                     ) : (
                                                         <div className="space-y-3">
-                                                            <textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-50 border-2 rounded-2xl min-h-[160px] outline-none font-medium text-slate-800" placeholder="Input analytical response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />
+                                                            <textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-50 border-2 rounded-2xl min-h-[160px] outline-none font-medium text-slate-800" placeholder="Input Response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />
                                                             {!sessionResults[cur.id] && <button onClick={submitErq} disabled={!tempAnswer.trim()||loading} className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-md">{loading?'Analyzing...':'Submit'}</button>}
                                                         </div>
                                                     )}
@@ -461,7 +466,7 @@
                                 <div className="space-y-4 animate-up">
                                     <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-6">
                                         <div className="p-4 bg-slate-900 rounded-2xl text-white space-y-2"><p className="text-[9px] font-black uppercase text-blue-400">Gemini AI Access</p><input type="password" placeholder="輸入 API Key" className="w-full p-3 bg-white/10 border-none rounded-lg text-sm text-blue-100" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} /></div>
-                                        <button onClick={()=>{if(confirm("確定要重置嗎？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest">Reset All Data</button>
+                                        <button onClick={()=>{if(confirm("重置數據嗎？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest">Reset All Data</button>
                                     </div>
                                 </div>
                             )}
