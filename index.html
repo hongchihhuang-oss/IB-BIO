@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master | 最終穩定純淨版</title>
+    <title>IB Bio Master | 穩定修復版</title>
     
     <!-- 核心資源 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -11,7 +11,12 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- html2pdf -->
+    <!-- KaTeX 科學渲染 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <!-- html2pdf 匯出 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -24,10 +29,11 @@
         .main-scroll { flex: 1; overflow-y: auto; padding: 1.25rem; }
         .content-buffer { padding-bottom: 100px; width: 100%; }
 
-        .glass-nav { background: white; border-top: 1px solid #f1f5f9; height: 75px; flex-shrink: 0; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.02); }
+        .glass-nav { background: white; border-top: 1px solid #f1f5f9; height: 75px; flex-shrink: 0; display: flex; justify-content: space-around; align-items: center; }
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #2563eb; }
         
+        /* 質感報告樣式 */
         .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: white; margin-bottom: 1.1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .card-blue { border-color: #2563eb; background: #f0f7ff; }
         .card-rose { border-color: #e11d48; background: #fff1f2; }
@@ -35,10 +41,13 @@
         .card-emerald { border-color: #10b981; background: #ecfdf5; }
         .card-slate { border-color: #64748b; background: #f8fafc; }
 
-        .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 8px; display: inline-block; text-transform: uppercase; letter-spacing: 0.5px; background: #1e293b; color: white; }
+        .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 8px; display: inline-block; text-transform: uppercase; background: #1e293b; color: white; }
         
-        .text-content { line-height: 1.75; word-break: break-word; margin-bottom: 0.8rem; }
+        .math-container { line-height: 1.75; word-break: break-word; margin-bottom: 0.8rem; }
         .indent-content { padding-left: 1.25rem; border-left: 3.5px solid rgba(0,0,0,0.05); margin-top: 0.75rem; color: #334155; }
+
+        .animate-up { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .option-label { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; background: #f1f5f9; color: #1e293b; border: 2.5px solid #cbd5e1; flex-shrink: 0; }
         .selected-label { background: #1e293b; color: white; border-color: #1e293b; }
@@ -52,18 +61,18 @@
         .mastery-toggle-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
         .bio-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85em; background: white; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; }
-        .bio-table th { background: #f8fafc; padding: 10px; text-align: left; font-weight: 800; border-bottom: 2px solid #e2e8f0; color: #64748b; }
-        .bio-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; color: #334155; line-height: 1.5; }
+        .bio-table th { background: #f8fafc; padding: 10px; text-align: left; font-weight: 800; border-bottom: 2px solid #e2e8f0; }
+        .bio-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
         
-        .pdf-mode { font-size: 11px !important; }
-        .pdf-mode .themed-card { box-shadow: none !important; margin-bottom: 0.5rem !important; border: 1px solid #eee; border-left-width: 6px; }
+        .pdf-mode { font-size: 11px !important; line-height: 1.25 !important; }
+        .pdf-mode .themed-card { margin-bottom: 0.5rem !important; padding: 0.8rem 1rem !important; border: 1px solid #eee; border-left-width: 6px; box-shadow: none !important; break-inside: avoid; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, Fragment, useCallback, useRef, useMemo } = React;
+        const { useState, useEffect, useLayoutEffect, Fragment, useCallback, useRef, useMemo } = React;
 
         const THEMES = [
             { id: "A", name: "Unity & Molecules", color: "#2563eb", bg: "#eff6ff" }, 
@@ -72,7 +81,7 @@
             { id: "D", name: "Evolution", color: "#f59e0b", bg: "#fffbeb" }
         ];
 
-        // --- 核心圖示 ---
+        // --- 元件圖示 ---
         const AppIcon = ({ name, size = 18, color = "currentColor", fill = "none", strokeWidth = "2.5" }) => {
             const icons = {
                 Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
@@ -88,19 +97,18 @@
             return icons[name] || null;
         };
 
-        // --- 文字純淨處理：不再隔離符號，直接轉為純文字呈現 ---
+        // --- 極簡編譯：原樣呈現，避開所有保護佔位符 ---
         const bioCompiler = (raw) => {
             let text = String(raw || "");
             if (!text) return "";
             
-            // 1. 徹底去除所有 LaTeX 佔位符與標籤，還原為純文字
-            text = text.replace(/\\text\{([^}]+)\}/g, "$1") // ATP
+            // 僅處理 Markdown 符號與 LaTeX 內部的 text 標籤簡化
+            text = text.replace(/\\text\{([^}]+)\}/g, "$1") 
                        .replace(/\\text\s+/g, "")
-                       .replace(/\$([^\$]+)\$/g, "$1") // $Vmax$ => Vmax
-                       .replace(/(\*\*|__)/g, "") // 移除加粗
-                       .replace(/#+\s?/g, "") // 移除標題
-                       .replace(/\{([^\}]+)\}/g, "$1") // 移除大括號
-                       .replace(/_/g, ""); // 移除底線 (V_max => Vmax)
+                       .replace(/(\*\*|__)/g, "")
+                       .replace(/#+\s?/g, "")
+                       .replace(/Supplement for:.*?\n/gi, "")
+                       .replace(/---/g, "");
 
             const lines = text.split('\n');
             let finalHTML = [];
@@ -110,6 +118,7 @@
             lines.forEach((l) => {
                 const line = l.trim();
                 if (!line) return;
+
                 if (line.includes('|')) {
                     const cells = line.split('|').filter(c => c.trim().length > 0).map(c => c.trim());
                     if (cells.length > 0 && !line.includes(':---')) {
@@ -121,14 +130,13 @@
                         finalHTML.push(`<table class="bio-table"><thead><tr>${tableData[0].map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${tableData.slice(1).map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
                         inTable = false; tableData = [];
                     }
-                    finalHTML.push(`<div class="mb-3 text-content">${line}</div>`);
+                    finalHTML.push(`<div class="mb-3 math-container">${line}</div>`);
                 }
             });
             return finalHTML.join('');
         };
 
         const App = () => {
-            // --- 狀態管理 ---
             const [tab, setTab] = useState('home');
             const [contentFontSize, setContentFontSize] = useState(Number(localStorage.getItem('contentFontSize')) || 16);
             const [userApiKey, setUserApiKey] = useState(localStorage.getItem('gemini_api_key') || "");
@@ -147,24 +155,53 @@
             const [buildTheme, setBuildTheme] = useState('A');
             const [buildRatio, setBuildRatio] = useState('mixed'); 
 
-            // 當前題目讀取
             const cur = useMemo(() => (queue && queue.length > 0) ? queue[currentIndex] : null, [queue, currentIndex]);
 
-            // --- 內建題庫直入 (解決加載不全問題) ---
-            const INITIAL_DATA = {
-                A: [
-                    { id: "A_1", theme: "A", type: "MCQ", question: "Which property of water allows for movement of sap against gravity?", options: { A: "Specific heat", B: "Cohesion/Adhesion", C: "Density", D: "LHV" }, answer: "B", explanation: "Cohesion sticking to itself, adhesion to xylem walls.", prefetchedInsight: "Transpiration pull." },
-                    { id: "A_2", theme: "A", type: "MCQ", question: "Rubisco enzyme failure affects which process?", options: { A: "Photolysis", B: "Carbon fixation", C: "ATP synthesis", D: "Respiration" }, answer: "B", explanation: "Rubisco is key for Calvin cycle CO2 fixation." },
-                    { id: "A_3", theme: "MCQ", theme: "A", question: "Competitive inhibitor effect on Michaelis-Menten?", options: { A: "Vmax increases", B: "Km increases", C: "Allosteric binding", D: "None" }, answer: "B", explanation: "Needs more substrate to outcompete." },
-                    { id: "A_E1", theme: "A", type: "ERQ", question: "Explain phospholipid structure and selective permeability. (6 marks)" },
-                    { id: "A_E2", theme: "A", type: "ERQ", question: "Evaluate the effect of a non-competitive inhibitor on $V_{max}$ and $K_m$." }
-                ],
-                B: [{ id: "B_1", theme: "B", type: "MCQ", question: "Direct evidence for endosymbiotic theory?", options: { A: "80S ribosomes", B: "70S ribosomes/Circular DNA", C: "ER synthesis", D: "Single membrane" }, answer: "B" }],
-                C: [{ id: "C_1", theme: "C", type: "MCQ", question: "NH4+ to NO2- process?", options: { A: "Fixation", B: "Nitrification", C: "Denitrification", D: "Assimilation" }, answer: "B" }],
-                D: [{ id: "D_1", theme: "D", type: "MCQ", question: "Allopatric speciation example?", options: { A: "Temporal", B: "Mountain range separator", C: "Polyploidy", D: "Behavioral" }, answer: "B" }]
-            };
+            // --- 物理強制渲染邏輯：解決點擊紅框才變正確的問題 ---
+            useLayoutEffect(() => {
+                const triggerKaTeX = () => {
+                    if (window.renderMathInElement) {
+                        renderMathInElement(document.body, {
+                            delimiters: [
+                                {left: '$$', right: '$$', display: true},
+                                {left: '$', right: '$', display: false}
+                            ],
+                            throwOnError: false
+                        });
+                    }
+                };
+                triggerKaTeX();
+                const t1 = setTimeout(triggerKaTeX, 50);
+                const t2 = setTimeout(triggerKaTeX, 350); // 確保異步內容加載後也會掃描
+                return () => { clearTimeout(t1); clearTimeout(t2); };
+            }, [quizStep, currentIndex, sessionResults, tab, contentFontSize]);
 
-            // --- 統計引擎 ---
+            // --- 數據載入 ---
+            const loadAllBanks = useCallback(async () => {
+                const pool = { A:[], B:[], C:[], D:[] };
+                const targets = ['questions_bank.json', 'questions_bank_A.json', 'questions_bank_B.json', 'questions_bank_C.json', 'questions_bank_D.json'];
+                for (const f of targets) {
+                    try {
+                        const res = await fetch(`./${f}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            Object.keys(data).forEach(k => {
+                                const u = k.toUpperCase().replace('THEME ', '').trim();
+                                if (pool[u]) pool[u] = [...pool[u], ...(data[k] || [])];
+                            });
+                        }
+                    } catch (e) {}
+                }
+                const local = JSON.parse(localStorage.getItem('local_custom_bank') || '{}');
+                Object.keys(local).forEach(u => {
+                    const id = u.toUpperCase().replace('THEME ', '').trim();
+                    if (pool[id]) pool[id] = [...pool[id], ...(local[u] || [])];
+                });
+                setMasterBank(pool);
+            }, []);
+
+            useEffect(() => { loadAllBanks(); }, [loadAllBanks]);
+
             const stats = useMemo(() => {
                 const uniqueMap = new Map();
                 Object.values(masterBank).flat().forEach(q => { if (q && q.id) uniqueMap.set(q.id, q); });
@@ -173,16 +210,56 @@
                 return { total: all.length, mastered: masteredIds.size, A: count('A'), B: count('B'), C: count('C'), D: count('D') };
             }, [masterBank, masteredIds]);
 
-            // --- 初始化與匯入 ---
-            useEffect(() => {
-                const local = JSON.parse(localStorage.getItem('local_custom_bank') || '{}');
-                const merged = { A: [...INITIAL_DATA.A], B: [...INITIAL_DATA.B], C: [...INITIAL_DATA.C], D: [...INITIAL_DATA.D] };
-                Object.keys(local).forEach(k => {
-                    const u = k.toUpperCase().replace('THEME ', '');
-                    if (merged[u]) merged[u] = [...merged[u], ...local[k]];
-                });
-                setMasterBank(merged);
+            const cycleFontSize = useCallback(() => {
+                const sizes = [14, 16, 19, 23];
+                const next = sizes[(sizes.indexOf(contentFontSize) + 1) % sizes.length];
+                setContentFontSize(next);
+                localStorage.setItem('contentFontSize', String(next));
+            }, [contentFontSize]);
+
+            const exportPDF = useCallback(() => {
+                const el = document.getElementById('report-content');
+                if (!el) return;
+                el.classList.add('pdf-mode');
+                const opt = { margin: 10, filename: 'Assessment_Report.pdf', image: { type: 'jpeg', quality: 1 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4' } };
+                html2pdf().set(opt).from(el).save().then(() => el.classList.remove('pdf-mode'));
             }, []);
+
+            // --- 修復報告切割 (鎖定標題法) ---
+            const renderFeedback = useCallback((text, isErq, original, expl, prefetched) => {
+                if (!text && !expl && !prefetched) return null;
+                const markers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar", "Key Concept", "Pitfall", "Fact", "Deep Analysis"];
+                const fullText = String(text || "");
+                const cards = [];
+
+                if (isErq && original) cards.push(<div key="user" className="themed-card card-slate"><span className="badge-mini bg-slate-500 text-white">Your Response</span><div className="font-semibold text-slate-600 italic leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(original) }} /></div>);
+                
+                if (!isErq) {
+                    if (expl) cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini bg-emerald-600 text-white">Correct Answer Detail: {cur?.answer}</span><div className="font-semibold text-emerald-800" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
+                }
+
+                let segments = [];
+                markers.forEach(m => {
+                    const idx = fullText.indexOf(m);
+                    if (idx !== -1) segments.push({ name: m, start: idx, len: m.length });
+                });
+                segments.sort((a,b) => a.start - b.start);
+
+                segments.forEach((seg, i) => {
+                    const end = (i + 1 < segments.length) ? segments[i+1].start : fullText.length;
+                    const content = fullText.substring(seg.start + seg.len, end).replace(/^[:\s\*-]+/, "").trim();
+                    let color = "card-blue", label = seg.name;
+                    if (isErq) {
+                        if (seg.name.includes("Mark")) { color="card-emerald"; label="Mark Scheme"; }
+                        else if (seg.name.includes("Gap")) { color="card-rose"; label="Gaps"; }
+                        else if (seg.name.includes("Level")) { color="card-amber"; label="To L7"; }
+                    }
+                    if (content.length > 2) cards.push(<div key={seg.name+i} className={`themed-card ${color}`}><span className="badge-mini bg-slate-800 text-white">{label}</span><div className="font-medium text-slate-700 indent-content" dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} /></div>);
+                });
+
+                if (cards.length === 0 && fullText.length > 5) cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini">AI Analysis</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(fullText) }} /></div>);
+                return cards;
+            }, [cur]);
 
             const importToBank = (json) => {
                 if (!json) return;
@@ -198,14 +275,14 @@
                                 q.type = (q.options && Object.keys(q.options).length >= 2) ? 'MCQ' : 'ERQ';
                                 if (q.type === 'MCQ') {
                                     const raw = Object.values(q.options).slice(0, 4);
-                                    const clean = {}; ['A','B','C','D'].forEach((l, i) => { if (raw[i]) clean[l] = raw[i]; });
-                                    q.options = clean;
+                                    const cl = {}; ['A','B','C','D'].forEach((l, i) => { if (raw[i]) cl[l] = raw[i]; });
+                                    q.options = cl;
                                     const a = String(q.answer).toUpperCase();
                                     q.answer = a.includes('0') ? 'A' : (a.includes('1') ? 'B' : (a.includes('2') ? 'C' : (a.includes('3') ? 'D' : a)));
                                 }
                                 return q;
                             });
-                            next[uKey] = [...next[uKey], ...norm];
+                            next[uKey] = [...(next[uKey] || []), ...norm];
                         }
                     });
                     localStorage.setItem('local_custom_bank', JSON.stringify(next));
@@ -213,59 +290,37 @@
                 });
             };
 
-            // --- 解析報告渲染 ---
-            const renderFeedback = useCallback((text, isErq, original, expl, prefetched) => {
-                if (!text && !expl && !prefetched) return null;
-                const markers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar", "Key Concept", "Pitfall", "Fact", "Deep Analysis"];
-                const fullText = String(text || "");
-                const cards = [];
-
-                if (isErq && original) cards.push(<div key="user" className="themed-card card-slate"><span className="badge-mini bg-slate-500 text-white">Your Response</span><div className="font-semibold text-slate-600 italic leading-tight">{bioCompiler(original)}</div></div>);
-                
-                if (!isErq) {
-                    if (expl) cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini bg-emerald-600 text-white">Correct Answer Detail: {cur?.answer}</span><div className="font-semibold text-emerald-800">{bioCompiler(expl)}</div></div>);
-                }
-
-                // 精確位置切割
-                let segments = [];
-                markers.forEach(m => {
-                    const idx = fullText.indexOf(m);
-                    if (idx !== -1) segments.push({ name: m, start: idx, len: m.length });
-                });
-                segments.sort((a,b) => a.start - b.start);
-
-                segments.forEach((seg, i) => {
-                    const end = (i + 1 < segments.length) ? segments[i+1].start : fullText.length;
-                    const content = fullText.substring(seg.start + seg.len, end).replace(/^[:\s\*-]+/, "").trim();
-                    let color = "card-blue", label = seg.name;
-                    if (isErq) {
-                        if (seg.name.includes("Mark")) { color="card-emerald"; label="Mark Scheme"; }
-                        else if (seg.name.includes("Gap")) { color="card-rose"; label="Gaps"; }
-                        else if (seg.name.includes("Level")) { color="card-amber"; label="To Level 7"; }
-                    }
-                    if (content.length > 2) cards.push(<div key={seg.name+i} className={`themed-card ${color}`}><span className="badge-mini bg-slate-800 text-white">{label}</span><div className="font-medium text-slate-700 indent-content">{bioCompiler(content)}</div></div>);
-                });
-
-                if (cards.length === 0 && fullText.length > 5) cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini">Feedback</span><div>{bioCompiler(fullText)}</div></div>);
-                return cards;
-            }, [cur]);
-
-            const exportPDF = useCallback(() => {
-                const el = document.getElementById('report-content');
-                if (el) { el.classList.add('pdf-mode'); html2pdf().from(el).save().then(()=>el.classList.remove('pdf-mode')); }
-            }, []);
-
-            const showToast = (msg) => { setStatusMsg(msg); setTimeout(() => setStatusMsg(""), 3000); };
+            const startPractice = () => {
+                const pool = selThemes.flatMap(t => masterBank[t] || []).filter(q => q && q.id && q.type === selType && !masteredIds.has(q.id));
+                const uniquePool = Array.from(new Map(pool.map(q => [q.id, q])).values());
+                if (uniquePool.length) {
+                    setQueue([...uniquePool].sort(() => Math.random() - 0.5));
+                    setCurrentIndex(0); setQuizStep('practice'); setSessionResults({}); setTempAnswer('');
+                } else showToast("目前無可用題目");
+            };
 
             const handleNext = () => {
-                if (!queue.length) return;
+                if (!queue || queue.length === 0) return;
                 if (masteredIds.has(cur?.id)) {
-                    const nextQ = queue.filter(q => q.id !== cur.id); setQueue(nextQ);
-                    if (currentIndex >= nextQ.length && nextQ.length > 0) setCurrentIndex(0);
+                    const nQ = queue.filter(q => q.id !== cur.id); setQueue(nQ);
+                    if (currentIndex >= nQ.length && nQ.length > 0) setCurrentIndex(0);
                 } else {
                     setQueue(prev => { const n = [...prev]; n.push(n.splice(currentIndex, 1)[0]); return n; });
                 }
-                if (queue.length <= 1 && masteredIds.has(cur?.id)) { showToast("完成練習！"); setQuizStep('setup'); } else { setTempAnswer(''); }
+                if (queue.length <= 1 && masteredIds.has(cur?.id)) { showToast("完成練習！"); setQuizStep('setup'); }
+                else { setTempAnswer(''); }
+            };
+
+            const submitMcq = (k, ans) => {
+                setSessionResults(prev => ({ ...prev, [cur.id]: { answer: k, isCorrect: String(k).toUpperCase() === String(ans).toUpperCase() } }));
+            };
+
+            const submitErq = async () => {
+                if (!tempAnswer.trim()) return;
+                setLoading(true);
+                const fb = await askAI(`Question: "${cur.question}"\nStudent Answer: "${tempAnswer}"\nProvide evaluation with these EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Detailed content.`, "Senior IB Bio Moderator.");
+                if (fb) setSessionResults(prev => ({ ...prev, [cur.id]: { answer: tempAnswer, feedback: fb } }));
+                setLoading(false);
             };
 
             const askAI = async (p, s) => {
@@ -281,13 +336,21 @@
                 } catch (e) { return null; }
             };
 
+            // AI Key 自動導航
+            useEffect(() => {
+                if (userApiKey && userApiKey.trim().length > 10 && tab === 'config') setTab('home');
+                else if (!userApiKey && tab !== 'config') setTab('config');
+            }, [userApiKey, tab]);
+
+            const showToast = (msg) => { setStatusMsg(msg); setTimeout(() => setStatusMsg(""), 3000); };
+
             return (
                 <div className="app-container">
                     {statusMsg && <div className="toast-msg">{statusMsg}</div>}
                     <header className="header-fixed flex items-center justify-between px-4 py-3">
                         <div className="flex items-center gap-2">
                             {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm"><AppIcon name="House" size={24} /></button>}
-                            {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-100 flex items-center gap-1"><span className="text-[11px] font-black uppercase text-slate-400">Q {currentIndex + 1} / {queue.length}</span></div>}
+                            {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-50 px-2 py-1.5 rounded-xl border border-slate-100 flex items-center gap-1"><span className="text-[11px] font-black uppercase text-slate-400">Q {currentIndex + 1} / {queue.length}</span></div>}
                         </div>
                         <h1 className="font-black text-slate-900 italic text-sm uppercase tracking-widest">IB Bio Master Pro</h1>
                         <div className="flex items-center gap-2">
@@ -301,13 +364,11 @@
                                             localStorage.setItem('mastered_ids', JSON.stringify(Array.from(next)));
                                             return next;
                                         });
-                                    }} className={`mastery-toggle-btn shadow-sm ${masteredIds.has(cur.id) ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-400'}`}><AppIcon name="Star" size={20} fill={masteredIds.has(cur.id) ? "white" : "none"} /></button>
+                                    }} className={`mastery-toggle-btn shadow-sm active:scale-95 ${masteredIds.has(cur.id) ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-400'}`}><AppIcon name="Star" size={20} fill={masteredIds.has(cur.id) ? "white" : "none"} /></button>
                                 </div>
                             )}
-                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => {
-                                const s = [14, 16, 19, 23]; setContentFontSize(p => s[(s.indexOf(p) + 1) % s.length]);
-                            }} className="font-cycle-btn shadow-sm">Aa</button>}
-                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={handleNext} className="next-nav-btn shadow-sm"><AppIcon name="NextArrow" size={22} /></button>}
+                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={cycleFontSize} className="font-cycle-btn shadow-sm active:scale-95">Aa</button>}
+                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={handleNext} className="next-nav-btn shadow-sm active:scale-95"><AppIcon name="NextArrow" size={22} /></button>}
                         </div>
                     </header>
 
@@ -329,11 +390,11 @@
                                         <div className="space-y-3">
                                             <div className="flex gap-2 p-1 rounded-xl bg-slate-50">{THEMES.map(t=>(<button key={t.id} onClick={()=>setBuildTheme(t.id)} className={`flex-1 py-1.5 rounded-lg font-black text-xs transition-all ${buildTheme===t.id ? 'bg-white shadow-md' : 'text-slate-400'}`} style={{ color: buildTheme===t.id ? t.color : 'inherit' }}>{t.id}</button>))}</div>
                                             <div className="flex gap-1">{[{id:'mixed',n:'綜合'}, {id:'mcq',n:'選擇'}, {id:'erq',n:'論述'}].map(m=>(<button key={m.id} onClick={()=>setBuildRatio(m.id)} className={`flex-1 py-1.5 rounded-lg font-black text-[10px] border transition-all ${buildRatio===m.id ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-white text-slate-400 border-slate-100'}`}>{m.n}</button>))}</div>
-                                            <button onClick={async()=>{setLoading(true); const r=await askAI(`Gen 10 Unit ${buildTheme} questions (${buildRatio}). Output JSON { "${buildTheme}": [ ... ] }. Include ERQ. MCQ 4 options A, B, C, D. Plain text only, no LaTeX complex markers.`, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase text-[10px] shadow-md">{loading ? 'AI Working...' : 'Generate 10 New Questions'}</button>
+                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 IB bio questions for Unit ${buildTheme} (${buildRatio}). Output JSON: { "${buildTheme}": [ ... ] }. Include ERQ. MCQ 4 options A, B, C, D. EACH needs answer, explanation. Use plain text like Vmax, Km and Rubisco.`; const r=await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r)setGeneratedJson(r); setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-black uppercase text-[10px] shadow-md">{loading ? 'AI Working...' : 'Generate 10 New Questions'}</button>
                                         </div>
                                         {generatedJson && (
                                             <div className="mt-4 pt-4 border-t space-y-2">
-                                                <button onClick={() => { importToBank(JSON.parse(generatedJson)); setGeneratedJson(""); showToast("同步成功！"); }} className="btn-action w-full bg-emerald-600 text-white font-black uppercase p-3 rounded-xl shadow-lg">Add to Bank</button>
+                                                <button onClick={() => { try{ importToBank(JSON.parse(generatedJson)); setGeneratedJson(""); showToast("同步成功！"); }catch(e){showToast("解析失敗");} }} className="btn-action w-full bg-emerald-600 text-white font-black uppercase p-3 rounded-xl shadow-lg">Add to Bank</button>
                                                 <textarea readOnly className="w-full h-24 p-3 bg-slate-900 text-blue-300 text-[8px] rounded-xl font-mono" value={generatedJson} />
                                             </div>
                                         )}
@@ -353,9 +414,7 @@
                                         <div className="space-y-4 animate-up" key={currentIndex}>
                                             <div style={{ fontSize: `${contentFontSize}px` }}>
                                                 <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-md">
-                                                    <div className="text-slate-900 font-black italic border-l-4 border-blue-600 pl-3 mb-6 leading-tight">
-                                                        {cur.question}
-                                                    </div>
+                                                    <div className="text-slate-900 font-black italic border-l-4 border-blue-600 pl-3 mb-6 leading-tight" dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
                                                     {cur.type === 'MCQ' ? (
                                                         <div className="grid gap-2">
                                                             {Object.entries(cur.options || {}).map(([k, v]) => {
@@ -366,7 +425,7 @@
                                                                     else if (String(k)===String(res.answer)) st="border-red-500 bg-red-50 border-2";
                                                                     else st="opacity-30 grayscale";
                                                                 }
-                                                                return (<button key={k} disabled={!!res} onClick={()=>submitMcq(k, cur.answer)} className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${st}`}><span className={`option-label ${res?.answer === k ? 'selected-label shadow-inner' : ''}`}>{k}</span><span className="font-bold">{v}</span></button>);
+                                                                return (<button key={k} disabled={!!res} onClick={()=>submitMcq(k, cur.answer)} className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${st}`}><span className={`option-label ${res?.answer === k ? 'selected-label shadow-inner' : ''}`}>{k}</span><span className="font-bold" dangerouslySetInnerHTML={{ __html: bioCompiler(v) }} /></button>);
                                                             })}
                                                         </div>
                                                     ) : (
@@ -401,8 +460,8 @@
                             {tab === 'config' && (
                                 <div className="space-y-4 animate-up">
                                     <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-6">
-                                        <div className="p-4 bg-slate-900 rounded-2xl text-white space-y-2"><p className="text-[9px] font-black uppercase text-blue-400">Gemini AI Access</p><input type="password" placeholder="請輸入 API Key" className="w-full p-3 bg-white/10 border-none rounded-lg text-sm text-blue-100" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} /></div>
-                                        <button onClick={()=>{if(confirm("確定要清空本地數據嗎？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest">Reset All Data</button>
+                                        <div className="p-4 bg-slate-900 rounded-2xl text-white space-y-2"><p className="text-[9px] font-black uppercase text-blue-400">Gemini AI Access</p><input type="password" placeholder="輸入 API Key" className="w-full p-3 bg-white/10 border-none rounded-lg text-sm text-blue-100" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} /></div>
+                                        <button onClick={()=>{if(confirm("確定要重置嗎？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest">Reset All Data</button>
                                     </div>
                                 </div>
                             )}
