@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master | 專業列印與穩定加固版</title>
+    <title>IB Bio Master | 最終穩定加固版</title>
     
     <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -22,13 +22,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
-        /* 基礎樣式與過渡 */
         body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow: hidden; height: 100vh; transition: background 0.3s, color 0.3s; }
         .app-container { height: 100vh; width: 100%; display: flex; flex-direction: column; position: relative; }
         .main-scroll { flex: 1; overflow-y: auto; padding: 1.25rem; }
         .content-buffer { padding-bottom: 100px; width: 100%; }
 
-        /* 主題變量定義 */
+        /* 主題色彩定義 */
         .theme-light { --bg-body: #f8fafc; --bg-card: #ffffff; --text-main: #1e293b; --text-sub: #64748b; --border: #e2e8f0; --nav-bg: #ffffff; }
         .theme-dark { --bg-body: #0f172a; --bg-card: #1e293b; --text-main: #f1f5f9; --text-sub: #94a3b8; --border: #334155; --nav-bg: #1e293b; }
         .theme-midnight { --bg-body: #000000; --bg-card: #111111; --text-main: #ffffff; --text-sub: #a1a1aa; --border: #27272a; --nav-bg: #111111; }
@@ -40,8 +39,7 @@
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: var(--text-sub); font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #3b82f6; }
         
-        /* 網頁版質感卡片 */
-        .themed-card { border-left-width: 6px; padding: 1.5rem; border-radius: 1.5rem; background: var(--bg-card); margin-bottom: 1.1rem; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .themed-card { border-left-width: 6px; padding: 1.25rem; border-radius: 1.5rem; background: var(--bg-card); margin-bottom: 1.1rem; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .card-blue { border-left-color: #3b82f6; }
         .card-rose { border-left-color: #e11d48; }
         .card-amber { border-left-color: #f59e0b; }
@@ -68,12 +66,12 @@
         .bio-table th { background: var(--bg-body); padding: 10px; text-align: left; font-weight: 800; border-bottom: 2px solid var(--border); color: var(--text-sub); }
         .bio-table td { padding: 10px; border-bottom: 1px solid var(--border); }
         
-        /* --- PDF 專業節能列印優化 --- */
+        /* --- PDF 列印專用優化 --- */
         .print-only { display: none; }
         .pdf-mode .print-only { display: block !important; margin-bottom: 15px; }
         
-        /* 列印模式設定：白底黑字，縮減邊距節省紙張 */
-        .pdf-mode { background: #ffffff !important; color: #000000 !important; padding: 12mm !important; width: 100% !important; height: auto !important; overflow: visible !important; }
+        /* 列印模式：純白背景，移除邊距浪費 */
+        .pdf-mode { background: #ffffff !important; color: #000000 !important; padding: 15mm !important; width: 100% !important; height: auto !important; overflow: visible !important; }
         
         /* 移除列印時浪費墨水的框框與背景 */
         .pdf-mode .themed-card { 
@@ -85,10 +83,10 @@
             margin-bottom: 1.2rem !important; 
             padding: 0 !important;
             border-radius: 0 !important;
-            break-inside: avoid; /* 防止在分頁處切斷文字 */
+            break-inside: avoid; /* 防止在分頁處切割文字 */
         }
         
-        /* 列印標題加粗化 */
+        /* 列印標題樣式 */
         .pdf-mode .badge-mini { 
             background: none !important; 
             color: #000000 !important; 
@@ -108,7 +106,6 @@
             margin-top: 4px !important;
         }
         
-        /* 列印時隱藏不需要的交互組件 */
         .pdf-mode .header-fixed, .pdf-mode .glass-nav, .pdf-mode button { display: none !important; }
     </style>
 </head>
@@ -170,11 +167,12 @@
         };
 
         const App = () => {
-            // --- 狀態定義 ---
+            // --- 狀態管理 ---
             const [themeMode, setThemeMode] = useState(localStorage.getItem('theme_mode') || 'theme-dark');
             const [contentFontSize, setContentFontSize] = useState(Number(localStorage.getItem('contentFontSize')) || 16);
             const [userApiKey, setUserApiKey] = useState(localStorage.getItem('gemini_api_key') || "");
             const [statusMsg, setStatusMsg] = useState("");
+            const [aiProgress, setAiProgress] = useState(""); // 新增：AI 產題進度
             const [tab, setTab] = useState('home');
             const [masterBank, setMasterBank] = useState({ A:[], B:[], C:[], D:[] });
             const [masteredIds, setMasteredIds] = useState(new Set(JSON.parse(localStorage.getItem('mastered_ids') || '[]')));
@@ -187,6 +185,7 @@
             const [selThemes, setSelThemes] = useState(['A']); 
             const [selType, setSelType] = useState('MCQ');
             const [buildTheme, setBuildTheme] = useState('A');
+            const [generatedJson, setGeneratedJson] = useState('');
 
             const cur = useMemo(() => (queue && queue.length > 0) ? queue[currentIndex] : null, [queue, currentIndex]);
 
@@ -201,6 +200,7 @@
                 return () => { observer.disconnect(); timers.forEach(clearTimeout); };
             }, [quizStep, currentIndex, sessionResults, tab, contentFontSize, themeMode, cur]);
 
+            // --- 數據載入 ---
             useEffect(() => {
                 const loadData = async () => {
                     const pool = { A:[], B:[], C:[], D:[] };
@@ -242,14 +242,14 @@
                 const opt = { 
                     margin: [10, 10, 10, 10], 
                     filename: 'Assessment_Report.pdf', 
-                    image:{type:'jpeg',quality:1}, 
+                    image:{type:'jpeg',quality:0.98}, 
                     html2canvas:{scale:2, useCORS: true}, 
                     jsPDF:{unit:'mm',format:'a4', orientation: 'portrait'} 
                 };
                 html2pdf().set(opt).from(el).save().then(() => el.classList.remove('pdf-mode'));
             }, []);
 
-            // --- 報告精密切割引擎 (修正段落問題並防空) ---
+            // --- 報告精密切割引擎 (修正段落並防空) ---
             const renderFeedback = useCallback((text, isErq, original, expl, prefetched) => {
                 const markers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar", "Key Concept", "Pitfall", "Fact", "Deep Analysis"];
                 const cards = [];
@@ -271,8 +271,6 @@
                 segs.forEach((s, i) => {
                     const nextStart = (i + 1 < segs.length) ? segs[i+1].start : fullText.length;
                     const content = fullText.substring(s.start + s.len, nextStart).replace(/^[:\s\*-]+/, "").trim();
-                    
-                    // 防崩潰與空段落檢查：內容必須大於 5 個字才有顯示意義
                     if (content.length > 5) {
                         let color = "card-blue", label = s.name;
                         if (isErq) {
@@ -290,10 +288,40 @@
                 });
 
                 if (cards.length === 0 && fullText.length > 10) {
-                    cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini border-none">{isErq ? "Evaluation" : "Insight"}</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(fullText) }} /></div>);
+                    cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini border-none">{isErq ? "AI Evaluation" : "Insight"}</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(fullText) }} /></div>);
                 }
                 return cards;
             }, [cur]);
+
+            const importToBank = (json) => {
+                if (!json) return;
+                setMasterBank(prev => {
+                    const next = JSON.parse(JSON.stringify(prev));
+                    Object.keys(json).forEach(unit => {
+                        let uKey = unit.toUpperCase().replace('THEME ', '').replace('UNIT ', '').trim();
+                        if (['A','B','C','D'].includes(uKey)) {
+                            const incoming = Array.isArray(json[unit]) ? json[unit] : [json[unit]];
+                            const norm = incoming.map(q => {
+                                q.id = "GEN_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4);
+                                q.theme = uKey;
+                                q.type = (q.options && Object.keys(q.options).length >= 2) ? 'MCQ' : 'ERQ';
+                                if (q.type === 'MCQ') {
+                                    const rawVals = Object.values(q.options).slice(0, 4);
+                                    const cleanOpts = {};
+                                    ['A','B','C','D'].forEach((l, i) => { if (rawVals[i]) cleanOpts[l] = rawVals[i]; });
+                                    q.options = cleanOpts;
+                                    const a = String(q.answer).toUpperCase();
+                                    q.answer = a.includes('0') ? 'A' : (a.includes('1') ? 'B' : (a.includes('2') ? 'C' : (a.includes('3') ? 'D' : a)));
+                                }
+                                return q;
+                            });
+                            next[uKey] = [...(next[uKey] || []), ...norm];
+                        }
+                    });
+                    localStorage.setItem('local_custom_bank', JSON.stringify(next));
+                    return next; 
+                });
+            };
 
             const startPractice = () => {
                 const pool = selThemes.flatMap(t => masterBank[t] || []).filter(q => q && q.id && q.type === selType && !masteredIds.has(q.id));
@@ -306,14 +334,9 @@
 
             const handleNext = () => {
                 if (!queue || queue.length === 0) return;
-                if (currentIndex + 1 >= queue.length) { showToast("單元練習完成！"); setQuizStep('setup'); return; }
+                if (currentIndex + 1 >= queue.length) { showToast("練習完成！"); setQuizStep('setup'); return; }
                 const curId = cur?.id;
-                if (masteredIds.has(curId)) {
-                    const newQueue = queue.filter(q => q.id !== curId);
-                    setQueue(newQueue);
-                } else {
-                    setCurrentIndex(prev => prev + 1);
-                }
+                if (masteredIds.has(curId)) { setQueue(queue.filter(q => q.id !== curId)); } else { setCurrentIndex(prev => prev + 1); }
                 setTempAnswer('');
             };
 
@@ -322,24 +345,38 @@
             const submitErq = async () => {
                 if (!tempAnswer.trim() || loading) return;
                 setLoading(true);
-                const fb = await askAI(`Question: "${cur.question}"\nStudent Answer: "${tempAnswer}"\nEvaluate using these EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Detailed content.`, "Senior IB Bio Moderator.");
+                const fb = await askAI(`Question: "${cur.question}"\nStudent Answer: "${tempAnswer}"\nProvide evaluation with these EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar. Detailed content.`, "Senior IB Bio Moderator.");
                 if (fb) setSessionResults(prev => ({ ...prev, [cur.id]: { answer: tempAnswer, feedback: fb } }));
                 setLoading(false);
             };
 
+            // --- 修復版：AI 進度訊息通知 ---
             const askAI = async (p, s, retries = 5, delay = 1000) => {
                 if (!userApiKey) return null;
+                setAiProgress("準備連線...");
                 try {
                     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${userApiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: p }] }], systemInstruction: { parts: [{ text: s }] } })
                     });
-                    if (res.status === 429 && retries > 0) { await new Promise(resolve => setTimeout(resolve, delay)); return askAI(p, s, retries - 1, delay * 2); }
+                    
+                    if (res.status === 429 && retries > 0) {
+                        setAiProgress(`限額重試 (${delay/1000}秒)...`);
+                        await new Promise(r => setTimeout(r, delay));
+                        return askAI(p, s, retries - 1, delay * 2);
+                    }
+                    
                     if (!res.ok) throw new Error();
+                    
+                    setAiProgress("AI 運算中...");
                     const data = await res.json();
+                    setAiProgress("解析結果中...");
                     return data.candidates?.[0]?.content?.parts?.[0]?.text;
-                } catch (e) { return null; }
+                } catch (e) {
+                    setAiProgress("");
+                    return null;
+                }
             };
 
             const showToast = (msg) => { setStatusMsg(msg); setTimeout(() => setStatusMsg(""), 3000); };
@@ -357,7 +394,7 @@
                             {tab === 'quiz' && quizStep === 'practice' && cur && (
                                 <button onClick={() => { setMasteredIds(prev => { const next = new Set(prev); if (next.has(cur.id)) next.delete(cur.id); else next.add(cur.id); localStorage.setItem('mastered_ids', JSON.stringify(Array.from(next))); return next; }); }} className={`mastery-toggle-btn shadow-sm active:scale-95 ${masteredIds.has(cur.id) ? 'bg-amber-500 text-white border-amber-500' : ''}`}><AppIcon name="Star" size={20} fill={masteredIds.has(cur.id) ? "white" : "none"} /></button>
                             )}
-                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => { const sizes = [14, 16, 19, 23]; setContentFontSize(prev => sizes[(sizes.indexOf(prev) + 1) % sizes.length]); }} className="font-cycle-btn shadow-sm active:scale-95">Aa</button>}
+                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => { const sizes = [14, 16, 19, 23]; setContentFontSize(prev => sizes[(sizes.indexOf(prev) + 1) % sizes.length]); }} className="font-cycle-btn shadow-sm">Aa</button>}
                             {tab === 'quiz' && quizStep === 'practice' && <button onClick={handleNext} className="next-nav-btn shadow-sm active:scale-95"><AppIcon name="NextArrow" size={22} /></button>}
                         </div>
                     </header>
@@ -374,8 +411,36 @@
                                         <h2 className="font-black text-xs uppercase italic opacity-40 flex items-center gap-2"><AppIcon name="Sparkles" size={12} /> AI Generator</h2>
                                         <div className="space-y-3">
                                             <div className="flex gap-2 p-1 rounded-xl bg-slate-800/20">{THEMES.map(t=>(<button key={t.id} onClick={()=>setBuildTheme(t.id)} className={`flex-1 py-1.5 rounded-lg font-black text-xs transition-all ${buildTheme===t.id ? 'bg-slate-700 text-white shadow-md' : 'opacity-40'}`} style={{ color: buildTheme===t.id ? t.color : 'inherit' }}>{t.id}</button>))}</div>
-                                            <button onClick={async()=>{setLoading(true); const usr=`Generate 10 IB bio questions for Unit ${buildTheme}. JSON object { "${buildTheme}": [ ... ] }. Include prefetchedInsight for each.`; const r=await askAI(usr, "Expert IB Bio Teacher."); if(r) { const m = r.match(/\{[\s\S]*\}/); if(m) importToBank(JSON.parse(m[0])); } setLoading(false);}} disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] shadow-md hover:bg-blue-500 disabled:opacity-50">{loading ? 'AI Working...' : 'Generate 10 New Questions'}</button>
+                                            <button 
+                                                onClick={async()=>{
+                                                    setLoading(true); 
+                                                    const usr=`Generate 10 IB bio questions for Unit ${buildTheme}. Output JSON object { "${buildTheme}": [ ... ] }. Include prefetchedInsight for each with labels Key Concept, Deep Analysis, Fact. Use plain text like Vmax and Km.`; 
+                                                    const r = await askAI(usr, "Expert IB Bio Teacher. JSON only."); 
+                                                    if(r) setGeneratedJson(r);
+                                                    setLoading(false);
+                                                    setAiProgress("");
+                                                }} 
+                                                disabled={loading} 
+                                                className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] shadow-md hover:bg-blue-500 disabled:opacity-50 transition-all"
+                                            >
+                                                {loading ? (aiProgress || '運作中...') : 'Generate 10 New Questions'}
+                                            </button>
                                         </div>
+                                        {generatedJson && (
+                                            <div className="mt-4 pt-4 border-t border-slate-700 space-y-2">
+                                                <button onClick={() => { 
+                                                    try { 
+                                                        const match = generatedJson.match(/\{[\s\S]*\}/); 
+                                                        if (match) { 
+                                                            importToBank(JSON.parse(match[0])); 
+                                                            setGeneratedJson(""); 
+                                                            showToast("同步成功！庫存已更新"); 
+                                                        } else throw new Error(); 
+                                                    } catch(e) { showToast("解析失敗"); } 
+                                                }} className="w-full bg-emerald-600 text-white font-black uppercase p-3 rounded-xl shadow-lg">Add to Bank</button>
+                                                <textarea readOnly className="w-full h-24 p-3 bg-slate-950 text-blue-400 text-[8px] rounded-xl font-mono border border-slate-700" value={generatedJson} />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -384,9 +449,7 @@
                                 <div className="space-y-4">
                                     {quizStep === 'setup' ? (
                                         <div className="space-y-4 animate-up">
-                                            <div className="flex gap-2">
-                                                {['MCQ','ERQ'].map(type=>(<button key={type} onClick={()=>setSelType(type)} className={`flex-1 py-3 rounded-lg font-black border-2 transition-all ${selType===type?'bg-slate-100 text-slate-900 border-slate-100 shadow-md':'text-slate-500 bg-slate-800 border-slate-700'}`}>{type}</button>))}
-                                            </div>
+                                            <div className="flex gap-2">{['MCQ','ERQ'].map(type=>(<button key={type} onClick={()=>setSelType(type)} className={`flex-1 py-3 rounded-lg font-black border-2 transition-all ${selType===type?'bg-slate-100 text-slate-900 border-slate-100 shadow-md':'text-slate-500 bg-slate-800 border-slate-700'}`}>{type}</button>))}</div>
                                             <div className="grid grid-cols-2 gap-2">{THEMES.map(t => (<button key={t.id} onClick={()=>setSelThemes(p=>p.includes(t.id)?(p.length > 1 ? p.filter(i=>i!==t.id) : p):[...p,t.id])} className={`p-4 rounded-xl text-left border-2 transition-all ${selThemes.includes(t.id)?'bg-slate-800/40 shadow-sm':'border-slate-800 opacity-40'}`} style={{ borderColor: selThemes.includes(t.id) ? t.color : '#1f2937' }}><span className="font-black text-xs uppercase" style={{ color: selThemes.includes(t.id) ? t.color : '#475569' }}>Unit {t.id}</span></button>))}</div>
                                             <button onClick={startPractice} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase italic tracking-widest shadow-lg active:scale-95">Start Session</button>
                                         </div>
@@ -403,23 +466,23 @@
                                                             return (<button key={k} disabled={!!res} onClick={()=>submitMcq(k, cur.answer)} className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${st}`}><span className={`option-label ${res?.answer === k ? 'selected-label shadow-inner' : ''}`}>{k}</span><span className="font-bold opacity-80" dangerouslySetInnerHTML={{ __html: bioCompiler(v) }} /></button>);
                                                         })}</div>
                                                     ) : (
-                                                        <div className="space-y-3"><textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-500/5 border-2 border-slate-700/20 rounded-2xl min-h-[160px] outline-none font-medium text-inherit focus:border-blue-500 transition-colors" placeholder="Input analytical response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />{!sessionResults[cur.id] && <button onClick={submitErq} disabled={!tempAnswer.trim()||loading} className="w-full bg-slate-100 text-slate-900 py-4 rounded-xl font-black uppercase tracking-widest shadow-md active:scale-95 disabled:opacity-50">{loading?'Analyzing...':'Submit'}</button>}</div>
+                                                        <div className="space-y-3"><textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-500/5 border-2 border-slate-700/20 rounded-2xl min-h-[160px] outline-none font-medium text-inherit focus:border-blue-500 transition-colors" placeholder="Input Response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />{!sessionResults[cur.id] && <button onClick={submitErq} disabled={!tempAnswer.trim()||loading} className="w-full bg-slate-100 text-slate-900 py-4 rounded-xl font-black uppercase tracking-widest shadow-md active:scale-95 disabled:opacity-50">{loading ? '運作中...' : 'Submit'}</button>}</div>
                                                     )}
                                                 </div>
                                                 {sessionResults[cur.id] && (
                                                     <div id="report-content">
-                                                        {/* PDF 專用區塊：簡潔列印抬頭 */}
+                                                        {/* PDF 專屬：列印抬頭 */}
                                                         <div className="print-only">
-                                                            <div style={{ borderBottom: '3px solid black', paddingBottom: '8px', marginBottom: '15px' }}>
+                                                            <div style={{ borderBottom: '2px solid black', paddingBottom: '8px', marginBottom: '15px' }}>
                                                                 <h1 style={{ fontSize: '18pt', fontWeight: 900, textAlign: 'center' }}>IB BIOLOGY ASSESSMENT</h1>
                                                             </div>
-                                                            <div style={{ marginBottom: '12px' }}>
-                                                                <span style={{ fontSize: '10pt', fontWeight: 900, textDecoration: 'underline' }}>QUESTION CONTENT:</span>
+                                                            <div style={{ marginBottom: '15px' }}>
+                                                                <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline' }}>QUESTION:</span>
                                                                 <div style={{ marginTop: '4px', fontStyle: 'italic', fontSize: '11pt' }} dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
                                                             </div>
                                                             <div style={{ marginBottom: '25px' }}>
-                                                                <span style={{ fontSize: '10pt', fontWeight: 900, textDecoration: 'underline' }}>STUDENT RESPONSE:</span>
-                                                                <div style={{ marginTop: '4px', fontSize: '11pt', borderLeft: '2px solid #eee', paddingLeft: '10px' }} dangerouslySetInnerHTML={{ __html: bioCompiler(sessionResults[cur.id].answer) }} />
+                                                                <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline' }}>STUDENT RESPONSE:</span>
+                                                                <div style={{ marginTop: '4px', fontSize: '11pt', padding: '10px', background: '#f8fafc', borderLeft: '3px solid #ccc' }} dangerouslySetInnerHTML={{ __html: bioCompiler(sessionResults[cur.id].answer) }} />
                                                             </div>
                                                         </div>
 
@@ -442,7 +505,7 @@
                                 <div className="space-y-4 animate-up">
                                     <div className="themed-card border-none space-y-6 shadow-none">
                                         <div className="space-y-2">
-                                            <p className="text-[10px] font-black uppercase opacity-40 italic tracking-widest">Interface Theme</p>
+                                            <p className="text-[10px] font-black uppercase opacity-40 italic tracking-widest">Theme Mode</p>
                                             <div className="grid grid-cols-3 gap-2">
                                                 {[ {id:'theme-light', n:'Light'}, {id:'theme-dark', n:'Soft Dark'}, {id:'theme-midnight', n:'Midnight'} ].map(t=>(
                                                     <button key={t.id} onClick={()=>{setThemeMode(t.id); localStorage.setItem('theme_mode', t.id);}} className={`py-3 rounded-xl font-black text-[10px] border-2 transition-all ${themeMode===t.id ? 'border-blue-500 bg-blue-500/10 text-blue-500' : 'border-slate-700/20 text-slate-500'}`}>{t.n}</button>
@@ -450,7 +513,7 @@
                                             </div>
                                         </div>
                                         <div className="p-4 bg-slate-500/5 border border-slate-700/20 rounded-2xl space-y-2"><p className="text-[9px] font-black uppercase text-blue-400">Gemini Key</p><input type="password" placeholder="API Key" className="w-full p-3 bg-transparent border-none rounded-lg text-sm text-inherit" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} /></div>
-                                        <button onClick={()=>{if(confirm("重置數據？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-500/5 rounded-lg uppercase tracking-widest border border-rose-500/20">Reset Data</button>
+                                        <button onClick={()=>{if(confirm("重置數據？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest border border-rose-500/20 active:scale-95">Reset Data</button>
                                     </div>
                                 </div>
                             )}
