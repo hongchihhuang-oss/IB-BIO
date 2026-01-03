@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master Pro | 最終定案精準版</title>
+    <title>IB Bio Master Pro | 最終定案穩定版</title>
     
-    <!-- 核心資源 -->
+    <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -39,33 +39,38 @@
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: var(--text-sub); font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #3b82f6; }
         
-        /* 網頁端顯示卡片 */
-        .themed-card { border-left-width: 6px; padding: 1.5rem; border-radius: 1.5rem; background: var(--bg-card); margin-bottom: 1.1rem; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .themed-card { border-left-width: 6px; padding: 1.5rem; border-radius: 1.5rem; background: var(--bg-card); margin-bottom: 1.1rem; border: 1px solid var(--border); border-left-width: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .card-blue { border-left-color: #3b82f6; }
         .card-rose { border-left-color: #e11d48; }
+        .card-amber { border-left-color: #f59e0b; }
         .card-emerald { border-left-color: #10b981; }
         .card-slate { border-left-color: #64748b; }
 
         .badge-mini { font-size: 0.65rem; font-weight: 900; padding: 3px 10px; border-radius: 6px; margin-bottom: 8px; display: inline-block; text-transform: uppercase; background: var(--bg-body); color: var(--text-sub); border: 1px solid var(--border); }
         
         .math-container { line-height: 1.8; word-break: break-word; margin-bottom: 0.75rem; }
+        .indent-content { padding-left: 1.25rem; border-left: 3px solid var(--border); margin-top: 0.75rem; color: var(--text-sub); }
+
+        .animate-up { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .option-label { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; background: var(--bg-body); border: 2.5px solid var(--border); flex-shrink: 0; }
         .selected-label { background: #3b82f6 !important; color: white !important; border-color: #3b82f6 !important; }
 
         .font-cycle-btn { background: var(--bg-card); padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #3b82f6; border: 2px solid var(--border); }
+        .back-nav-btn { color: #3b82f6; padding: 10px; border-radius: 14px; background: var(--bg-card); border: 2px solid var(--border); }
         .next-nav-btn { color: #3b82f6; padding: 10px; border-radius: 12px; background: var(--bg-card); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; }
         .mastery-toggle-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: 0.2s; background: var(--bg-card); border: 2px solid var(--border); }
 
-        /* --- PDF 專業列印定案 (白紙、無框、字大、不切斷) --- */
+        /* --- PDF 最終完美列印方案 (省墨、不切斷) --- */
         .print-only { display: none; }
         .pdf-mode .print-only { display: block !important; margin-bottom: 25px; }
         
-        /* 移除過度留白 (10mm)，純白底 */
+        /* 移除過度留白，定案 10mm 邊距 */
         .pdf-mode { background: #ffffff !important; color: #000000 !important; padding: 10mm !important; width: 100% !important; height: auto !important; overflow: visible !important; }
         
-        /* 移除浪費墨水的框框，加大字體至 13pt */
-        .pdf-mode .themed-card { 
+        /* 核心：解決一行字被橫向切斷的問題，移除框線 */
+        .pdf-mode .themed-card, .pdf-mode .math-container { 
             background: #ffffff !important; 
             color: #000000 !important; 
             border: none !important; 
@@ -74,30 +79,29 @@
             margin-bottom: 1rem !important; 
             padding: 0 !important;
             border-radius: 0 !important;
-            page-break-inside: avoid !important; /* 核心：防止分頁切割 */
+            break-inside: avoid !important; /* 防止文字一行被切兩段 */
+            page-break-inside: avoid !important;
         }
         
         .pdf-mode .badge-mini { 
             background: none !important; 
             color: #000000 !important; 
             border: none !important; 
-            font-size: 12pt !important; 
+            font-size: 12pt !important; /* 加大標題字體 */
             font-weight: 900 !important; 
-            margin-bottom: 5px !important;
+            margin-bottom: 6px !important;
             padding: 0 !important;
             text-decoration: underline;
         }
 
         .pdf-mode .math-container { 
             color: #000000 !important; 
-            font-size: 13pt !important; 
+            font-size: 13pt !important; /* A4 列印最適字體大小 */
             line-height: 1.8 !important; 
-            white-space: pre-wrap !important;
-            word-break: break-word !important;
         }
         
         .pdf-mode .indent-content { border-left: none !important; padding-left: 0 !important; }
-        .pdf-mode .header-fixed, .pdf-mode .glass-nav, .pdf-mode button { display: none !important; }
+        .pdf-mode .header-fixed, .pdf-mode .glass-nav, .pdf-mode button:not(.pdf-ignore) { display: none !important; }
     </style>
 </head>
 <body class="theme-dark">
@@ -113,11 +117,13 @@
             { id: "D", name: "Evolution", color: "#f59e0b" }
         ];
 
+        // --- 元件圖示 ---
         const AppIcon = ({ name, size = 18, color = "currentColor", fill = "none", strokeWidth = "2.5" }) => {
             const icons = {
                 Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
                 Brain: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
                 Config: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/><circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
+                Check: <svg width={size} height={size} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>,
                 House: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3.5" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
                 Star: <svg width={size} height={size} fill={fill} stroke={color} strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,
                 NextArrow: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="4.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>,
@@ -156,6 +162,7 @@
         };
 
         const App = () => {
+            // --- 狀態定義 ---
             const [themeMode, setThemeMode] = useState(localStorage.getItem('theme_mode') || 'theme-dark');
             const [contentFontSize, setContentFontSize] = useState(Number(localStorage.getItem('contentFontSize')) || 16);
             const [userApiKey, setUserApiKey] = useState(localStorage.getItem('gemini_api_key') || "");
@@ -177,13 +184,15 @@
 
             const cur = useMemo(() => (queue && queue.length > 0) ? queue[currentIndex] : null, [queue, currentIndex]);
 
+            // --- 物理渲染監控 ---
             useLayoutEffect(() => {
                 document.body.className = themeMode;
                 const triggerKaTeX = () => { if (window.renderMathInElement) renderMathInElement(document.body, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false }); };
                 triggerKaTeX();
                 const observer = new MutationObserver(() => triggerKaTeX());
                 observer.observe(document.body, { childList: true, subtree: true, characterData: true });
-                return () => observer.disconnect();
+                const timers = [setTimeout(triggerKaTeX, 50), setTimeout(triggerKaTeX, 150), setTimeout(triggerKaTeX, 400)];
+                return () => { observer.disconnect(); timers.forEach(clearTimeout); };
             }, [quizStep, currentIndex, sessionResults, tab, contentFontSize, themeMode, cur]);
 
             useEffect(() => {
@@ -225,31 +234,31 @@
                 el.classList.add('pdf-mode');
                 const opt = { 
                     margin: [10, 10, 10, 10], 
-                    filename: 'IB_Final_Report.pdf', 
-                    image: { type: 'jpeg', quality: 0.98 }, 
+                    filename: 'IB_Final_Assessment.pdf', 
+                    image: { type: 'jpeg', quality: 1 }, 
                     html2canvas: { scale: 2, useCORS: true }, 
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
                 };
                 html2pdf().set(opt).from(el).save().then(() => el.classList.remove('pdf-mode'));
             }, []);
 
-            // --- 核心：精準回饋引擎 (不消失、還原範文) ---
+            // --- 核心修正：精準回饋與範文引擎 ---
             const renderFeedback = useCallback((text, isErq, expl, prefetched) => {
                 const cards = [];
                 const sourceText = String(text || "").trim();
                 const bankExemplar = String(prefetched || "").trim();
 
-                // 1. 範文顯示 (Professional Full-Mark Exemplar) - 最優先
+                // 1. 核心範文：Model Exemplar (Student Sample) - 還原敘事風格
                 if (isErq && bankExemplar.length > 5) {
                     cards.push(
                         <div key="exemplar" className="themed-card card-slate">
                             <span className="badge-mini border-none">Professional Full-Mark Exemplar (Student Sample)</span>
-                            <div className="font-medium opacity-90 italic leading-relaxed text-blue-500" dangerouslySetInnerHTML={{ __html: bioCompiler(bankExemplar) }} />
+                            <div className="font-medium opacity-90 italic leading-relaxed text-blue-500" style={{ fontSize: '1.1em' }} dangerouslySetInnerHTML={{ __html: bioCompiler(bankExemplar) }} />
                         </div>
                     );
                 }
 
-                // 2. 選擇題正確詳解
+                // 2. 選擇題詳解
                 if (!isErq && expl) {
                     cards.push(
                         <div key="expl" className="themed-card card-emerald">
@@ -259,7 +268,7 @@
                     );
                 }
 
-                // 3. AI 評分區塊切割
+                // 3. AI 評分區塊精密切割
                 const erqMarkers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7"];
                 const mcqMarkers = ["Key Concept", "Pitfall", "Fact", "Deep Analysis"];
                 const activeMarkers = isErq ? erqMarkers : mcqMarkers;
@@ -290,13 +299,29 @@
                     }
                 });
 
-                // 4. 兜底顯示：如果什麼都沒切出來，但 AI 有回覆，直接顯示
+                // 4. 兜底機制：若切完沒內容且 AI 有回覆，顯示原始評估
                 if (cards.length === 0 && sourceText.length > 10) {
                     cards.push(<div key="fallback" className="themed-card card-blue"><span className="badge-mini border-none">Evaluation Report</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(sourceText) }} /></div>);
                 }
                 
                 return cards;
             }, [cur]);
+
+            const submitMcq = (k, ans) => {
+                if (!cur) return;
+                setSessionResults(prev => ({ 
+                    ...prev, 
+                    [cur.id]: { answer: k, isCorrect: String(k).toUpperCase() === String(ans).toUpperCase() } 
+                }));
+            };
+
+            const submitErq = async () => {
+                if (!tempAnswer.trim() || loading) return;
+                setLoading(true);
+                const fb = await askAI(`Evaluate: "${cur.question}" with Student Answer: "${tempAnswer}". Use headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7.`, "Senior IB Bio Moderator.");
+                if (fb) setSessionResults(prev => ({ ...prev, [cur.id]: { answer: tempAnswer, feedback: fb } }));
+                setLoading(false);
+            };
 
             const askAI = async (p, s, retries = 5, delay = 1000) => {
                 if (!userApiKey) return null;
@@ -308,14 +333,14 @@
                         body: JSON.stringify({ contents: [{ parts: [{ text: p }] }], systemInstruction: { parts: [{ text: s }] } })
                     });
                     if (res.status === 429 && retries > 0) {
-                        setAiProgress(`限額重試 (${delay/1000}秒)...`);
+                        setAiProgress(`重試中 (${delay/1000}s)...`);
                         await new Promise(r => setTimeout(r, delay));
                         return askAI(p, s, retries - 1, delay * 2);
                     }
                     if (!res.ok) throw new Error();
-                    setAiProgress("思考中...");
+                    setAiProgress("運算中...");
                     const data = await res.json();
-                    setAiProgress("數據解析...");
+                    setAiProgress("解析結果...");
                     return data.candidates?.[0]?.content?.parts?.[0]?.text;
                 } catch (e) { setAiProgress(""); return null; }
             };
@@ -337,7 +362,7 @@
                     <header className="header-fixed flex items-center justify-between px-4 py-3">
                         <div className="flex items-center gap-2">
                             {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm active:scale-95"><AppIcon name="House" size={24} /></button>}
-                            {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-800/10 px-2.5 py-1.5 rounded-xl border border-slate-700/20"><span className="text-[11px] font-black uppercase">Q {currentIndex + 1} / {queue.length}</span></div>}
+                            {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-800/10 px-2.5 py-1.5 rounded-xl border border-slate-700/20 flex items-center gap-1"><span className="text-[11px] font-black uppercase">Q {currentIndex + 1} / {queue.length}</span></div>}
                         </div>
                         <h1 className="font-black italic text-sm uppercase tracking-widest text-blue-500 opacity-80">IB Bio Master Pro</h1>
                         <div className="flex items-center gap-2">
@@ -345,7 +370,7 @@
                                 <button onClick={() => { setMasteredIds(prev => { const next = new Set(prev); if (next.has(cur.id)) next.delete(cur.id); else next.add(cur.id); localStorage.setItem('mastered_ids', JSON.stringify(Array.from(next))); return next; }); }} className={`mastery-toggle-btn shadow-sm active:scale-95 ${masteredIds.has(cur.id) ? 'bg-amber-500 text-white border-amber-500' : ''}`}><AppIcon name="Star" size={20} fill={masteredIds.has(cur.id) ? "white" : "none"} /></button>
                             )}
                             {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setContentFontSize(f => f >= 23 ? 14 : (f===14?16:f+3))} className="font-cycle-btn shadow-sm">Aa</button>}
-                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => { if(currentIndex+1 >= queue.length) { showToast("完成練習！"); setQuizStep('setup'); } else { setCurrentIndex(i=>i+1); setTempAnswer(""); } }} className="next-nav-btn shadow-sm active:scale-95"><AppIcon name="NextArrow" size={22} /></button>}
+                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => { if(currentIndex+1 >= queue.length) { showToast("練習完成！"); setQuizStep('setup'); } else { setCurrentIndex(i=>i+1); setTempAnswer(""); } }} className="next-nav-btn shadow-sm active:scale-95"><AppIcon name="NextArrow" size={22} /></button>}
                         </div>
                     </header>
 
@@ -355,24 +380,24 @@
                                 <div className="space-y-4 animate-up">
                                     <div className="themed-card card-slate text-center border-none py-8 shadow-none">
                                         <div className="grid grid-cols-2 gap-3 mb-6">
-                                            <div className="p-3 rounded-2xl border border-slate-700/20 bg-slate-800/20"><p className="text-xl font-black text-blue-400">{stats.total}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Stock</p></div>
-                                            <div className="p-3 rounded-2xl border border-slate-700/20 bg-slate-800/20"><p className="text-xl font-black text-emerald-400">{stats.mastered}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Mastered</p></div>
+                                            <div className="p-3 rounded-2xl border border-slate-700/20 bg-slate-800/20"><p className="text-xl font-black text-blue-400">{Array.from(new Set(Object.values(masterBank).flat().map(q => q?.id))).filter(Boolean).length}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Stock</p></div>
+                                            <div className="p-3 rounded-2xl border border-slate-700/20 bg-slate-800/20"><p className="text-xl font-black text-emerald-400">{masteredIds.size}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Mastered</p></div>
                                         </div>
-                                        <div className="grid grid-cols-4 gap-2">{THEMES_LIST.map(t => (<div key={t.id} className="text-center"><p className="text-[10px] font-black uppercase" style={{ color: t.color }}>{t.id}</p><p className="text-sm font-black">{stats[t.id]}</p></div>))}</div>
+                                        <div className="grid grid-cols-4 gap-2">{THEMES_LIST.map(t => (<div key={t.id} className="text-center"><p className="text-[10px] font-black uppercase" style={{ color: t.color }}>{t.id}</p><p className="text-sm font-black">{(masterBank[t.id] || []).length}</p></div>))}</div>
                                     </div>
                                     <div className="themed-card border-none space-y-4 shadow-none">
                                         <h2 className="font-black text-xs uppercase italic opacity-40 flex items-center gap-2"><AppIcon name="Sparkles" size={12} /> AI Generator</h2>
                                         <div className="space-y-3">
                                             <div className="flex gap-2 p-1 rounded-xl bg-slate-800/20">{THEMES_LIST.map(t=>(<button key={t.id} onClick={()=>setBuildTheme(t.id)} className={`flex-1 py-1.5 rounded-lg font-black text-xs transition-all ${buildTheme===t.id ? 'bg-slate-700 text-white shadow-md' : 'opacity-40'}`} style={{ color: buildTheme===t.id ? t.color : 'inherit' }}>{t.id}</button>))}</div>
                                             <button onClick={async()=>{
-                                                setLoading(true); setAiProgress("準備中...");
-                                                const prompt = `Generate 10 IB biology questions for Unit ${buildTheme}. Output JSON object { "${buildTheme}": [ ... ] }. For ERQs, you MUST provide a "prefetchedInsight" field containing a HIGH-QUALITY narrative model answer (3-4 paragraphs) in a student's tone, avoiding bullet points. Use terms like Rubisco and ATP.`;
+                                                setLoading(true); setAiProgress("連線中...");
+                                                const prompt = `Generate 10 IB biology questions for Unit ${buildTheme}. Output JSON object { "${buildTheme}": [ ... ] }. For ERQs, you MUST provide a "prefetchedInsight" field containing a HIGH-QUALITY narrative model answer (3-4 paragraphs) in a student's tone. Use scientific terms like Rubisco and ATP.`;
                                                 const r = await askAI(prompt, "Senior IB Bio Moderator. JSON output only.");
                                                 if(r) { const m = r.match(/\{[\s\S]*\}/); if(m) { const data = JSON.parse(m[0]); setMasterBank(prev => { 
                                                     const next = {...prev}; 
                                                     next[buildTheme] = [...(next[buildTheme]||[]), ...data[buildTheme].map(q => ({...q, id: 'GEN_'+Date.now()+'_'+Math.random().toString(36).substr(2,4), theme: buildTheme, type: (q.options ? 'MCQ' : 'ERQ')}))];
                                                     localStorage.setItem('local_custom_bank', JSON.stringify(next)); return next;
-                                                }); showToast("成功產出 10 題並加入庫存！"); } }
+                                                }); showToast("成功產出 10 題！"); } }
                                                 setLoading(false); setAiProgress("");
                                             }} disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] shadow-md disabled:opacity-50">{loading ? (aiProgress || 'AI運作中...') : 'Generate 10 New Questions'}</button>
                                         </div>
@@ -401,30 +426,31 @@
                                                             return (<button key={k} disabled={!!res} onClick={()=>submitMcq(k, cur.answer)} className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${st}`}><span className={`option-label ${res?.answer === k ? 'selected-label shadow-inner' : ''}`}>{k}</span><span className="font-bold opacity-80" dangerouslySetInnerHTML={{ __html: bioCompiler(v) }} /></button>);
                                                         })}</div>
                                                     ) : (
-                                                        <div className="space-y-3"><textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-500/5 border-2 border-slate-700/20 rounded-2xl min-h-[180px] outline-none font-medium text-inherit focus:border-blue-500 transition-colors" placeholder="Input Response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />{!sessionResults[cur.id] && <button onClick={submitErq} disabled={!tempAnswer.trim()||loading} className="w-full bg-slate-100 text-slate-900 py-4 rounded-xl font-black uppercase tracking-widest shadow-md active:scale-95 disabled:opacity-50">{loading ? '運作中...' : 'Submit'}</button>}</div>
+                                                        <div className="space-y-3"><textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-500/5 border-2 border-slate-700/20 rounded-2xl min-h-[160px] outline-none font-medium text-inherit focus:border-blue-500 transition-colors" placeholder="Input Response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />{!sessionResults[cur.id] && <button onClick={submitErq} disabled={!tempAnswer.trim()||loading} className="w-full bg-slate-100 text-slate-900 py-4 rounded-xl font-black uppercase tracking-widest shadow-md active:scale-95 disabled:opacity-50">{loading ? '運作中...' : 'Submit'}</button>}</div>
                                                     )}
                                                 </div>
                                                 {sessionResults[cur.id] && (
                                                     <div id="report-content" className="mt-12">
-                                                        {/* PDF 專屬：抬頭紀錄 */}
                                                         <div className="print-only">
                                                             <div style={{ borderBottom: '2px solid black', paddingBottom: '10px', marginBottom: '20px', textAlign: 'center' }}>
                                                                 <h1 style={{ fontSize: '18pt', fontWeight: 900 }}>IB BIOLOGY ASSESSMENT REPORT</h1>
                                                             </div>
                                                             <div style={{ marginBottom: '15px' }}>
                                                                 <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline' }}>EXAM QUESTION:</span>
-                                                                <div style={{ marginTop: '5px', fontStyle: 'italic', fontSize: '12pt' }} dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
+                                                                <div style={{ marginTop: '5px', fontStyle: 'italic', fontSize: '13pt' }} dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
                                                             </div>
-                                                            <div style={{ marginBottom: '30px' }}>
-                                                                <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline' }}>STUDENT RESPONSE:</span>
-                                                                <div style={{ marginTop: '5px', fontSize: '12pt', padding: '10px', background: '#f8fafc', borderLeft: '3px solid #3b82f6' }} dangerouslySetInnerHTML={{ __html: bioCompiler(sessionResults[cur.id].answer) }} />
-                                                            </div>
+                                                            {cur.type === 'ERQ' && (
+                                                                <div style={{ marginBottom: '30px' }}>
+                                                                    <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline' }}>YOUR RESPONSE:</span>
+                                                                    <div style={{ marginTop: '5px', fontSize: '12pt', padding: '10px', background: '#f8fafc', borderLeft: '3px solid #3b82f6' }} dangerouslySetInnerHTML={{ __html: bioCompiler(sessionResults[cur.id].answer) }} />
+                                                                </div>
+                                                            )}
                                                         </div>
 
                                                         <div className="p-0 md:p-5 rounded-3xl bg-transparent md:bg-slate-500/5 shadow-none">
                                                             <div className="flex justify-between items-center mb-5 md:px-0 px-2">
                                                                 <span className="text-[10px] font-black opacity-40 uppercase italic tracking-widest">Feedback Analysis</span>
-                                                                {cur.type === 'ERQ' && <button onClick={exportPDF} className="text-[11px] font-black text-blue-400 flex items-center gap-1 uppercase hover:underline"><AppIcon name="Download" size={16} /> Get PDF</button>}
+                                                                {cur.type === 'ERQ' && <button onClick={exportPDF} className="text-[11px] font-black text-blue-400 flex items-center gap-1 uppercase hover:underline pdf-ignore"><AppIcon name="Download" size={16} /> Get PDF</button>}
                                                             </div>
                                                             {renderFeedback(sessionResults[cur.id].feedback, cur.type === 'ERQ', cur.explanation, cur.prefetchedInsight)}
                                                         </div>
@@ -442,7 +468,7 @@
                                         <div className="space-y-2">
                                             <p className="text-[10px] font-black uppercase opacity-40 italic tracking-widest">Appearance</p>
                                             <div className="grid grid-cols-3 gap-2">
-                                                {[ {id:'theme-light', n:'Light'}, {id:'theme-dark', n:'Dark'}, {id:'theme-midnight', n:'Night'} ].map(t=>(
+                                                {[ {id:'theme-light', n:'Light'}, {id:'theme-dark', n:'Dark'}, {id:'theme-midnight', n:'Midnight'} ].map(t=>(
                                                     <button key={t.id} onClick={()=>{setThemeMode(t.id); localStorage.setItem('theme_mode', t.id);}} className={`py-3 rounded-xl font-black text-[10px] border-2 transition-all ${themeMode===t.id ? 'border-blue-500 bg-blue-500/10 text-blue-500' : 'border-slate-700/20 text-slate-500'}`}>{t.n}</button>
                                                 ))}
                                             </div>
