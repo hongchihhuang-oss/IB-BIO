@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master Pro v1.1.8 | 功能補完鎖定版</title>
+    <title>IB Bio Master Pro v1.1.9 | 最終定案鎖定版</title>
     
     <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
-    <!-- html2pdf 功能 -->
+    <!-- html2pdf 匯出功能 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -27,7 +27,7 @@
         .main-scroll { flex: 1; overflow-y: auto; padding: 1.25rem; }
         .content-buffer { padding-bottom: 100px; width: 100%; }
 
-        /* 主題顏色：預設為 Light 清晰模式 */
+        /* 主題顏色變量 - 預設為 Light 模式 */
         .theme-light { --bg-body: #f8fafc; --bg-card: #ffffff; --text-main: #000000; --text-sub: #111111; --border: #cbd5e1; --nav-bg: #ffffff; }
         .theme-dark { --bg-body: #0f172a; --bg-card: #1e293b; --text-main: #f1f5f9; --text-sub: #94a3b8; --border: #334155; --nav-bg: #1e293b; }
         .theme-midnight { --bg-body: #000000; --bg-card: #111111; --text-main: #ffffff; --text-sub: #a1a1aa; --border: #27272a; --nav-bg: #111111; }
@@ -61,31 +61,34 @@
         .selected-label { background: #3b82f6 !important; color: white !important; border-color: #3b82f6 !important; }
 
         .font-cycle-btn { background: var(--bg-card); padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #3b82f6; border: 2px solid var(--border); }
+        .back-nav-btn { color: #3b82f6; padding: 10px; border-radius: 14px; background: var(--bg-card); border: 2px solid var(--border); }
         .next-nav-btn { color: #3b82f6; padding: 10px; border-radius: 12px; background: var(--bg-card); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; }
 
-        /* --- PDF 最終優化方案 --- */
+        /* --- PDF 最終優化方案：解決切斷、留白與空白頁 --- */
         .print-only { display: none; }
         .pdf-mode .print-only { display: block !important; }
         
+        /* 移除四周多餘留白 (10mm)，移除首頁頂部空白 */
         .pdf-mode { background: #ffffff !important; color: #000000 !important; padding: 10mm !important; width: 100% !important; height: auto !important; overflow: visible !important; }
         
-        /* 允許區塊自然分頁，徹底移除列印框線 */
+        /* 允許大卡片自然跨頁，不強行擠在下一頁 */
         .pdf-mode .themed-card { 
             background: #ffffff !important; 
             color: #000000 !important; 
             border: none !important; 
             box-shadow: none !important; 
-            margin-bottom: 5px !important; 
+            margin-bottom: 10px !important; 
             padding: 0 !important;
             break-inside: auto !important; 
         }
         
-        /* 保護每一行不被切開，增加底部微小緩衝 */
-        .pdf-mode .math-container, .pdf-mode .badge-mini, .pdf-mode .print-label, .pdf-mode .exemplar-text { 
+        /* 核心：保護每一行文字不被橫向切開 */
+        .pdf-mode .math-container, .pdf-mode .badge-mini, .pdf-mode .print-label, .pdf-mode .exemplar-text, .pdf-mode h1 { 
             break-inside: avoid !important; 
             page-break-inside: avoid !important;
             color: #000000 !important;
             padding-bottom: 2px !important; 
+            margin-bottom: 4px !important;
         }
         
         .pdf-mode .badge-mini { 
@@ -94,6 +97,7 @@
             text-decoration: underline;
         }
 
+        /* 可讀性最佳字體大小：10.5pt */
         .pdf-mode .math-container, .pdf-mode .exemplar-text { 
             font-size: 10.5pt !important; 
             line-height: 1.5 !important; 
@@ -104,6 +108,7 @@
         .pdf-mode .content-buffer { padding: 0 !important; }
         .pdf-mode #report-content { margin-top: 0 !important; padding-top: 0 !important; }
         
+        /* 底部緩衝區預留一行高度 */
         .pdf-footer-buffer { height: 1.5rem; width: 100%; display: none; }
         .pdf-mode .pdf-footer-buffer { display: block; }
     </style>
@@ -121,7 +126,6 @@
             { id: "D", name: "Evolution", color: "#f59e0b" }
         ];
 
-        // --- 元件圖示 ---
         const AppIcon = ({ name, size = 18, color = "currentColor", fill = "none", strokeWidth = "2.5" }) => {
             const icons = {
                 Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
@@ -134,6 +138,34 @@
                 Sparkles: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 3l.94 2.06L8 6l-2.06.94L5 9l-.94-2.06L2 6l2.06-.94L5 3zm14 15l.94 2.06L22 21l-2.06.94L19 24l-.94-2.06L16 21l2.06-.94L19 18zm4.5-10.5l1.09 2.41L27 11l-2.41 1.09L23.5 14.5l-1.09-2.41L20 11l2.41-1.09L23.5 7.5z"/></svg>
             };
             return icons[name] || null;
+        };
+
+        const bioCompiler = (raw) => {
+            let text = String(raw || "").trim();
+            if (!text) return "";
+            text = text.replace(/LATEX_PROTECT_\d+/g, "").replace(/LATEX_RESTORE_\d+/g, "").replace(/LATEX_SHIELD_\d+/g, "").replace(/\\text\{([^}]+)\}/g, "$1").replace(/(\*\*|__)/g, "").replace(/#+\s?/g, "").replace(/Supplement for:.*?\n/gi, "").replace(/---/g, "");
+            const lines = text.split('\n');
+            let finalHTML = [];
+            let inTable = false;
+            let tableData = [];
+            lines.forEach((l) => {
+                const line = l.trim();
+                if (!line) return;
+                if (line.includes('|')) {
+                    const cells = line.split('|').filter(c => c.trim().length > 0).map(c => c.trim());
+                    if (cells.length > 0 && !line.includes(':---')) {
+                        if (!inTable) { inTable = true; tableData = []; }
+                        tableData.push(cells);
+                    }
+                } else {
+                    if (inTable && tableData.length > 0) {
+                        finalHTML.push(`<table class="bio-table"><thead><tr>${tableData[0].map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${tableData.slice(1).map(row => `<tr>${row.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
+                        inTable = false; tableData = [];
+                    }
+                    finalHTML.push(`<div class="mb-3 math-container text-black">${line}</div>`);
+                }
+            });
+            return finalHTML.join('');
         };
 
         const App = () => {
@@ -156,11 +188,11 @@
             const [selThemes, setSelThemes] = useState(['A']); 
             const [selType, setSelType] = useState('MCQ');
             const [buildTheme, setBuildTheme] = useState('A');
-            const [genType, setGenType] = useState('MCQ'); // 核心修正：產題型態
+            const [genType, setGenType] = useState('MCQ');
 
             const cur = useMemo(() => (queue && queue.length > 0) ? queue[currentIndex] : null, [queue, currentIndex]);
 
-            // --- 物理重繪 ---
+            // --- 物理渲染 ---
             useLayoutEffect(() => {
                 document.body.className = themeMode;
                 const triggerKaTeX = () => { if (window.renderMathInElement) renderMathInElement(document.body, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false }); };
@@ -169,6 +201,29 @@
                 observer.observe(document.body, { childList: true, subtree: true, characterData: true });
                 return () => observer.disconnect();
             }, [quizStep, currentIndex, sessionResults, tab, contentFontSize, themeMode, cur]);
+
+            // --- 核心邏輯：導入數據到庫存 ---
+            const importToBank = (data) => {
+                setMasterBank(prev => {
+                    const next = {...prev};
+                    Object.keys(data).forEach(k => {
+                        const unit = k.toUpperCase().replace('THEME ', '').trim();
+                        if (next[unit]) {
+                            const incoming = data[k] || [];
+                            // 排重檢查
+                            const uniqueInbound = incoming.filter(q => !next[unit].some(ex => ex.id === q.id));
+                            next[unit] = [...next[unit], ...uniqueInbound.map(q => ({
+                                ...q, 
+                                id: q.id || 'GEN_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                                theme: unit,
+                                type: q.options ? 'MCQ' : 'ERQ'
+                            }))];
+                        }
+                    });
+                    localStorage.setItem('local_custom_bank', JSON.stringify(next));
+                    return next;
+                });
+            };
 
             useEffect(() => {
                 const loadData = async () => {
@@ -202,7 +257,7 @@
                 loadData();
             }, []);
 
-            // --- 核心修復：精準 Available 統計 (排除 Mastering) ---
+            // --- 精準統計：徹底扣除 Mastered 題目 ---
             const stats = useMemo(() => {
                 const allQ = Object.values(masterBank).flat().filter(q => q && q.id);
                 const available = allQ.filter(q => !masteredIds.has(q.id)).length;
@@ -215,7 +270,7 @@
                 el.classList.add('pdf-mode');
                 const opt = { 
                     margin: [0, 0, 0, 0], 
-                    filename: 'Assessment_Report_v118.pdf', 
+                    filename: 'IB_Bio_Assessment_v119.pdf', 
                     image: { type: 'jpeg', quality: 1 }, 
                     html2canvas: { scale: 2, useCORS: true, logging: false }, 
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
@@ -223,14 +278,14 @@
                 html2pdf().set(opt).from(el).save().then(() => el.classList.remove('pdf-mode'));
             }, []);
 
-            // --- 引擎：多解析卡片與專家範文 ---
+            // --- 核心引擎：解析引擎 ---
             const renderFeedback = useCallback((text, isErq, expl, prefetched) => {
                 const cards = [];
                 const sourceText = String(text || "").trim();
                 const bankExemplar = String(prefetched || "").trim();
 
                 if (!isErq && expl) {
-                    cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini border-none">Correct Answer Analysis: {cur?.answer}</span><div className="font-semibold text-black" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
+                    cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini border-none">Correct Answer Detail: {cur?.answer}</span><div className="font-semibold text-black" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
                 }
 
                 const erqMarkers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Professional Model Exemplar"];
@@ -264,34 +319,12 @@
                     }
                 });
 
-                if (bankExemplar.length > 10) {
-                    let bankSegs = [];
-                    activeMarkers.forEach(m => {
-                        const idx = bankExemplar.indexOf(m);
-                        if (idx !== -1) bankSegs.push({ name: m, start: idx, len: m.length });
-                    });
-                    if (bankSegs.length > 0) {
-                        bankSegs.sort((a,b) => a.start - b.start);
-                        bankSegs.forEach((s, i) => {
-                            const nextStart = (i + 1 < bankSegs.length) ? bankSegs[i+1].start : bankExemplar.length;
-                            const content = bankExemplar.substring(s.start + s.len, nextStart).replace(/^[:\s\*-]+/, "").trim();
-                            if (content.length > 5) {
-                                let color = "card-blue";
-                                if (isErq && s.name.includes("Exemplar")) color = "card-slate";
-                                cards.push(
-                                    <div key={"bank"+s.name+i} className={`themed-card ${color}`}>
-                                        <span className="badge-mini border-none">{isErq && s.name.includes("Exemplar") ? "Professional Model Exemplar (Expert Narrative)" : s.name}</span>
-                                        <div className={`${(isErq && s.name.includes("Exemplar")) ? 'exemplar-text' : 'font-medium text-black'} indent-content`} dangerouslySetInnerHTML={{ __html: bioCompiler(content) }} />
-                                    </div>
-                                );
-                            }
-                        });
-                    } else if (isErq) {
-                        cards.push(<div key="bank-erq-raw" className="themed-card card-slate"><span className="badge-mini border-none">Professional Model Exemplar (Expert Narrative)</span><div className="exemplar-text text-blue-600 leading-relaxed text-[1.05em]" dangerouslySetInnerHTML={{ __html: bioCompiler(bankExemplar) }} /></div>);
-                    }
+                if (bankExemplar.length > 10 && !sourceText.includes("Exemplar")) {
+                    cards.push(<div key="bank-exemplar" className="themed-card card-slate"><span className="badge-mini border-none">Professional Model Exemplar (Expert Narrative)</span><div className="exemplar-text leading-relaxed" dangerouslySetInnerHTML={{ __html: bioCompiler(bankExemplar) }} /></div>);
                 }
+                
                 if (cards.length === 0 && sourceText.length > 10) {
-                    cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini border-none">Analysis</span><div className="text-black font-medium" dangerouslySetInnerHTML={{ __html: bioCompiler(sourceText) }} /></div>);
+                    cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini border-none">Assessment Summary</span><div className="text-black font-medium" dangerouslySetInnerHTML={{ __html: bioCompiler(sourceText) }} /></div>);
                 }
                 return cards;
             }, [cur]);
@@ -306,12 +339,11 @@
                         body: JSON.stringify({ contents: [{ parts: [{ text: p }] }], systemInstruction: { parts: [{ text: s }] } })
                     });
                     if (res.status === 429 && retries > 0) {
-                        setAiProgress(`限額重試 (${delay/1000}s)...`);
+                        setAiProgress(`重試 (${delay/1000}s)...`);
                         await new Promise(r => setTimeout(r, delay));
                         return askAI(p, s, retries - 1, delay * 2);
                     }
                     if (!res.ok) throw new Error();
-                    setAiProgress("思考中...");
                     const data = await res.json();
                     return data.candidates?.[0]?.content?.parts?.[0]?.text;
                 } catch (e) { setAiProgress(""); return null; }
@@ -319,7 +351,7 @@
 
             const showToast = (msg) => { setStatusMsg(msg); setTimeout(() => setStatusMsg(""), 3000); };
 
-            // --- 核心修復：啟動測驗邏輯 (嚴格排除熟悉題目) ---
+            // --- 核心修復：絕對排除重複題目 ---
             const startPractice = () => {
                 const currentPool = THEMES_CONST
                     .filter(t => selThemes.includes(t.id))
@@ -346,7 +378,7 @@
             const submitErq = async () => {
                 if (!tempAnswer.trim() || loading) return;
                 setLoading(true);
-                const prompt = `Evaluate: "${cur.question}" with Student Answer: "${tempAnswer}". Use headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7. Finally, provide "Professional Model Exemplar" with a narrative 7-mark rewrite.`;
+                const prompt = `Question: "${cur.question}"\n\nStudent Answer: "${tempAnswer}"\n\nTask: Evaluate following IB standards. Use EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7. Finally, add a section "Professional Model Exemplar" providing a narrative expert answer (3 paragraphs) that would score full marks.`;
                 const fb = await askAI(prompt, "Senior IB Biology Moderator.");
                 if (fb) setSessionResults(prev => ({ ...prev, [cur.id]: { answer: tempAnswer, feedback: fb } }));
                 setLoading(false);
@@ -361,7 +393,7 @@
                             {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm active:scale-95"><AppIcon name="House" size={24} /></button>}
                             {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-800/10 px-2.5 py-1.5 rounded-xl border border-slate-700/20 flex items-center gap-1"><span className="text-[11px] font-black uppercase">Q {currentIndex + 1} / {queue.length}</span></div>}
                         </div>
-                        <h1 className="font-black italic text-sm uppercase tracking-widest text-blue-500 opacity-80">IB Bio Master Pro <span className="text-[10px] opacity-40 ml-1">v1.1.8</span></h1>
+                        <h1 className="font-black italic text-sm uppercase tracking-widest text-blue-500 opacity-80">IB Bio Master Pro <span className="text-[10px] opacity-40 ml-1">v1.1.9</span></h1>
                         <div className="flex items-center gap-2">
                             {tab === 'quiz' && quizStep === 'practice' && cur && (
                                 <button onClick={() => { 
@@ -392,7 +424,6 @@
                                     <div className="themed-card border-none space-y-4 shadow-none">
                                         <h2 className="font-black text-xs uppercase italic opacity-40 flex items-center gap-2"><AppIcon name="Sparkles" size={12} /> AI Generator</h2>
                                         <div className="space-y-3">
-                                            {/* 核心修正：加入產題類型選擇 */}
                                             <div className="flex gap-2 p-1 rounded-xl bg-slate-800/20">
                                                 {['MCQ','ERQ'].map(type=>(
                                                     <button key={type} onClick={()=>setGenType(type)} className={`flex-1 py-2 rounded-lg font-black text-[10px] transition-all ${genType===type ? 'bg-blue-600 text-white shadow-md' : 'opacity-40 text-slate-500'}`}>{type}</button>
@@ -403,9 +434,9 @@
                                             </div>
                                             <button onClick={async()=>{
                                                 setLoading(true); setAiProgress("連線中...");
-                                                const prompt = `Generate 10 IB ${genType}s for Unit ${buildTheme}. JSON { "${buildTheme}": [ ... ] }. For ERQs, MUST provide "prefetchedInsight" as narrative 7-mark answer.`;
-                                                const r = await askAI(prompt, "Expert IB Bio Teacher.");
-                                                if(r) { const m = r.match(/\{[\s\S]*\}/); if(m) { const j = JSON.parse(m[0]); setMasterBank(prev => { const next={...prev}; next[buildTheme]=[...(next[buildTheme]||[]),...j[buildTheme].map(q=>({...q, id:'GEN_'+Date.now()+'_'+Math.random().toString(36).substr(2,4), theme:buildTheme, type:genType}))]; localStorage.setItem('local_custom_bank', JSON.stringify(next)); return next; }); showToast("成功加入 10 題！"); } }
+                                                const prompt = `Generate 10 IB ${genType}s for Unit ${buildTheme}. JSON output { "${buildTheme}": [ ... ] }. For ERQs, MUST provide "prefetchedInsight" as narrative 7-mark exemplar. Use DNA, ATP.`;
+                                                const r = await askAI(prompt, "Expert IB Bio Teacher. JSON only.");
+                                                if(r) { const m = r.match(/\{[\s\S]*\}/); if(m) { importToBank(JSON.parse(m[0])); showToast("成功加入 10 題！"); } }
                                                 setLoading(false); setAiProgress("");
                                             }} disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] shadow-md hover:bg-blue-500 transition-all">{loading ? (aiProgress || 'AI運作中...') : `Generate 10 New ${genType}s`}</button>
                                         </div>
