@@ -58,29 +58,33 @@
         .option-label { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; background: var(--bg-body); border: 2.5px solid var(--border); flex-shrink: 0; }
         .selected-label { background: #3b82f6 !important; color: white !important; border-color: #3b82f6 !important; }
 
-        .font-cycle-btn { background: var(--bg-card); padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #3b82f6; border: 2px solid var(--border); transition: 0.2s; }
+        .font-cycle-btn { background: var(--bg-card); padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #3b82f6; border: 2px solid var(--border); }
         .back-nav-btn { color: #3b82f6; padding: 10px; border-radius: 14px; background: var(--bg-card); border: 2px solid var(--border); }
         .next-nav-btn { color: #3b82f6; padding: 10px; border-radius: 12px; background: var(--bg-card); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; }
         .mastery-toggle-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: 0.2s; background: var(--bg-card); border: 2px solid var(--border); }
 
-        /* --- PDF 專業列印優化 (回歸理想精簡版) --- */
+        .bio-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85em; background: var(--bg-card); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+        .bio-table th { background: var(--bg-body); padding: 10px; text-align: left; font-weight: 800; border-bottom: 2px solid var(--border); color: var(--text-sub); }
+        .bio-table td { padding: 10px; border-bottom: 1px solid var(--border); }
+        
+        /* --- PDF 列印優化 (回歸最理想方案) --- */
         .print-only { display: none; }
         .pdf-mode .print-only { display: block !important; margin-bottom: 20px; }
         
-        /* 移除過度留白與背景，維持白底黑字 */
+        /* 移除浪費紙張的邊距 */
         .pdf-mode { background: #ffffff !important; color: #000000 !important; padding: 10mm !important; width: 100% !important; height: auto !important; overflow: visible !important; }
         
-        /* 移除浪費墨水的框框，改用純文字段落 */
+        /* 徹底移除黑框，僅保留段落感 */
         .pdf-mode .themed-card { 
             background: #ffffff !important; 
             color: #000000 !important; 
             border: none !important; 
             border-left: none !important;
             box-shadow: none !important; 
-            margin-bottom: 1rem !important; 
+            margin-bottom: 1.2rem !important; 
             padding: 0 !important;
             border-radius: 0 !important;
-            break-inside: avoid; /* 核心：防止文字切斷 */
+            break-inside: avoid; /* 防止文字在一行中被切割 */
             page-break-inside: avoid;
         }
         
@@ -92,16 +96,11 @@
             font-weight: 900 !important; 
             margin-bottom: 4px !important;
             padding: 0 !important;
-            text-decoration: underline; /* 以底線標示區塊 */
+            text-decoration: underline;
         }
 
         .pdf-mode .math-container { color: #000000 !important; font-size: 11pt !important; line-height: 1.6 !important; }
-        .pdf-mode .indent-content { 
-            color: #000000 !important; 
-            border-left: none !important; 
-            padding-left: 0 !important;
-            margin-top: 5px !important;
-        }
+        .pdf-mode .indent-content { color: #000000 !important; border-left: none !important; padding-left: 0 !important; margin-top: 5px !important; }
         
         .pdf-mode .header-fixed, .pdf-mode .glass-nav, .pdf-mode button { display: none !important; }
     </style>
@@ -112,7 +111,7 @@
     <script type="text/babel">
         const { useState, useEffect, useLayoutEffect, Fragment, useCallback, useRef, useMemo } = React;
 
-        const THEMES = [
+        const THEMES_LIST = [
             { id: "A", name: "Unity & Molecules", color: "#3b82f6" }, 
             { id: "B", name: "Function & Cells", color: "#10b981" }, 
             { id: "C", name: "Interaction", color: "#8b5cf6" }, 
@@ -164,7 +163,7 @@
         };
 
         const App = () => {
-            // --- 狀態管理 ---
+            // --- 狀態定義 ---
             const [themeMode, setThemeMode] = useState(localStorage.getItem('theme_mode') || 'theme-dark');
             const [contentFontSize, setContentFontSize] = useState(Number(localStorage.getItem('contentFontSize')) || 16);
             const [userApiKey, setUserApiKey] = useState(localStorage.getItem('gemini_api_key') || "");
@@ -245,13 +244,13 @@
                 html2pdf().set(opt).from(el).save().then(() => el.classList.remove('pdf-mode'));
             }, []);
 
-            // --- 精準切割引擎 (優化論述題範文風格與切割品質) ---
+            // --- 精準切割引擎 (回歸理想邏輯：還原考生範文風格) ---
             const renderFeedback = useCallback((text, isErq, expl, prefetched) => {
                 const cards = [];
                 const sourceText = String(text || "").trim();
                 const bankInsight = String(prefetched || "").trim();
 
-                // 1. 選擇題正確詳解 (綠色)
+                // 1. 選擇題正確詳解 (翡翠綠)
                 if (!isErq && expl) {
                     cards.push(
                         <div key="expl" className="themed-card card-emerald">
@@ -261,7 +260,7 @@
                     );
                 }
 
-                // 2. 切割標籤定義 (論述與選擇徹底分離)
+                // 2. 切割標籤定義
                 const erqMarkers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7"];
                 const mcqMarkers = ["Key Concept", "Pitfall", "Fact", "Deep Analysis"];
                 
@@ -277,6 +276,7 @@
                 segs.forEach((s, i) => {
                     const nextStart = (i + 1 < segs.length) ? segs[i+1].start : sourceText.length;
                     const content = sourceText.substring(s.start + s.len, nextStart).replace(/^[:\s\*-]+/, "").trim();
+                    
                     if (content.length > 5) {
                         let color = "card-blue", label = s.name;
                         if (isErq) {
@@ -293,7 +293,7 @@
                     }
                 });
 
-                // 3. 還原：Model Exemplar (標竿範文) - 改回考生作答風格
+                // 3. 還原：Model Exemplar (標竿範文) - 論述題專屬考生風格
                 if (isErq && bankInsight.length > 10) {
                     cards.push(
                         <div key="bank-ref" className="themed-card card-slate">
@@ -326,7 +326,7 @@
                 }
 
                 if (cards.length === 0 && sourceText.length > 10) {
-                    cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini border-none">Evaluation</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(sourceText) }} /></div>);
+                    cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini border-none">Assessment Insight</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(sourceText) }} /></div>);
                 }
                 return cards;
             }, [cur]);
@@ -342,7 +342,7 @@
 
             const handleNext = () => {
                 if (!queue || queue.length === 0) return;
-                if (currentIndex + 1 >= queue.length) { showToast("練習完成！"); setQuizStep('setup'); return; }
+                if (currentIndex + 1 >= queue.length) { showToast("單元練習完成！"); setQuizStep('setup'); return; }
                 const curId = cur?.id;
                 if (masteredIds.has(curId)) { setQueue(queue.filter(q => q.id !== curId)); } else { setCurrentIndex(prev => prev + 1); }
                 setTempAnswer('');
@@ -367,11 +367,15 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: p }] }], systemInstruction: { parts: [{ text: s }] } })
                     });
-                    if (res.status === 429 && retries > 0) { setAiProgress(`限額重試 (${delay/1000}s)...`); await new Promise(r => setTimeout(r, delay)); return askAI(p, s, retries - 1, delay * 2); }
+                    if (res.status === 429 && retries > 0) {
+                        setAiProgress(`限額重試 (${delay/1000}s)...`);
+                        await new Promise(r => setTimeout(r, delay));
+                        return askAI(p, s, retries - 1, delay * 2);
+                    }
                     if (!res.ok) throw new Error();
                     setAiProgress("AI 思考中...");
                     const data = await res.json();
-                    setAiProgress("解析數據...");
+                    setAiProgress("解析結果...");
                     return data.candidates?.[0]?.content?.parts?.[0]?.text;
                 } catch (e) { setAiProgress(""); return null; }
             };
@@ -384,7 +388,7 @@
                     <header className="header-fixed flex items-center justify-between px-4 py-3">
                         <div className="flex items-center gap-2">
                             {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm active:scale-95"><AppIcon name="House" size={24} /></button>}
-                            {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-800/10 px-2.5 py-1.5 rounded-xl border border-slate-700/20"><span className="text-[11px] font-black uppercase">Q {currentIndex + 1} / {queue.length}</span></div>}
+                            {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-800/10 px-2.5 py-1.5 rounded-xl border border-slate-700/20 flex items-center gap-1"><span className="text-[11px] font-black uppercase tracking-widest">Q {currentIndex + 1} / {queue.length}</span></div>}
                         </div>
                         <h1 className="font-black italic text-sm uppercase tracking-widest text-blue-500 opacity-80">IB Bio Master Pro</h1>
                         <div className="flex items-center gap-2">
@@ -402,13 +406,13 @@
                                 <div className="space-y-4 animate-up">
                                     <div className="themed-card card-slate text-center border-none py-8 shadow-none">
                                         <div className="grid grid-cols-2 gap-3 mb-6"><div className="p-3 rounded-2xl border border-slate-700/20 bg-slate-800/20"><p className="text-xl font-black text-blue-400">{stats.total}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Stock</p></div><div className="p-3 rounded-2xl border border-slate-700/20 bg-slate-800/20"><p className="text-xl font-black text-emerald-400">{stats.mastered}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Mastered</p></div></div>
-                                        <div className="grid grid-cols-4 gap-2">{THEMES.map(t => (<div key={t.id} className="text-center"><p className="text-[10px] font-black uppercase" style={{ color: t.color }}>{t.id}</p><p className="text-sm font-black">{stats[t.id]}</p></div>))}</div>
+                                        <div className="grid grid-cols-4 gap-2">{THEMES_LIST.map(t => (<div key={t.id} className="text-center"><p className="text-[10px] font-black uppercase" style={{ color: t.color }}>{t.id}</p><p className="text-sm font-black">{stats[t.id]}</p></div>))}</div>
                                     </div>
-                                    <div className="themed-card border-none space-y-4">
+                                    <div className="themed-card border-none space-y-4 shadow-none">
                                         <h2 className="font-black text-xs uppercase italic opacity-40 flex items-center gap-2"><AppIcon name="Sparkles" size={12} /> AI Generator</h2>
                                         <div className="space-y-3">
-                                            <div className="flex gap-2 p-1 rounded-xl bg-slate-800/20">{THEMES.map(t=>(<button key={t.id} onClick={()=>setBuildTheme(t.id)} className={`flex-1 py-1.5 rounded-lg font-black text-xs transition-all ${buildTheme===t.id ? 'bg-slate-700 text-white shadow-md' : 'opacity-40'}`} style={{ color: buildTheme===t.id ? t.color : 'inherit' }}>{t.id}</button>))}</div>
-                                            <button onClick={async()=>{setLoading(true); setAiProgress("準備中..."); const usr=`Generate 10 IB bio questions for Unit ${buildTheme}. JSON object { "${buildTheme}": [ ... ] }. Include prefetchedInsight with student-style model answers. Use plain text like Rubisco.`; const r = await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r) { const m = r.match(/\{[\s\S]*\}/); if(m) importToBank(JSON.parse(m[0])); } setLoading(false); setAiProgress("");}} disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] shadow-md hover:bg-blue-500 disabled:opacity-50">{loading ? (aiProgress || '運作中...') : 'Generate 10 New Questions'}</button>
+                                            <div className="flex gap-2 p-1 rounded-xl bg-slate-800/20">{THEMES_LIST.map(t=>(<button key={t.id} onClick={()=>setBuildTheme(t.id)} className={`flex-1 py-1.5 rounded-lg font-black text-xs transition-all ${buildTheme===t.id ? 'bg-slate-700 text-white shadow-md' : 'opacity-40'}`} style={{ color: buildTheme===t.id ? t.color : 'inherit' }}>{t.id}</button>))}</div>
+                                            <button onClick={async()=>{setLoading(true); setAiProgress("準備中..."); const usr=`Generate 10 IB bio questions for Unit ${buildTheme}. JSON object { "${buildTheme}": [ ... ] }. Include prefetchedInsight with student-style model answers. Use plain text like Rubisco.`; const r = await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r) { const m = r.match(/\{[\s\S]*\}/); if(m) { setGeneratedJson(r); importToBank(JSON.parse(m[0])); showToast("同步成功！庫存已更新"); } } setLoading(false); setAiProgress("");}} disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] shadow-md hover:bg-blue-500 disabled:opacity-50">{loading ? (aiProgress || '運作中...') : 'Generate 10 New Questions'}</button>
                                         </div>
                                     </div>
                                 </div>
@@ -419,7 +423,7 @@
                                     {quizStep === 'setup' ? (
                                         <div className="space-y-4 animate-up">
                                             <div className="flex gap-2">{['MCQ','ERQ'].map(type=>(<button key={type} onClick={()=>setSelType(type)} className={`flex-1 py-3 rounded-lg font-black border-2 transition-all ${selType===type?'bg-slate-100 text-slate-900 border-slate-100 shadow-md':'text-slate-500 bg-slate-800 border-slate-700'}`}>{type}</button>))}</div>
-                                            <div className="grid grid-cols-2 gap-2">{THEMES.map(t => (<button key={t.id} onClick={()=>setSelThemes(p=>p.includes(t.id)?(p.length > 1 ? p.filter(i=>i!==t.id) : p):[...p,t.id])} className={`p-4 rounded-xl text-left border-2 transition-all ${selThemes.includes(t.id)?'bg-slate-800/40 shadow-sm':'border-slate-800 opacity-40'}`} style={{ borderColor: selThemes.includes(t.id) ? t.color : '#1f2937' }}><span className="font-black text-xs uppercase" style={{ color: selThemes.includes(t.id) ? t.color : '#475569' }}>Unit {t.id}</span></button>))}</div>
+                                            <div className="grid grid-cols-2 gap-2">{THEMES_LIST.map(t => (<button key={t.id} onClick={()=>setSelThemes(p=>p.includes(t.id)?(p.length > 1 ? p.filter(i=>i!==t.id) : p):[...p,t.id])} className={`p-4 rounded-xl text-left border-2 transition-all ${selThemes.includes(t.id)?'bg-slate-800/40 shadow-sm':'border-slate-800 opacity-40'}`} style={{ borderColor: selThemes.includes(t.id) ? t.color : '#1f2937' }}><span className="font-black text-xs uppercase" style={{ color: selThemes.includes(t.id) ? t.color : '#475569' }}>Unit {t.id}</span></button>))}</div>
                                             <button onClick={startPractice} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase italic tracking-widest shadow-lg active:scale-95">Start Session</button>
                                         </div>
                                     ) : cur ? (
@@ -435,23 +439,23 @@
                                                             return (<button key={k} disabled={!!res} onClick={()=>submitMcq(k, cur.answer)} className={`w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3 ${st}`}><span className={`option-label ${res?.answer === k ? 'selected-label shadow-inner' : ''}`}>{k}</span><span className="font-bold opacity-80" dangerouslySetInnerHTML={{ __html: bioCompiler(v) }} /></button>);
                                                         })}</div>
                                                     ) : (
-                                                        <div className="space-y-3"><textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-500/5 border-2 border-slate-700/20 rounded-2xl min-h-[160px] outline-none font-medium text-inherit focus:border-blue-500 transition-colors" placeholder="Input analytical response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />{!sessionResults[cur.id] && <button onClick={submitErq} disabled={!tempAnswer.trim()||loading} className="w-full bg-slate-100 text-slate-900 py-4 rounded-xl font-black uppercase tracking-widest shadow-md active:scale-95 disabled:opacity-50">{loading ? '運作中...' : 'Submit'}</button>}</div>
+                                                        <div className="space-y-3"><textarea disabled={!!sessionResults[cur.id]} className="w-full p-4 bg-slate-500/5 border-2 border-slate-700/20 rounded-2xl min-h-[160px] outline-none font-medium text-inherit focus:border-blue-500 transition-colors" placeholder="Input Response..." value={tempAnswer} onChange={(e)=>setTempAnswer(e.target.value)} />{!sessionResults[cur.id] && <button onClick={submitErq} disabled={!tempAnswer.trim()||loading} className="w-full bg-slate-100 text-slate-900 py-4 rounded-xl font-black uppercase tracking-widest shadow-md active:scale-95 disabled:opacity-50">{loading ? '運作中...' : 'Submit'}</button>}</div>
                                                     )}
                                                 </div>
                                                 {sessionResults[cur.id] && (
-                                                    <div id="report-content" className="mt-8"> {/* 增加首段與報告間距 */}
+                                                    <div id="report-content" className="mt-8"> {/* 解決首段過擠 */}
                                                         <div className="print-only">
                                                             <div style={{ borderBottom: '2px solid black', paddingBottom: '10px', marginBottom: '20px' }}>
                                                                 <h1 style={{ fontSize: '18pt', fontWeight: 900, textAlign: 'center' }}>IB BIOLOGY ASSESSMENT REPORT</h1>
                                                             </div>
                                                             <div style={{ marginBottom: '15px' }}>
                                                                 <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline' }}>EXAM QUESTION:</span>
-                                                                <div style={{ marginTop: '5px', fontStyle: 'italic', fontSize: '11pt' }} dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
+                                                                <div style={{ marginTop: '4px', fontStyle: 'italic', fontSize: '11pt' }} dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
                                                             </div>
                                                             {cur.type === 'ERQ' && (
                                                                 <div style={{ marginBottom: '30px' }}>
                                                                     <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline' }}>YOUR RESPONSE:</span>
-                                                                    <div style={{ marginTop: '5px', fontSize: '11pt', padding: '10px', background: '#f8fafc', borderLeft: '3px solid #ccc' }} dangerouslySetInnerHTML={{ __html: bioCompiler(sessionResults[cur.id].answer) }} />
+                                                                    <div style={{ marginTop: '4px', fontSize: '11pt', padding: '10px', background: '#f8fafc', borderLeft: '3px solid #ccc' }} dangerouslySetInnerHTML={{ __html: bioCompiler(sessionResults[cur.id].answer) }} />
                                                                 </div>
                                                             )}
                                                         </div>
@@ -475,15 +479,15 @@
                                 <div className="space-y-4 animate-up">
                                     <div className="themed-card border-none space-y-6 shadow-none">
                                         <div className="space-y-2">
-                                            <p className="text-[10px] font-black uppercase opacity-40 italic tracking-widest">Appearance</p>
+                                            <p className="text-[10px] font-black uppercase opacity-40 italic tracking-widest">Interface Appearance</p>
                                             <div className="grid grid-cols-3 gap-2">
-                                                {[ {id:'theme-light', n:'Light'}, {id:'theme-dark', n:'Dark'}, {id:'theme-midnight', n:'Night'} ].map(t=>(
+                                                {[ {id:'theme-light', n:'Light'}, {id:'theme-dark', n:'Dark'}, {id:'theme-midnight', n:'Midnight'} ].map(t=>(
                                                     <button key={t.id} onClick={()=>{setThemeMode(t.id); localStorage.setItem('theme_mode', t.id);}} className={`py-3 rounded-xl font-black text-[10px] border-2 transition-all ${themeMode===t.id ? 'border-blue-500 bg-blue-500/10 text-blue-500' : 'border-slate-700/20 text-slate-500'}`}>{t.n}</button>
                                                 ))}
                                             </div>
                                         </div>
                                         <div className="p-4 bg-slate-500/5 border border-slate-700/20 rounded-2xl space-y-2"><p className="text-[9px] font-black uppercase text-blue-400">Gemini Key</p><input type="password" placeholder="API Key" className="w-full p-3 bg-transparent border-none rounded-lg text-sm text-inherit" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} /></div>
-                                        <button onClick={()=>{if(confirm("確定重置所有數據？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest border border-rose-500/20 active:scale-95">Reset Data</button>
+                                        <button onClick={()=>{if(confirm("重置數據？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest border border-rose-500/20 active:scale-95">Reset Data</button>
                                     </div>
                                 </div>
                             )}
