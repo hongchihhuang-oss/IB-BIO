@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master Pro v1.2.2 | 最終定案版</title>
+    <title>IB Bio Master Pro v1.2.3 | 最終定案版</title>
     
     <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -78,7 +78,7 @@
             break-inside: auto !important; 
         }
         
-        /* 核心：解決一行字切開，每頁底部預留空白 */
+        /* 核心修復：解決一行字被切開，增加底部留白 */
         .pdf-mode .math-container, .pdf-mode .badge-mini, .pdf-mode .print-label, .pdf-mode .exemplar-text, .pdf-mode h1 { 
             break-inside: avoid !important; 
             page-break-inside: avoid !important;
@@ -87,7 +87,7 @@
             padding-bottom: 2px !important;
         }
 
-        /* 內容字體固定為 10pt，更省紙並清晰 */
+        /* 內容字體固定為 10pt，符合專業 A4 感 */
         .pdf-mode .math-container, .pdf-mode .exemplar-text { 
             font-size: 10pt !important; 
             line-height: 1.4 !important; 
@@ -96,7 +96,7 @@
         .pdf-mode .header-fixed, .pdf-mode .glass-nav, .pdf-mode button:not(.pdf-ignore) { display: none !important; }
         .pdf-mode .main-scroll { overflow: visible !important; padding: 0 !important; }
         .pdf-mode .content-buffer { padding: 0 !important; }
-        .pdf-mode #report-content { margin-top: 0 !important; padding-top: 0 !important; padding-bottom: 20mm !important; } /* 底部留白關鍵 */
+        .pdf-mode #report-content { margin-top: 0 !important; padding-top: 0 !important; padding-bottom: 20mm !important; } /* 每頁底部安全留白 */
     </style>
 </head>
 <body class="theme-light">
@@ -160,7 +160,7 @@
         };
 
         const App = () => {
-            // --- 狀態定義 (修復 Set 錯誤) ---
+            // --- 狀態定義 ---
             const [themeMode, setThemeMode] = useState(localStorage.getItem('theme_mode') || 'theme-light');
             const [contentFontSize, setContentFontSize] = useState(Number(localStorage.getItem('contentFontSize')) || 16);
             const [userApiKey, setUserApiKey] = useState(localStorage.getItem('gemini_api_key') || "");
@@ -169,7 +169,7 @@
             const [tab, setTab] = useState('home');
             const [masterBank, setMasterBank] = useState({ A:[], B:[], C:[], D:[] });
             
-            // 重要修正：useState 接收一個函數作為初始值，並使用 new Set()
+            // 重要修正：正確初始化 Set 狀態
             const [masteredIds, setMasteredIds] = useState(() => new Set(JSON.parse(localStorage.getItem('mastered_ids') || '[]')));
             
             const [quizStep, setQuizStep] = useState('setup'); 
@@ -204,7 +204,12 @@
                             incoming.forEach(q => {
                                 const finalId = q.id || 'GEN_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
                                 if (!next[unit].some(ex => ex.id === finalId)) {
-                                    next[unit].push({ ...q, id: finalId, theme: unit, type: q.options ? 'MCQ' : 'ERQ' });
+                                    next[unit].push({ 
+                                        ...q, 
+                                        id: finalId, 
+                                        theme: unit, 
+                                        type: q.options ? 'MCQ' : 'ERQ' 
+                                    });
                                 }
                             });
                         }
@@ -256,7 +261,7 @@
                 el.classList.add('pdf-mode');
                 const opt = { 
                     margin: [0, 0, 0, 0], 
-                    filename: 'IB_Bio_Master_v122.pdf', 
+                    filename: 'Assessment_Report_v123.pdf', 
                     image: { type: 'jpeg', quality: 1 }, 
                     html2canvas: { scale: 2, useCORS: true, logging: false }, 
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
@@ -269,9 +274,14 @@
                 const sourceText = String(text || "").trim();
                 const bankExemplar = String(prefetched || "").trim();
 
-                // 1. MCQ 詳解 (必現)
+                // 1. MCQ 詳解 (修復：無論如何都優先顯示)
                 if (!isErq && expl) {
-                    cards.push(<div key="expl" className="themed-card card-emerald"><span className="badge-mini border-none">Correct Answer Analysis: {cur?.answer}</span><div className="font-semibold text-black" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} /></div>);
+                    cards.push(
+                        <div key="expl" className="themed-card card-emerald">
+                            <span className="badge-mini border-none">Correct Answer Analysis: {cur?.answer}</span>
+                            <div className="font-semibold text-black" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} />
+                        </div>
+                    );
                 }
 
                 const erqMarkers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Professional Model Exemplar"];
@@ -305,7 +315,7 @@
                     }
                 });
 
-                // 2. 顯示庫存解析 (修正 MCQ 說明消失)
+                // 2. 顯示庫存解析 (確保 MCQ 科學說明回歸)
                 if (bankExemplar.length > 10) {
                     let bankSegs = [];
                     activeMarkers.forEach(m => {
@@ -384,7 +394,7 @@
             const submitErq = async () => {
                 if (!tempAnswer.trim() || loading) return;
                 setLoading(true);
-                const prompt = `Evaluate: "${cur.question}" with Student Answer: "${tempAnswer}". MUST include headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7. Finally, provide "Professional Model Exemplar" with a narrative full-mark rewrite (3-4 paragraphs).`;
+                const prompt = `Evaluate: "${cur.question}" with Student Answer: "${tempAnswer}". Use headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7. Finally, provide "Professional Model Exemplar" with a narrative full-mark rewrite (3-4 paragraphs).`;
                 const fb = await askAI(prompt, "Senior IB Moderator.");
                 if (fb) setSessionResults(prev => ({ ...prev, [cur.id]: { answer: tempAnswer, feedback: fb } }));
                 setLoading(false);
@@ -399,7 +409,7 @@
                             {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm active:scale-95"><AppIcon name="House" size={24} /></button>}
                             {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-800/10 px-2.5 py-1.5 rounded-xl border border-slate-700/20 flex items-center gap-1"><span className="text-[11px] font-black uppercase">Q {currentIndex + 1} / {queue.length}</span></div>}
                         </div>
-                        <h1 className="font-black italic text-sm uppercase tracking-widest text-blue-500 opacity-80">IB Bio Master Pro <span className="text-[10px] opacity-40 ml-1">v1.2.2</span></h1>
+                        <h1 className="font-black italic text-sm uppercase tracking-widest text-blue-500 opacity-80">IB Bio Master Pro <span className="text-[10px] opacity-40 ml-1">v1.2.3</span></h1>
                         <div className="flex items-center gap-2">
                             {tab === 'quiz' && quizStep === 'practice' && cur && (
                                 <button onClick={() => { 
@@ -440,7 +450,8 @@
                                             </div>
                                             <button onClick={async()=>{
                                                 setLoading(true); setAiProgress("連線中...");
-                                                const prompt = `Generate 10 IB ${genType}s for Unit ${buildTheme}. JSON output { "${buildTheme}": [ ... ] }. For ERQs, provide "prefetchedInsight" as narrative 7-mark exemplar.`;
+                                                // 核心修正：產題指令要求包含解釋與說明卡片
+                                                const prompt = `Generate 10 IB ${genType}s for Unit ${buildTheme}. JSON output { "${buildTheme}": [ ... ] }. FOR MCQs, you MUST provide "explanation" (why the answer is correct) AND "prefetchedInsight" containing categorized scientific facts (Key Concept, Fact, etc.). FOR ERQs, provide "prefetchedInsight" as narrative 7-mark exemplar.`;
                                                 const r = await askAI(prompt, "Expert IB Bio Teacher. JSON only.");
                                                 if(r) { const m = r.match(/\{[\s\S]*\}/); if(m) { importToBank(JSON.parse(m[0])); showToast("成功加入 10 題！"); } }
                                                 setLoading(false); setAiProgress("");
@@ -488,11 +499,11 @@
                                                             </div>
                                                             <div style={{ marginBottom: '15px' }} className="print-label">
                                                                 <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline', color: '#000000' }}>EXAM QUESTION:</span>
-                                                                <div style={{ marginTop: '4px', fontStyle: 'italic', fontSize: '10.5pt', color: '#000000' }} dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
+                                                                <div style={{ marginTop: '4px', fontStyle: 'italic', fontSize: '10pt', color: '#000000' }} dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
                                                             </div>
                                                             <div style={{ marginBottom: '20px' }} className="print-label">
                                                                 <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline', color: '#000000' }}>YOUR RESPONSE:</span>
-                                                                <div style={{ marginTop: '4px', fontSize: '10.5pt', padding: '10px', background: '#f8fafc', borderLeft: '3px solid #3b82f6', color: '#000000' }} dangerouslySetInnerHTML={{ __html: bioCompiler(sessionResults[cur.id].answer) }} />
+                                                                <div style={{ marginTop: '4px', fontSize: '10pt', padding: '10px', background: '#f8fafc', borderLeft: '3px solid #3b82f6', color: '#000000' }} dangerouslySetInnerHTML={{ __html: bioCompiler(sessionResults[cur.id].answer) }} />
                                                             </div>
                                                         </div>
 
