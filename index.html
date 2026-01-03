@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master Pro | 穩定精準排版版</title>
+    <title>IB Bio Master Pro | 最終穩定定版</title>
     
     <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
-    <!-- html2pdf 匯出功能 -->
+    <!-- html2pdf 匯出 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -58,23 +58,19 @@
         .option-label { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; background: var(--bg-body); border: 2.5px solid var(--border); flex-shrink: 0; }
         .selected-label { background: #3b82f6 !important; color: white !important; border-color: #3b82f6 !important; }
 
-        .font-cycle-btn { background: var(--bg-card); padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #3b82f6; border: 2px solid var(--border); }
+        .font-cycle-btn { background: var(--bg-card); padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #3b82f6; border: 2px solid var(--border); transition: 0.2s; }
         .back-nav-btn { color: #3b82f6; padding: 10px; border-radius: 14px; background: var(--bg-card); border: 2px solid var(--border); }
         .next-nav-btn { color: #3b82f6; padding: 10px; border-radius: 12px; background: var(--bg-card); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; }
         .mastery-toggle-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: 0.2s; background: var(--bg-card); border: 2px solid var(--border); }
 
-        .bio-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85em; background: var(--bg-card); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
-        .bio-table th { background: var(--bg-body); padding: 10px; text-align: left; font-weight: 800; border-bottom: 2px solid var(--border); color: var(--text-sub); }
-        .bio-table td { padding: 10px; border-bottom: 1px solid var(--border); }
-        
-        /* --- PDF 列印優化 (回歸最理想方案) --- */
+        /* --- PDF 理想列印方案 (回歸簡潔) --- */
         .print-only { display: none; }
-        .pdf-mode .print-only { display: block !important; margin-bottom: 20px; }
+        .pdf-mode .print-only { display: block !important; margin-bottom: 25px; }
         
-        /* 移除浪費紙張的邊距 */
+        /* 移除過度留白，定案 10mm 邊距 */
         .pdf-mode { background: #ffffff !important; color: #000000 !important; padding: 10mm !important; width: 100% !important; height: auto !important; overflow: visible !important; }
         
-        /* 徹底移除黑框，僅保留段落感 */
+        /* 徹底移除列印黑框，改用文字間距 */
         .pdf-mode .themed-card { 
             background: #ffffff !important; 
             color: #000000 !important; 
@@ -84,7 +80,7 @@
             margin-bottom: 1.2rem !important; 
             padding: 0 !important;
             border-radius: 0 !important;
-            break-inside: avoid; /* 防止文字在一行中被切割 */
+            break-inside: avoid; /* 防止文字一行被切兩段 */
             page-break-inside: avoid;
         }
         
@@ -94,7 +90,7 @@
             border: none !important; 
             font-size: 11pt !important; 
             font-weight: 900 !important; 
-            margin-bottom: 4px !important;
+            margin-bottom: 5px !important;
             padding: 0 !important;
             text-decoration: underline;
         }
@@ -118,13 +114,12 @@
             { id: "D", name: "Evolution", color: "#f59e0b" }
         ];
 
-        // --- 元件圖示 ---
+        // --- 圖示組件 ---
         const AppIcon = ({ name, size = 18, color = "currentColor", fill = "none", strokeWidth = "2.5" }) => {
             const icons = {
                 Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
                 Brain: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
                 Config: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/><circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
-                Check: <svg width={size} height={size} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>,
                 House: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3.5" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
                 Star: <svg width={size} height={size} fill={fill} stroke={color} strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,
                 NextArrow: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="4.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>,
@@ -163,7 +158,6 @@
         };
 
         const App = () => {
-            // --- 狀態定義 ---
             const [themeMode, setThemeMode] = useState(localStorage.getItem('theme_mode') || 'theme-dark');
             const [contentFontSize, setContentFontSize] = useState(Number(localStorage.getItem('contentFontSize')) || 16);
             const [userApiKey, setUserApiKey] = useState(localStorage.getItem('gemini_api_key') || "");
@@ -185,7 +179,6 @@
 
             const cur = useMemo(() => (queue && queue.length > 0) ? queue[currentIndex] : null, [queue, currentIndex]);
 
-            // --- 物理渲染監控 ---
             useLayoutEffect(() => {
                 document.body.className = themeMode;
                 const triggerKaTeX = () => { if (window.renderMathInElement) renderMathInElement(document.body, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false }); };
@@ -222,21 +215,13 @@
                 loadData();
             }, []);
 
-            const stats = useMemo(() => {
-                const map = new Map();
-                Object.values(masterBank).flat().forEach(q => { if (q && q.id) map.set(q.id, q); });
-                const all = Array.from(map.values());
-                const count = (tid) => all.filter(q => q.theme === tid || String(q.id).startsWith(tid)).length;
-                return { total: all.length, mastered: masteredIds.size, A: count('A'), B: count('B'), C: count('C'), D: count('D') };
-            }, [masterBank, masteredIds]);
-
             const exportPDF = useCallback(() => {
                 const el = document.getElementById('report-content');
                 if (!el) return;
                 el.classList.add('pdf-mode');
                 const opt = { 
                     margin: [10, 10, 10, 10], 
-                    filename: 'Assessment_Report.pdf', 
+                    filename: 'IB_Assessment_Report.pdf', 
                     image:{type:'jpeg',quality:1}, 
                     html2canvas:{scale:2, useCORS: true}, 
                     jsPDF:{unit:'mm',format:'a4', orientation: 'portrait'} 
@@ -244,7 +229,7 @@
                 html2pdf().set(opt).from(el).save().then(() => el.classList.remove('pdf-mode'));
             }, []);
 
-            // --- 精準切割引擎 (回歸理想邏輯：還原考生範文風格) ---
+            // --- 精準切割引擎 (修正：還原考生例子與標題完整性) ---
             const renderFeedback = useCallback((text, isErq, expl, prefetched) => {
                 const cards = [];
                 const sourceText = String(text || "").trim();
@@ -260,10 +245,9 @@
                     );
                 }
 
-                // 2. 切割標籤定義
+                // 2. 切割標籤定義 (論述與選擇徹底分離)
                 const erqMarkers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7"];
                 const mcqMarkers = ["Key Concept", "Pitfall", "Fact", "Deep Analysis"];
-                
                 const activeMarkers = isErq ? erqMarkers : mcqMarkers;
 
                 let segs = [];
@@ -276,7 +260,6 @@
                 segs.forEach((s, i) => {
                     const nextStart = (i + 1 < segs.length) ? segs[i+1].start : sourceText.length;
                     const content = sourceText.substring(s.start + s.len, nextStart).replace(/^[:\s\*-]+/, "").trim();
-                    
                     if (content.length > 5) {
                         let color = "card-blue", label = s.name;
                         if (isErq) {
@@ -293,12 +276,12 @@
                     }
                 });
 
-                // 3. 還原：Model Exemplar (標竿範文) - 論述題專屬考生風格
+                // 3. 還原：Model Exemplar (標竿範文) - 核心例子還原 (論述題專用)
                 if (isErq && bankInsight.length > 10) {
                     cards.push(
                         <div key="bank-ref" className="themed-card card-slate">
                             <span className="badge-mini border-none">Model Exemplar (Student Sample)</span>
-                            <div className="font-medium opacity-80 italic leading-relaxed text-blue-500/80" dangerouslySetInnerHTML={{ __html: bioCompiler(bankInsight) }} />
+                            <div className="font-medium opacity-80 italic leading-relaxed text-blue-500/90" dangerouslySetInnerHTML={{ __html: bioCompiler(bankInsight) }} />
                         </div>
                     );
                 }
@@ -325,14 +308,16 @@
                     });
                 }
 
+                // 5. 兜底顯示：如果切割完沒東西，直接顯示原始回覆
                 if (cards.length === 0 && sourceText.length > 10) {
-                    cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini border-none">Assessment Insight</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(sourceText) }} /></div>);
+                    cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini border-none">Evaluation Insight</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(sourceText) }} /></div>);
                 }
+                
                 return cards;
             }, [cur]);
 
             const startPractice = () => {
-                const pool = selThemes.flatMap(t => masterBank[t] || []).filter(q => q && q.id && q.type === selType && !masteredIds.has(q.id));
+                const pool = THEMES_LIST.flatMap(t => masterBank[t.id] || []).filter(q => q && q.id && q.type === selType && !masteredIds.has(q.id));
                 const uniquePool = Array.from(new Map(pool.map(q => [q.id, q])).values());
                 if (uniquePool.length) {
                     setQueue([...uniquePool].sort(() => Math.random() - 0.5));
@@ -342,18 +327,16 @@
 
             const handleNext = () => {
                 if (!queue || queue.length === 0) return;
-                if (currentIndex + 1 >= queue.length) { showToast("單元練習完成！"); setQuizStep('setup'); return; }
+                if (currentIndex + 1 >= queue.length) { showToast("練習完成！"); setQuizStep('setup'); return; }
                 const curId = cur?.id;
                 if (masteredIds.has(curId)) { setQueue(queue.filter(q => q.id !== curId)); } else { setCurrentIndex(prev => prev + 1); }
                 setTempAnswer('');
             };
 
-            const submitMcq = (k, ans) => { if (cur) setSessionResults(prev => ({ ...prev, [cur.id]: { answer: k, isCorrect: String(k).toUpperCase() === String(ans).toUpperCase() } })); };
-
             const submitErq = async () => {
                 if (!tempAnswer.trim() || loading) return;
                 setLoading(true);
-                const fb = await askAI(`Evaluate: "${cur.question}" with Student Answer: "${tempAnswer}". MUST use EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7.`, "Senior IB Bio Moderator.");
+                const fb = await askAI(`Evaluate: "${cur.question}" with Student Answer: "${tempAnswer}". Use headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7.`, "Senior IB Bio Moderator.");
                 if (fb) setSessionResults(prev => ({ ...prev, [cur.id]: { answer: tempAnswer, feedback: fb } }));
                 setLoading(false);
             };
@@ -367,11 +350,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: p }] }], systemInstruction: { parts: [{ text: s }] } })
                     });
-                    if (res.status === 429 && retries > 0) {
-                        setAiProgress(`限額重試 (${delay/1000}s)...`);
-                        await new Promise(r => setTimeout(r, delay));
-                        return askAI(p, s, retries - 1, delay * 2);
-                    }
+                    if (res.status === 429 && retries > 0) { setAiProgress(`限額重試 (${delay/1000}s)...`); await new Promise(r => setTimeout(r, delay)); return askAI(p, s, retries - 1, delay * 2); }
                     if (!res.ok) throw new Error();
                     setAiProgress("AI 思考中...");
                     const data = await res.json();
@@ -388,7 +367,7 @@
                     <header className="header-fixed flex items-center justify-between px-4 py-3">
                         <div className="flex items-center gap-2">
                             {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm active:scale-95"><AppIcon name="House" size={24} /></button>}
-                            {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-800/10 px-2.5 py-1.5 rounded-xl border border-slate-700/20 flex items-center gap-1"><span className="text-[11px] font-black uppercase tracking-widest">Q {currentIndex + 1} / {queue.length}</span></div>}
+                            {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-800/10 px-2.5 py-1.5 rounded-xl border border-slate-700/20 flex items-center gap-1"><span className="text-[11px] font-black uppercase">Q {currentIndex + 1} / {queue.length}</span></div>}
                         </div>
                         <h1 className="font-black italic text-sm uppercase tracking-widest text-blue-500 opacity-80">IB Bio Master Pro</h1>
                         <div className="flex items-center gap-2">
@@ -405,14 +384,17 @@
                             {tab === 'home' && (
                                 <div className="space-y-4 animate-up">
                                     <div className="themed-card card-slate text-center border-none py-8 shadow-none">
-                                        <div className="grid grid-cols-2 gap-3 mb-6"><div className="p-3 rounded-2xl border border-slate-700/20 bg-slate-800/20"><p className="text-xl font-black text-blue-400">{stats.total}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Stock</p></div><div className="p-3 rounded-2xl border border-slate-700/20 bg-slate-800/20"><p className="text-xl font-black text-emerald-400">{stats.mastered}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Mastered</p></div></div>
-                                        <div className="grid grid-cols-4 gap-2">{THEMES_LIST.map(t => (<div key={t.id} className="text-center"><p className="text-[10px] font-black uppercase" style={{ color: t.color }}>{t.id}</p><p className="text-sm font-black">{stats[t.id]}</p></div>))}</div>
+                                        <div className="grid grid-cols-2 gap-3 mb-6">
+                                            <div className="p-3 rounded-2xl border border-slate-700/20 bg-slate-800/20"><p className="text-xl font-black text-blue-400">{Array.from(new Set(Object.values(masterBank).flat().map(q => q?.id))).filter(Boolean).length}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Stock</p></div>
+                                            <div className="p-3 rounded-2xl border border-slate-700/20 bg-slate-800/20"><p className="text-xl font-black text-emerald-400">{masteredIds.size}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Mastered</p></div>
+                                        </div>
+                                        <div className="grid grid-cols-4 gap-2">{THEMES_LIST.map(t => (<div key={t.id} className="text-center"><p className="text-[10px] font-black uppercase" style={{ color: t.color }}>{t.id}</p><p className="text-sm font-black">{(masterBank[t.id] || []).length}</p></div>))}</div>
                                     </div>
                                     <div className="themed-card border-none space-y-4 shadow-none">
                                         <h2 className="font-black text-xs uppercase italic opacity-40 flex items-center gap-2"><AppIcon name="Sparkles" size={12} /> AI Generator</h2>
                                         <div className="space-y-3">
                                             <div className="flex gap-2 p-1 rounded-xl bg-slate-800/20">{THEMES_LIST.map(t=>(<button key={t.id} onClick={()=>setBuildTheme(t.id)} className={`flex-1 py-1.5 rounded-lg font-black text-xs transition-all ${buildTheme===t.id ? 'bg-slate-700 text-white shadow-md' : 'opacity-40'}`} style={{ color: buildTheme===t.id ? t.color : 'inherit' }}>{t.id}</button>))}</div>
-                                            <button onClick={async()=>{setLoading(true); setAiProgress("準備中..."); const usr=`Generate 10 IB bio questions for Unit ${buildTheme}. JSON object { "${buildTheme}": [ ... ] }. Include prefetchedInsight with student-style model answers. Use plain text like Rubisco.`; const r = await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r) { const m = r.match(/\{[\s\S]*\}/); if(m) { setGeneratedJson(r); importToBank(JSON.parse(m[0])); showToast("同步成功！庫存已更新"); } } setLoading(false); setAiProgress("");}} disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] shadow-md hover:bg-blue-500 disabled:opacity-50">{loading ? (aiProgress || '運作中...') : 'Generate 10 New Questions'}</button>
+                                            <button onClick={async()=>{setLoading(true); setAiProgress("準備中..."); const usr=`Generate 10 IB bio questions for Unit ${buildTheme}. JSON { "${buildTheme}": [ ... ] }. Include model answer. Use ATP, Rubisco.`; const r = await askAI(usr, "Expert IB Bio Teacher."); if(r) { const m = r.match(/\{[\s\S]*\}/); if(m) { const j = JSON.parse(m[0]); importToBank(j); showToast("同步成功！"); } } setLoading(false); setAiProgress("");}} disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] shadow-md hover:bg-blue-500 disabled:opacity-50 transition-all">{loading ? (aiProgress || '運作中...') : 'Generate 10 New Questions'}</button>
                                         </div>
                                     </div>
                                 </div>
@@ -443,7 +425,7 @@
                                                     )}
                                                 </div>
                                                 {sessionResults[cur.id] && (
-                                                    <div id="report-content" className="mt-8"> {/* 解決首段過擠 */}
+                                                    <div id="report-content" className="mt-10"> {/* 核心修正：增加首段間距 */}
                                                         <div className="print-only">
                                                             <div style={{ borderBottom: '2px solid black', paddingBottom: '10px', marginBottom: '20px' }}>
                                                                 <h1 style={{ fontSize: '18pt', fontWeight: 900, textAlign: 'center' }}>IB BIOLOGY ASSESSMENT REPORT</h1>
@@ -471,7 +453,7 @@
                                                 )}
                                             </div>
                                         </div>
-                                    ) : (<div className="p-20 text-center animate-pulse opacity-20 font-black italic tracking-widest">SYNCING QUEUE...</div>)}
+                                    ) : (<div className="p-20 text-center animate-pulse opacity-20 font-black italic tracking-widest">SYNCING...</div>)}
                                 </div>
                             )}
 
@@ -479,7 +461,7 @@
                                 <div className="space-y-4 animate-up">
                                     <div className="themed-card border-none space-y-6 shadow-none">
                                         <div className="space-y-2">
-                                            <p className="text-[10px] font-black uppercase opacity-40 italic tracking-widest">Interface Appearance</p>
+                                            <p className="text-[10px] font-black uppercase opacity-40 italic tracking-widest">Appearance</p>
                                             <div className="grid grid-cols-3 gap-2">
                                                 {[ {id:'theme-light', n:'Light'}, {id:'theme-dark', n:'Dark'}, {id:'theme-midnight', n:'Midnight'} ].map(t=>(
                                                     <button key={t.id} onClick={()=>{setThemeMode(t.id); localStorage.setItem('theme_mode', t.id);}} className={`py-3 rounded-xl font-black text-[10px] border-2 transition-all ${themeMode===t.id ? 'border-blue-500 bg-blue-500/10 text-blue-500' : 'border-slate-700/20 text-slate-500'}`}>{t.n}</button>
@@ -487,7 +469,7 @@
                                             </div>
                                         </div>
                                         <div className="p-4 bg-slate-500/5 border border-slate-700/20 rounded-2xl space-y-2"><p className="text-[9px] font-black uppercase text-blue-400">Gemini Key</p><input type="password" placeholder="API Key" className="w-full p-3 bg-transparent border-none rounded-lg text-sm text-inherit" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} /></div>
-                                        <button onClick={()=>{if(confirm("重置數據？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest border border-rose-500/20 active:scale-95">Reset Data</button>
+                                        <button onClick={()=>{if(confirm("確定重置數據？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest border border-rose-500/20 active:scale-95">Reset Data</button>
                                     </div>
                                 </div>
                             )}
