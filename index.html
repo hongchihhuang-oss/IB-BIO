@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master Pro | 最終穩定精準版</title>
+    <title>IB Bio Master Pro | 穩定精準排版版</title>
     
     <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -39,8 +39,8 @@
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: var(--text-sub); font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #3b82f6; }
         
-        /* 網頁端顯示卡片 */
-        .themed-card { border-left-width: 6px; padding: 1.5rem; border-radius: 1.5rem; background: var(--bg-card); margin-bottom: 1.1rem; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        /* 網頁版卡片 */
+        .themed-card { border-left-width: 6px; padding: 1.5rem; border-radius: 1.5rem; background: var(--bg-card); margin-bottom: 1.1rem; border: 1px solid var(--border); border-left-width: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .card-blue { border-left-color: #3b82f6; }
         .card-rose { border-left-color: #e11d48; }
         .card-amber { border-left-color: #f59e0b; }
@@ -58,28 +58,30 @@
         .option-label { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; background: var(--bg-body); border: 2.5px solid var(--border); flex-shrink: 0; }
         .selected-label { background: #3b82f6 !important; color: white !important; border-color: #3b82f6 !important; }
 
-        .font-cycle-btn { background: var(--bg-card); padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #3b82f6; border: 2px solid var(--border); }
+        .font-cycle-btn { background: var(--bg-card); padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #3b82f6; border: 2px solid var(--border); transition: 0.2s; }
         .back-nav-btn { color: #3b82f6; padding: 10px; border-radius: 14px; background: var(--bg-card); border: 2px solid var(--border); }
         .next-nav-btn { color: #3b82f6; padding: 10px; border-radius: 12px; background: var(--bg-card); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; }
         .mastery-toggle-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: 0.2s; background: var(--bg-card); border: 2px solid var(--border); }
 
-        /* --- PDF 節能與專業列印樣式 (徹底移除黑框) --- */
+        /* --- PDF 專業列印優化 (回歸理想精簡版) --- */
         .print-only { display: none; }
         .pdf-mode .print-only { display: block !important; margin-bottom: 20px; }
         
-        .pdf-mode { background: #ffffff !important; color: #000000 !important; padding: 15mm !important; width: 100% !important; height: auto !important; overflow: visible !important; }
+        /* 移除過度留白與背景，維持白底黑字 */
+        .pdf-mode { background: #ffffff !important; color: #000000 !important; padding: 10mm !important; width: 100% !important; height: auto !important; overflow: visible !important; }
         
-        /* 移除列印黑框與背景，節省墨水 */
+        /* 移除浪費墨水的框框，改用純文字段落 */
         .pdf-mode .themed-card { 
             background: #ffffff !important; 
             color: #000000 !important; 
             border: none !important; 
             border-left: none !important;
             box-shadow: none !important; 
-            margin-bottom: 1.5rem !important; 
+            margin-bottom: 1rem !important; 
             padding: 0 !important;
             border-radius: 0 !important;
-            break-inside: avoid; /* 防止文字在分頁處被切斷 */
+            break-inside: avoid; /* 核心：防止文字切斷 */
+            page-break-inside: avoid;
         }
         
         .pdf-mode .badge-mini { 
@@ -90,13 +92,17 @@
             font-weight: 900 !important; 
             margin-bottom: 4px !important;
             padding: 0 !important;
-            text-decoration: underline; /* 標題加底線以區隔 */
+            text-decoration: underline; /* 以底線標示區塊 */
         }
 
-        .pdf-mode .math-container { color: #000000 !important; font-size: 11pt !important; line-height: 1.5 !important; }
-        .pdf-mode .indent-content { color: #000000 !important; border-left: none !important; padding-left: 0 !important; margin-top: 4px !important; }
+        .pdf-mode .math-container { color: #000000 !important; font-size: 11pt !important; line-height: 1.6 !important; }
+        .pdf-mode .indent-content { 
+            color: #000000 !important; 
+            border-left: none !important; 
+            padding-left: 0 !important;
+            margin-top: 5px !important;
+        }
         
-        /* 列印時隱藏不需要的交互元素 */
         .pdf-mode .header-fixed, .pdf-mode .glass-nav, .pdf-mode button { display: none !important; }
     </style>
 </head>
@@ -119,6 +125,7 @@
                 Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
                 Brain: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
                 Config: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/><circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
+                Check: <svg width={size} height={size} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth} viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>,
                 House: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="3.5" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
                 Star: <svg width={size} height={size} fill={fill} stroke={color} strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,
                 NextArrow: <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="4.5" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>,
@@ -157,13 +164,13 @@
         };
 
         const App = () => {
-            // --- 狀態定義 ---
+            // --- 狀態管理 ---
             const [themeMode, setThemeMode] = useState(localStorage.getItem('theme_mode') || 'theme-dark');
             const [contentFontSize, setContentFontSize] = useState(Number(localStorage.getItem('contentFontSize')) || 16);
             const [userApiKey, setUserApiKey] = useState(localStorage.getItem('gemini_api_key') || "");
             const [statusMsg, setStatusMsg] = useState("");
             const [aiProgress, setAiProgress] = useState(""); 
-            const [generatedJson, setGeneratedJson] = useState(""); // 修復：明確定義產題 JSON 狀態
+            const [generatedJson, setGeneratedJson] = useState(""); 
             const [tab, setTab] = useState('home');
             const [masterBank, setMasterBank] = useState({ A:[], B:[], C:[], D:[] });
             const [masteredIds, setMasteredIds] = useState(new Set(JSON.parse(localStorage.getItem('mastered_ids') || '[]')));
@@ -230,7 +237,7 @@
                 el.classList.add('pdf-mode');
                 const opt = { 
                     margin: [10, 10, 10, 10], 
-                    filename: 'IB_Assessment_Report.pdf', 
+                    filename: 'Assessment_Report.pdf', 
                     image:{type:'jpeg',quality:1}, 
                     html2canvas:{scale:2, useCORS: true}, 
                     jsPDF:{unit:'mm',format:'a4', orientation: 'portrait'} 
@@ -238,13 +245,13 @@
                 html2pdf().set(opt).from(el).save().then(() => el.classList.remove('pdf-mode'));
             }, []);
 
-            // --- 精準切割引擎 (核心修復：徹底分離 MCQ/ERQ，防空段落) ---
+            // --- 精準切割引擎 (優化論述題範文風格與切割品質) ---
             const renderFeedback = useCallback((text, isErq, expl, prefetched) => {
                 const cards = [];
                 const sourceText = String(text || "").trim();
                 const bankInsight = String(prefetched || "").trim();
 
-                // 1. 選擇題詳解 (翡翠綠)
+                // 1. 選擇題正確詳解 (綠色)
                 if (!isErq && expl) {
                     cards.push(
                         <div key="expl" className="themed-card card-emerald">
@@ -254,13 +261,12 @@
                     );
                 }
 
-                // 2. 切割標籤定義
-                const erqMarkers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7", "Model Exemplar"];
+                // 2. 切割標籤定義 (論述與選擇徹底分離)
+                const erqMarkers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7"];
                 const mcqMarkers = ["Key Concept", "Pitfall", "Fact", "Deep Analysis"];
                 
                 const activeMarkers = isErq ? erqMarkers : mcqMarkers;
 
-                // 執行主文本切割
                 let segs = [];
                 activeMarkers.forEach(m => {
                     const idx = sourceText.indexOf(m);
@@ -287,17 +293,17 @@
                     }
                 });
 
-                // 3. 庫存參考答案 (僅論述題顯示)
+                // 3. 還原：Model Exemplar (標竿範文) - 改回考生作答風格
                 if (isErq && bankInsight.length > 10) {
                     cards.push(
                         <div key="bank-ref" className="themed-card card-slate">
-                            <span className="badge-mini border-none">Reference Model Answer</span>
-                            <div className="font-medium opacity-70 italic" dangerouslySetInnerHTML={{ __html: bioCompiler(bankInsight) }} />
+                            <span className="badge-mini border-none">Model Exemplar (Student Sample)</span>
+                            <div className="font-medium opacity-80 italic leading-relaxed text-blue-500/80" dangerouslySetInnerHTML={{ __html: bioCompiler(bankInsight) }} />
                         </div>
                     );
                 }
                 
-                // 4. 庫存科學知識 (僅選擇題顯示)
+                // 4. 庫存科學知識 (選擇題專用)
                 if (!isErq && bankInsight.length > 10) {
                     let bankSegs = [];
                     mcqMarkers.forEach(m => {
@@ -320,40 +326,10 @@
                 }
 
                 if (cards.length === 0 && sourceText.length > 10) {
-                    cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini border-none">{isErq ? "Evaluation" : "Insight"}</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(sourceText) }} /></div>);
+                    cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini border-none">Evaluation</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(sourceText) }} /></div>);
                 }
                 return cards;
             }, [cur]);
-
-            const importToBank = (json) => {
-                if (!json) return;
-                setMasterBank(prev => {
-                    const next = JSON.parse(JSON.stringify(prev));
-                    Object.keys(json).forEach(unit => {
-                        let uKey = unit.toUpperCase().replace('THEME ', '').replace('UNIT ', '').trim();
-                        if (['A','B','C','D'].includes(uKey)) {
-                            const incoming = Array.isArray(json[unit]) ? json[unit] : [json[unit]];
-                            const norm = incoming.map(q => {
-                                q.id = "GEN_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4);
-                                q.theme = uKey;
-                                q.type = (q.options && Object.keys(q.options).length >= 2) ? 'MCQ' : 'ERQ';
-                                if (q.type === 'MCQ') {
-                                    const rawVals = Object.values(q.options).slice(0, 4);
-                                    const cleanOpts = {};
-                                    ['A','B','C','D'].forEach((l, i) => { if (rawVals[i]) cleanOpts[l] = rawVals[i]; });
-                                    q.options = cleanOpts;
-                                    const a = String(q.answer).toUpperCase();
-                                    q.answer = a.includes('0') ? 'A' : (a.includes('1') ? 'B' : (a.includes('2') ? 'C' : (a.includes('3') ? 'D' : a)));
-                                }
-                                return q;
-                            });
-                            next[uKey] = [...(next[uKey] || []), ...norm];
-                        }
-                    });
-                    localStorage.setItem('local_custom_bank', JSON.stringify(next));
-                    return next; 
-                });
-            };
 
             const startPractice = () => {
                 const pool = selThemes.flatMap(t => masterBank[t] || []).filter(q => q && q.id && q.type === selType && !masteredIds.has(q.id));
@@ -366,7 +342,7 @@
 
             const handleNext = () => {
                 if (!queue || queue.length === 0) return;
-                if (currentIndex + 1 >= queue.length) { showToast("單元練習完成！"); setQuizStep('setup'); return; }
+                if (currentIndex + 1 >= queue.length) { showToast("練習完成！"); setQuizStep('setup'); return; }
                 const curId = cur?.id;
                 if (masteredIds.has(curId)) { setQueue(queue.filter(q => q.id !== curId)); } else { setCurrentIndex(prev => prev + 1); }
                 setTempAnswer('');
@@ -377,7 +353,7 @@
             const submitErq = async () => {
                 if (!tempAnswer.trim() || loading) return;
                 setLoading(true);
-                const fb = await askAI(`Question: "${cur.question}"\nStudent Answer: "${tempAnswer}"\nProvide evaluation with headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7, Model Exemplar.`, "Senior IB Bio Moderator.");
+                const fb = await askAI(`Evaluate: "${cur.question}" with Student Answer: "${tempAnswer}". MUST use EXACT headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7.`, "Senior IB Bio Moderator.");
                 if (fb) setSessionResults(prev => ({ ...prev, [cur.id]: { answer: tempAnswer, feedback: fb } }));
                 setLoading(false);
             };
@@ -391,15 +367,11 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: p }] }], systemInstruction: { parts: [{ text: s }] } })
                     });
-                    if (res.status === 429 && retries > 0) {
-                        setAiProgress(`限額重試 (${delay/1000}秒)...`);
-                        await new Promise(r => setTimeout(r, delay));
-                        return askAI(p, s, retries - 1, delay * 2);
-                    }
+                    if (res.status === 429 && retries > 0) { setAiProgress(`限額重試 (${delay/1000}s)...`); await new Promise(r => setTimeout(r, delay)); return askAI(p, s, retries - 1, delay * 2); }
                     if (!res.ok) throw new Error();
                     setAiProgress("AI 思考中...");
                     const data = await res.json();
-                    setAiProgress("解析數據中...");
+                    setAiProgress("解析數據...");
                     return data.candidates?.[0]?.content?.parts?.[0]?.text;
                 } catch (e) { setAiProgress(""); return null; }
             };
@@ -408,7 +380,7 @@
 
             return (
                 <div className="app-container">
-                    {statusMsg && <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-6 py-3 rounded-2xl shadow-2xl font-black text-xs tracking-widest">{statusMsg}</div>}
+                    {statusMsg && <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-blue-600 text-white px-6 py-3 rounded-2xl shadow-2xl font-black text-xs uppercase tracking-widest">{statusMsg}</div>}
                     <header className="header-fixed flex items-center justify-between px-4 py-3">
                         <div className="flex items-center gap-2">
                             {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm active:scale-95"><AppIcon name="House" size={24} /></button>}
@@ -436,26 +408,8 @@
                                         <h2 className="font-black text-xs uppercase italic opacity-40 flex items-center gap-2"><AppIcon name="Sparkles" size={12} /> AI Generator</h2>
                                         <div className="space-y-3">
                                             <div className="flex gap-2 p-1 rounded-xl bg-slate-800/20">{THEMES.map(t=>(<button key={t.id} onClick={()=>setBuildTheme(t.id)} className={`flex-1 py-1.5 rounded-lg font-black text-xs transition-all ${buildTheme===t.id ? 'bg-slate-700 text-white shadow-md' : 'opacity-40'}`} style={{ color: buildTheme===t.id ? t.color : 'inherit' }}>{t.id}</button>))}</div>
-                                            <button 
-                                                onClick={async()=>{
-                                                    setLoading(true); 
-                                                    const usr=`Generate 10 IB bio questions for Unit ${buildTheme}. Output JSON object { "${buildTheme}": [ ... ] }. Include prefetchedInsight with structured labels. Use plain text like ATP and Rubisco.`; 
-                                                    const r = await askAI(usr, "Expert IB Bio Teacher. JSON only."); 
-                                                    if(r) setGeneratedJson(r);
-                                                    setLoading(false); setAiProgress("");
-                                                }} 
-                                                disabled={loading} 
-                                                className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] shadow-md active:scale-95 disabled:opacity-50"
-                                            >
-                                                {loading ? (aiProgress || 'AI運作中...') : 'Generate 10 New Questions'}
-                                            </button>
+                                            <button onClick={async()=>{setLoading(true); setAiProgress("準備中..."); const usr=`Generate 10 IB bio questions for Unit ${buildTheme}. JSON object { "${buildTheme}": [ ... ] }. Include prefetchedInsight with student-style model answers. Use plain text like Rubisco.`; const r = await askAI(usr, "Expert IB Bio Teacher. JSON only."); if(r) { const m = r.match(/\{[\s\S]*\}/); if(m) importToBank(JSON.parse(m[0])); } setLoading(false); setAiProgress("");}} disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] shadow-md hover:bg-blue-500 disabled:opacity-50">{loading ? (aiProgress || '運作中...') : 'Generate 10 New Questions'}</button>
                                         </div>
-                                        {generatedJson && (
-                                            <div className="mt-4 pt-4 border-t border-slate-700 space-y-2">
-                                                <button onClick={() => { try { const match = generatedJson.match(/\{[\s\S]*\}/); if (match) { importToBank(JSON.parse(match[0])); setGeneratedJson(""); showToast("同步成功！"); } } catch(e) { showToast("解析失敗"); } }} className="w-full bg-emerald-600 text-white font-black uppercase p-3 rounded-xl shadow-lg">Add to Bank</button>
-                                                <textarea readOnly className="w-full h-24 p-3 bg-slate-950 text-blue-400 text-[8px] rounded-xl font-mono border border-slate-700" value={generatedJson} />
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             )}
@@ -464,9 +418,7 @@
                                 <div className="space-y-4">
                                     {quizStep === 'setup' ? (
                                         <div className="space-y-4 animate-up">
-                                            <div className="flex gap-2">
-                                                {['MCQ','ERQ'].map(type=>(<button key={type} onClick={()=>setSelType(type)} className={`flex-1 py-3 rounded-lg font-black border-2 transition-all ${selType===type?'bg-slate-100 text-slate-900 border-slate-100 shadow-md':'text-slate-500 bg-slate-800 border-slate-700'}`}>{type}</button>))}
-                                            </div>
+                                            <div className="flex gap-2">{['MCQ','ERQ'].map(type=>(<button key={type} onClick={()=>setSelType(type)} className={`flex-1 py-3 rounded-lg font-black border-2 transition-all ${selType===type?'bg-slate-100 text-slate-900 border-slate-100 shadow-md':'text-slate-500 bg-slate-800 border-slate-700'}`}>{type}</button>))}</div>
                                             <div className="grid grid-cols-2 gap-2">{THEMES.map(t => (<button key={t.id} onClick={()=>setSelThemes(p=>p.includes(t.id)?(p.length > 1 ? p.filter(i=>i!==t.id) : p):[...p,t.id])} className={`p-4 rounded-xl text-left border-2 transition-all ${selThemes.includes(t.id)?'bg-slate-800/40 shadow-sm':'border-slate-800 opacity-40'}`} style={{ borderColor: selThemes.includes(t.id) ? t.color : '#1f2937' }}><span className="font-black text-xs uppercase" style={{ color: selThemes.includes(t.id) ? t.color : '#475569' }}>Unit {t.id}</span></button>))}</div>
                                             <button onClick={startPractice} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase italic tracking-widest shadow-lg active:scale-95">Start Session</button>
                                         </div>
@@ -487,19 +439,19 @@
                                                     )}
                                                 </div>
                                                 {sessionResults[cur.id] && (
-                                                    <div id="report-content">
+                                                    <div id="report-content" className="mt-8"> {/* 增加首段與報告間距 */}
                                                         <div className="print-only">
-                                                            <div style={{ borderBottom: '3px solid black', paddingBottom: '8px', marginBottom: '15px' }}>
-                                                                <h1 style={{ fontSize: '18pt', fontWeight: 900, textAlign: 'center' }}>IB BIOLOGY ASSESSMENT</h1>
+                                                            <div style={{ borderBottom: '2px solid black', paddingBottom: '10px', marginBottom: '20px' }}>
+                                                                <h1 style={{ fontSize: '18pt', fontWeight: 900, textAlign: 'center' }}>IB BIOLOGY ASSESSMENT REPORT</h1>
                                                             </div>
-                                                            <div style={{ marginBottom: '12px' }}>
+                                                            <div style={{ marginBottom: '15px' }}>
                                                                 <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline' }}>EXAM QUESTION:</span>
-                                                                <div style={{ marginTop: '4px', fontStyle: 'italic', fontSize: '11pt' }} dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
+                                                                <div style={{ marginTop: '5px', fontStyle: 'italic', fontSize: '11pt' }} dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
                                                             </div>
                                                             {cur.type === 'ERQ' && (
-                                                                <div style={{ marginBottom: '25px' }}>
+                                                                <div style={{ marginBottom: '30px' }}>
                                                                     <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline' }}>YOUR RESPONSE:</span>
-                                                                    <div style={{ marginTop: '4px', fontSize: '11pt', padding: '10px', background: '#f8fafc', borderLeft: '3px solid #ccc' }} dangerouslySetInnerHTML={{ __html: bioCompiler(sessionResults[cur.id].answer) }} />
+                                                                    <div style={{ marginTop: '5px', fontSize: '11pt', padding: '10px', background: '#f8fafc', borderLeft: '3px solid #ccc' }} dangerouslySetInnerHTML={{ __html: bioCompiler(sessionResults[cur.id].answer) }} />
                                                                 </div>
                                                             )}
                                                         </div>
@@ -531,7 +483,7 @@
                                             </div>
                                         </div>
                                         <div className="p-4 bg-slate-500/5 border border-slate-700/20 rounded-2xl space-y-2"><p className="text-[9px] font-black uppercase text-blue-400">Gemini Key</p><input type="password" placeholder="API Key" className="w-full p-3 bg-transparent border-none rounded-lg text-sm text-inherit" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} /></div>
-                                        <button onClick={()=>{if(confirm("確定重置數據？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest border border-rose-500/20 active:scale-95">Reset Data</button>
+                                        <button onClick={()=>{if(confirm("確定重置所有數據？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest border border-rose-500/20 active:scale-95">Reset Data</button>
                                     </div>
                                 </div>
                             )}
