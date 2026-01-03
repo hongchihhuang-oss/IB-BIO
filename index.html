@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master Pro | 最終鎖定定版</title>
+    <title>IB Bio Master Pro v1.1.0 | 專業定案版</title>
     
     <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -27,7 +27,7 @@
         .main-scroll { flex: 1; overflow-y: auto; padding: 1.25rem; }
         .content-buffer { padding-bottom: 100px; width: 100%; }
 
-        /* 主題定義 */
+        /* 主題顏色變量 */
         .theme-light { --bg-body: #f8fafc; --bg-card: #ffffff; --text-main: #1e293b; --text-sub: #64748b; --border: #e2e8f0; --nav-bg: #ffffff; }
         .theme-dark { --bg-body: #0f172a; --bg-card: #1e293b; --text-main: #f1f5f9; --text-sub: #94a3b8; --border: #334155; --nav-bg: #1e293b; }
         .theme-midnight { --bg-body: #000000; --bg-card: #111111; --text-main: #ffffff; --text-sub: #a1a1aa; --border: #27272a; --nav-bg: #111111; }
@@ -39,7 +39,6 @@
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: var(--text-sub); font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #3b82f6; }
         
-        /* 網頁版質感卡片 */
         .themed-card { border-left-width: 6px; padding: 1.5rem; border-radius: 1.5rem; background: var(--bg-card); margin-bottom: 1.1rem; border: 1px solid var(--border); border-left-width: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .card-blue { border-left-color: #3b82f6; }
         .card-rose { border-left-color: #e11d48; }
@@ -63,24 +62,24 @@
         .next-nav-btn { color: #3b82f6; padding: 10px; border-radius: 12px; background: var(--bg-card); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; }
         .mastery-toggle-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: 0.2s; background: var(--bg-card); border: 2px solid var(--border); }
 
-        /* --- PDF 專業列印定案：省墨、字大、不切斷 --- */
+        /* --- PDF 最終優化版本：針對 A4 紙張特性 --- */
         .print-only { display: none; }
-        .pdf-mode .print-only { display: block !important; margin-bottom: 25px; }
+        .pdf-mode .print-only { display: block !important; }
         
-        /* 移除過度留白 (10mm)，背景純白 */
+        /* 移除首頁與頂部空白，邊距 10mm */
         .pdf-mode { background: #ffffff !important; color: #000000 !important; padding: 10mm !important; width: 100% !important; height: auto !important; overflow: visible !important; }
         
-        /* 核心：解決一行字被橫向切斷的問題，移除裝飾黑框 */
+        /* 徹底移除黑框，設定 break-inside 防止橫向切斷 */
         .pdf-mode .themed-card, .pdf-mode .math-container { 
             background: #ffffff !important; 
             color: #000000 !important; 
             border: none !important; 
             border-left: none !important;
             box-shadow: none !important; 
-            margin-bottom: 1.2rem !important; 
+            margin-bottom: 15px !important; 
             padding: 0 !important;
             border-radius: 0 !important;
-            break-inside: avoid !important; /* 強制不切斷 */
+            break-inside: avoid !important; 
             page-break-inside: avoid !important;
         }
         
@@ -95,14 +94,16 @@
             text-decoration: underline;
         }
 
+        /* 可讀性最佳字體大小：11pt */
         .pdf-mode .math-container { 
             color: #000000 !important; 
-            font-size: 13pt !important; /* A4 列印可讀字體 */
-            line-height: 1.8 !important; 
+            font-size: 11pt !important; 
+            line-height: 1.6 !important; 
         }
         
         .pdf-mode .indent-content { border-left: none !important; padding-left: 0 !important; margin-top: 5px !important; }
         .pdf-mode .header-fixed, .pdf-mode .glass-nav, .pdf-mode button:not(.pdf-ignore) { display: none !important; }
+        .pdf-mode #report-content { margin-top: 0 !important; padding-top: 0 !important; }
     </style>
 </head>
 <body class="theme-dark">
@@ -118,7 +119,7 @@
             { id: "D", name: "Evolution", color: "#f59e0b" }
         ];
 
-        // --- 元件圖示 ---
+        // --- 圖示元件 ---
         const AppIcon = ({ name, size = 18, color = "currentColor", fill = "none", strokeWidth = "2.5" }) => {
             const icons = {
                 Home: <svg width={size} height={size} fill={fill} stroke={color} viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}/></svg>,
@@ -162,7 +163,7 @@
         };
 
         const App = () => {
-            // --- 狀態定義 (鎖定補齊，防止 ReferenceError) ---
+            // --- 狀態定義 ---
             const [themeMode, setThemeMode] = useState(localStorage.getItem('theme_mode') || 'theme-dark');
             const [contentFontSize, setContentFontSize] = useState(Number(localStorage.getItem('contentFontSize')) || 16);
             const [userApiKey, setUserApiKey] = useState(localStorage.getItem('gemini_api_key') || "");
@@ -184,7 +185,7 @@
 
             const cur = useMemo(() => (queue && queue.length > 0) ? queue[currentIndex] : null, [queue, currentIndex]);
 
-            // --- 物理重繪監控 ---
+            // --- 物理重繪監視 ---
             useLayoutEffect(() => {
                 document.body.className = themeMode;
                 const triggerKaTeX = () => { if (window.renderMathInElement) renderMathInElement(document.body, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false }); };
@@ -224,7 +225,8 @@
                 const map = new Map();
                 Object.values(masterBank).flat().forEach(q => { if (q && q.id) map.set(q.id, q); });
                 const all = Array.from(map.values());
-                return { total: all.length, mastered: masteredIds.size, A: (masterBank.A||[]).length, B: (masterBank.B||[]).length, C: (masterBank.C||[]).length, D: (masterBank.D||[]).length };
+                const available = all.filter(q => !masteredIds.has(q.id)).length;
+                return { total: all.length, mastered: masteredIds.size, available, A: (masterBank.A||[]).length, B: (masterBank.B||[]).length, C: (masterBank.C||[]).length, D: (masterBank.D||[]).length };
             }, [masterBank, masteredIds]);
 
             const exportPDF = useCallback(() => {
@@ -232,32 +234,32 @@
                 if (!el) return;
                 el.classList.add('pdf-mode');
                 const opt = { 
-                    margin: [10, 10, 10, 10], 
-                    filename: 'IB_Assessment_Report.pdf', 
+                    margin: [0, 0, 0, 0], 
+                    filename: `Assessment_Report_v110.pdf`, 
                     image: { type: 'jpeg', quality: 1 }, 
-                    html2canvas: { scale: 2, useCORS: true }, 
+                    html2canvas: { scale: 2, useCORS: true, logging: false }, 
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
                 };
                 html2pdf().set(opt).from(el).save().then(() => el.classList.remove('pdf-mode'));
             }, []);
 
-            // --- 精準切割引擎：還原多重卡片與高品質敘事範文 ---
+            // --- 精準切割引擎：還原專家級敘事範文與多重解析卡片 ---
             const renderFeedback = useCallback((text, isErq, expl, prefetched) => {
                 const cards = [];
                 const sourceText = String(text || "").trim();
                 const bankExemplar = String(prefetched || "").trim();
 
-                // 1. 選擇題正確詳解 (最上方)
+                // 1. 選擇題正確詳解 (翡翠綠)
                 if (!isErq && expl) {
                     cards.push(
                         <div key="expl" className="themed-card card-emerald">
-                            <span className="badge-mini border-none">Correct Answer Detail: {cur?.answer}</span>
+                            <span className="badge-mini border-none">Correct Answer Analysis: {cur?.answer}</span>
                             <div className="font-semibold" dangerouslySetInnerHTML={{ __html: bioCompiler(expl) }} />
                         </div>
                     );
                 }
 
-                // 2. 切割標籤定義
+                // 2. 解析標籤與切割
                 const erqMarkers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7"];
                 const mcqMarkers = ["Key Concept", "Pitfall", "Fact", "Deep Analysis"];
                 const activeMarkers = isErq ? erqMarkers : mcqMarkers;
@@ -288,17 +290,17 @@
                     }
                 });
 
-                // 3. 還原：考生敘事範文 (Professional Model Exemplar) - 出現在末尾
+                // 3. 還原：專家級考生範文 (Professional Narrative Exemplar) - 出現在最末尾
                 if (isErq && bankExemplar.length > 5) {
                     cards.push(
                         <div key="exemplar" className="themed-card card-slate">
-                            <span className="badge-mini border-none">Professional Model Exemplar (Student Style)</span>
-                            <div className="font-medium opacity-90 italic leading-relaxed text-blue-500/90" style={{ fontSize: '1.1em' }} dangerouslySetInnerHTML={{ __html: bioCompiler(bankExemplar) }} />
+                            <span className="badge-mini border-none">Professional Model Answer (Expert Narrative)</span>
+                            <div className="font-medium opacity-90 italic leading-relaxed text-blue-500/90" style={{ fontSize: '1.05em' }} dangerouslySetInnerHTML={{ __html: bioCompiler(bankExemplar) }} />
                         </div>
                     );
                 }
                 
-                // 4. MCQ 庫存洞察 (選擇題專用多卡片)
+                // 4. MCQ 庫存洞察 (多重解析卡片還原)
                 if (!isErq && bankExemplar.length > 10) {
                     let bankSegs = [];
                     mcqMarkers.forEach(m => {
@@ -320,8 +322,8 @@
                     });
                 }
 
-                if (cards.length === 0 && sourceText.length > 10) {
-                    cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini border-none">Assessment Insight</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(sourceText) }} /></div>);
+                if (cards.length === 0 && sourceText.length > 5) {
+                    cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini border-none">Assessment Analysis</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(sourceText) }} /></div>);
                 }
                 return cards;
             }, [cur]);
@@ -343,14 +345,14 @@
                     if (!res.ok) throw new Error();
                     setAiProgress("思考中...");
                     const data = await res.json();
-                    setAiProgress("解析數據...");
+                    setAiProgress("解析結果...");
                     return data.candidates?.[0]?.content?.parts?.[0]?.text;
                 } catch (e) { setAiProgress(""); return null; }
             };
 
             const showToast = (msg) => { setStatusMsg(msg); setTimeout(() => setStatusMsg(""), 3000); };
 
-            // --- 核心修復：題目過濾器邏輯 ---
+            // --- 核心修復：題目過濾器與重複排除 ---
             const startPractice = () => {
                 const pool = THEMES_CONST
                     .filter(t => selThemes.includes(t.id))
@@ -360,7 +362,7 @@
                 if (pool.length) {
                     setQueue([...pool].sort(() => Math.random() - 0.5));
                     setCurrentIndex(0); setQuizStep('practice'); setSessionResults({}); setTempAnswer('');
-                } else showToast("目前選中的單元無可用題目");
+                } else showToast("選中單元無可用題目 (或已全數掌握)");
             };
 
             const handleMcqSelect = (key) => {
@@ -374,7 +376,7 @@
             const submitErq = async () => {
                 if (!tempAnswer.trim() || loading) return;
                 setLoading(true);
-                const fb = await askAI(`Evaluate: "${cur.question}" with Student Answer: "${tempAnswer}". Use headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7.`, "Senior IB Bio Moderator.");
+                const fb = await askAI(`Evaluate: "${cur.question}" with Student Answer: "${tempAnswer}". MUST use headers: Mark Scheme Analysis, Knowledge Gaps, Pathway to Level 7.`, "Senior IB Bio Moderator.");
                 if (fb) setSessionResults(prev => ({ ...prev, [cur.id]: { answer: tempAnswer, feedback: fb } }));
                 setLoading(false);
             };
@@ -388,13 +390,13 @@
                             {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm active:scale-95"><AppIcon name="House" size={24} /></button>}
                             {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-800/10 px-2.5 py-1.5 rounded-xl border border-slate-700/20 flex items-center gap-1"><span className="text-[11px] font-black uppercase">Q {currentIndex + 1} / {queue.length}</span></div>}
                         </div>
-                        <h1 className="font-black italic text-sm uppercase tracking-widest text-blue-500 opacity-80">IB Bio Master Pro</h1>
+                        <h1 className="font-black italic text-sm uppercase tracking-widest text-blue-500 opacity-80">IB Bio Master Pro <span className="text-[10px] opacity-40 ml-1">v1.1.0</span></h1>
                         <div className="flex items-center gap-2">
                             {tab === 'quiz' && quizStep === 'practice' && cur && (
                                 <button onClick={() => { setMasteredIds(prev => { const next = new Set(prev); if (next.has(cur.id)) next.delete(cur.id); else next.add(cur.id); localStorage.setItem('mastered_ids', JSON.stringify(Array.from(next))); return next; }); }} className={`mastery-toggle-btn shadow-sm active:scale-95 ${masteredIds.has(cur.id) ? 'bg-amber-500 text-white border-amber-500' : ''}`}><AppIcon name="Star" size={20} fill={masteredIds.has(cur.id) ? "white" : "none"} /></button>
                             )}
                             {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setContentFontSize(f => f >= 23 ? 14 : (f===14?16:f+3))} className="font-cycle-btn shadow-sm">Aa</button>}
-                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => { if(currentIndex+1 >= queue.length) { showToast("完成練習！"); setQuizStep('setup'); } else { setCurrentIndex(i=>i+1); setTempAnswer(""); } }} className="next-nav-btn shadow-sm active:scale-95"><AppIcon name="NextArrow" size={22} /></button>}
+                            {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => { if(currentIndex+1 >= queue.length) { showToast("練習完成！"); setQuizStep('setup'); } else { setCurrentIndex(i=>i+1); setTempAnswer(""); } }} className="next-nav-btn shadow-sm active:scale-95"><AppIcon name="NextArrow" size={22} /></button>}
                         </div>
                     </header>
 
@@ -404,8 +406,8 @@
                                 <div className="space-y-4 animate-up">
                                     <div className="themed-card card-slate text-center border-none py-8 shadow-none">
                                         <div className="grid grid-cols-2 gap-3 mb-6">
-                                            <div className="p-3 rounded-2xl border border-slate-700/20 bg-slate-800/20"><p className="text-xl font-black text-blue-400">{Array.from(new Set(Object.values(masterBank).flat().map(q => q?.id))).filter(Boolean).length}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Stock</p></div>
-                                            <div className="p-3 rounded-2xl border border-slate-700/20 bg-slate-800/20"><p className="text-xl font-black text-emerald-400">{masteredIds.size}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Mastered</p></div>
+                                            <div className="p-3 rounded-2xl border border-slate-700/20 bg-slate-800/20"><p className="text-xl font-black text-blue-400">{stats.available}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Available</p></div>
+                                            <div className="p-3 rounded-2xl border border-slate-700/20 bg-slate-800/20"><p className="text-xl font-black text-emerald-400">{stats.mastered}</p><p className="text-[9px] opacity-40 uppercase font-black tracking-widest">Mastered</p></div>
                                         </div>
                                         <div className="grid grid-cols-4 gap-2">{THEMES_CONST.map(t => (<div key={t.id} className="text-center"><p className="text-[10px] font-black uppercase" style={{ color: t.color }}>{t.id}</p><p className="text-sm font-black">{(masterBank[t.id] || []).length}</p></div>))}</div>
                                     </div>
@@ -414,12 +416,12 @@
                                         <div className="space-y-3">
                                             <div className="flex gap-2 p-1 rounded-xl bg-slate-800/20">{THEMES_CONST.map(t=>(<button key={t.id} onClick={()=>setBuildTheme(t.id)} className={`flex-1 py-1.5 rounded-lg font-black text-xs transition-all ${buildTheme===t.id ? 'bg-slate-700 text-white shadow-md' : 'opacity-40'}`} style={{ color: buildTheme===t.id ? t.color : 'inherit' }}>{t.id}</button>))}</div>
                                             <button onClick={async()=>{
-                                                setLoading(true); setAiProgress("準備中...");
-                                                const prompt = `Generate 10 IB bio questions for Unit ${buildTheme}. JSON { "${buildTheme}": [ ... ] }. For ERQs, MUST provide "prefetchedInsight" as a HIGH-QUALITY narrative student answer (3-4 paragraphs), no bullet points. Use Rubisco, ATP.`;
-                                                const r = await askAI(prompt, "Expert IB Bio Teacher. JSON only.");
+                                                setLoading(true); setAiProgress("連線中...");
+                                                const prompt = `Generate 10 IB biology questions for Unit ${buildTheme}. JSON { "${buildTheme}": [ ... ] }. For ERQs, you MUST provide a "prefetchedInsight" containing a HIGH-QUALITY NARRATIVE 7-mark model answer (3-4 paragraphs) in an expert tone, strictly avoiding bullet points. Use scientific terms like ATP, Rubisco.`;
+                                                const r = await askAI(prompt, "Expert IB Bio Teacher.");
                                                 if(r) { const m = r.match(/\{[\s\S]*\}/); if(m) { const j = JSON.parse(m[0]); setMasterBank(prev => { const next={...prev}; next[buildTheme]=[...(next[buildTheme]||[]),...j[buildTheme].map(q=>({...q, id:'GEN_'+Date.now()+'_'+Math.random().toString(36).substr(2,4), theme:buildTheme, type:q.options?'MCQ':'ERQ'}))]; localStorage.setItem('local_custom_bank', JSON.stringify(next)); return next; }); showToast("成功加入 10 題！"); } }
                                                 setLoading(false); setAiProgress("");
-                                            }} disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] shadow-md hover:bg-blue-500 disabled:opacity-50 transition-all">{loading ? (aiProgress || '運作中...') : 'Generate 10 New Questions'}</button>
+                                            }} disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] shadow-md hover:bg-blue-500 disabled:opacity-50 transition-all">{loading ? (aiProgress || 'AI運作中...') : 'Generate 10 New Questions'}</button>
                                         </div>
                                     </div>
                                 </div>
@@ -453,13 +455,13 @@
                                                     <div id="report-content" className="mt-12">
                                                         <div className="print-only">
                                                             <div style={{ borderBottom: '2px solid black', paddingBottom: '10px', marginBottom: '20px', textAlign: 'center' }}>
-                                                                <h1 style={{ fontSize: '18pt', fontWeight: 900 }}>IB BIOLOGY ASSESSMENT REPORT</h1>
+                                                                <h1 style={{ fontSize: '16pt', fontWeight: 900 }}>IB BIOLOGY ASSESSMENT REPORT</h1>
                                                             </div>
                                                             <div style={{ marginBottom: '15px' }}>
                                                                 <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline' }}>EXAM QUESTION:</span>
                                                                 <div style={{ marginTop: '4px', fontStyle: 'italic', fontSize: '12pt' }} dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
                                                             </div>
-                                                            <div style={{ marginBottom: '30px' }}>
+                                                            <div style={{ marginBottom: '25px' }}>
                                                                 <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline' }}>YOUR RESPONSE:</span>
                                                                 <div style={{ marginTop: '4px', fontSize: '11pt', padding: '10px', background: '#f8fafc', borderLeft: '3px solid #3b82f6' }} dangerouslySetInnerHTML={{ __html: bioCompiler(sessionResults[cur.id].answer) }} />
                                                             </div>
@@ -486,7 +488,7 @@
                                         <div className="space-y-2">
                                             <p className="text-[10px] font-black uppercase opacity-40 italic tracking-widest">Appearance</p>
                                             <div className="grid grid-cols-3 gap-2">
-                                                {[ {id:'theme-light', n:'Light'}, {id:'theme-dark', n:'Dark'}, {id:'theme-midnight', n:'Night'} ].map(t=>(
+                                                {[ {id:'theme-light', n:'Light'}, {id:'theme-dark', n:'Dark'}, {id:'theme-midnight', n:'Midnight'} ].map(t=>(
                                                     <button key={t.id} onClick={()=>{setThemeMode(t.id); localStorage.setItem('theme_mode', t.id);}} className={`py-3 rounded-xl font-black text-[10px] border-2 transition-all ${themeMode===t.id ? 'border-blue-500 bg-blue-500/10 text-blue-500' : 'border-slate-700/20 text-slate-500'}`}>{t.n}</button>
                                                 ))}
                                             </div>
