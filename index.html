@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IB Bio Master Pro | 最終穩定定版</title>
+    <title>IB Bio Master Pro | 定版穩定專業列印版</title>
     
     <!-- 核心資源載入 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -39,7 +39,6 @@
         .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: var(--text-sub); font-weight: 800; font-size: 0.7rem; cursor: pointer; transition: 0.2s; gap: 4px; }
         .nav-active { color: #3b82f6; }
         
-        /* 網頁版卡片 */
         .themed-card { border-left-width: 6px; padding: 1.5rem; border-radius: 1.5rem; background: var(--bg-card); margin-bottom: 1.1rem; border: 1px solid var(--border); border-left-width: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .card-blue { border-left-color: #3b82f6; }
         .card-rose { border-left-color: #e11d48; }
@@ -58,29 +57,28 @@
         .option-label { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; background: var(--bg-body); border: 2.5px solid var(--border); flex-shrink: 0; }
         .selected-label { background: #3b82f6 !important; color: white !important; border-color: #3b82f6 !important; }
 
-        .font-cycle-btn { background: var(--bg-card); padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #3b82f6; border: 2px solid var(--border); transition: 0.2s; }
+        .font-cycle-btn { background: var(--bg-card); padding: 8px 16px; border-radius: 12px; font-weight: 900; font-size: 16px; color: #3b82f6; border: 2px solid var(--border); }
         .back-nav-btn { color: #3b82f6; padding: 10px; border-radius: 14px; background: var(--bg-card); border: 2px solid var(--border); }
         .next-nav-btn { color: #3b82f6; padding: 10px; border-radius: 12px; background: var(--bg-card); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; }
         .mastery-toggle-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; transition: 0.2s; background: var(--bg-card); border: 2px solid var(--border); }
 
-        /* --- PDF 理想列印方案 (回歸簡潔) --- */
+        /* --- PDF 專業列印優化 (最終修復版本) --- */
         .print-only { display: none; }
         .pdf-mode .print-only { display: block !important; margin-bottom: 25px; }
         
-        /* 移除過度留白，定案 10mm 邊距 */
-        .pdf-mode { background: #ffffff !important; color: #000000 !important; padding: 10mm !important; width: 100% !important; height: auto !important; overflow: visible !important; }
+        .pdf-mode { background: #ffffff !important; color: #000000 !important; padding: 15mm !important; width: 100% !important; height: auto !important; overflow: visible !important; }
         
-        /* 徹底移除列印黑框，改用文字間距 */
+        /* 移除浪費墨水的黑框，增加字體大小與行高以提升可讀性 */
         .pdf-mode .themed-card { 
             background: #ffffff !important; 
             color: #000000 !important; 
             border: none !important; 
             border-left: none !important;
             box-shadow: none !important; 
-            margin-bottom: 1.2rem !important; 
+            margin-bottom: 1.5rem !important; 
             padding: 0 !important;
             border-radius: 0 !important;
-            break-inside: avoid; /* 防止文字一行被切兩段 */
+            break-inside: avoid; /* 防止在分頁處橫向切斷一行字 */
             page-break-inside: avoid;
         }
         
@@ -88,15 +86,26 @@
             background: none !important; 
             color: #000000 !important; 
             border: none !important; 
-            font-size: 11pt !important; 
+            font-size: 12pt !important; /* 加大標題字體 */
             font-weight: 900 !important; 
-            margin-bottom: 5px !important;
+            margin-bottom: 8px !important;
             padding: 0 !important;
             text-decoration: underline;
         }
 
-        .pdf-mode .math-container { color: #000000 !important; font-size: 11pt !important; line-height: 1.6 !important; }
-        .pdf-mode .indent-content { color: #000000 !important; border-left: none !important; padding-left: 0 !important; margin-top: 5px !important; }
+        .pdf-mode .math-container { 
+            color: #000000 !important; 
+            font-size: 13pt !important; /* A4 列印最適字體大小 */
+            line-height: 1.7 !important; 
+            break-inside: avoid;
+        }
+        
+        .pdf-mode .indent-content { 
+            color: #000000 !important; 
+            border-left: none !important; 
+            padding-left: 0 !important;
+            margin-top: 5px !important;
+        }
         
         .pdf-mode .header-fixed, .pdf-mode .glass-nav, .pdf-mode button { display: none !important; }
     </style>
@@ -215,13 +224,21 @@
                 loadData();
             }, []);
 
+            const stats = useMemo(() => {
+                const map = new Map();
+                Object.values(masterBank).flat().forEach(q => { if (q && q.id) map.set(q.id, q); });
+                const all = Array.from(map.values());
+                const count = (tid) => all.filter(q => q.theme === tid || String(q.id).startsWith(tid)).length;
+                return { total: all.length, mastered: masteredIds.size, A: count('A'), B: count('B'), C: count('C'), D: count('D') };
+            }, [masterBank, masteredIds]);
+
             const exportPDF = useCallback(() => {
                 const el = document.getElementById('report-content');
                 if (!el) return;
                 el.classList.add('pdf-mode');
                 const opt = { 
-                    margin: [10, 10, 10, 10], 
-                    filename: 'IB_Assessment_Report.pdf', 
+                    margin: [15, 15, 15, 15], 
+                    filename: 'Assessment_Report.pdf', 
                     image:{type:'jpeg',quality:1}, 
                     html2canvas:{scale:2, useCORS: true}, 
                     jsPDF:{unit:'mm',format:'a4', orientation: 'portrait'} 
@@ -229,7 +246,7 @@
                 html2pdf().set(opt).from(el).save().then(() => el.classList.remove('pdf-mode'));
             }, []);
 
-            // --- 精準切割引擎 (修正：還原考生例子與標題完整性) ---
+            // --- 精準切割與範文呈現引擎 (核心修正：強化內容完整性) ---
             const renderFeedback = useCallback((text, isErq, expl, prefetched) => {
                 const cards = [];
                 const sourceText = String(text || "").trim();
@@ -245,7 +262,7 @@
                     );
                 }
 
-                // 2. 切割標籤定義 (論述與選擇徹底分離)
+                // 2. 切割標籤集
                 const erqMarkers = ["Mark Scheme Analysis", "Knowledge Gaps", "Pathway to Level 7"];
                 const mcqMarkers = ["Key Concept", "Pitfall", "Fact", "Deep Analysis"];
                 const activeMarkers = isErq ? erqMarkers : mcqMarkers;
@@ -276,11 +293,11 @@
                     }
                 });
 
-                // 3. 還原：Model Exemplar (標竿範文) - 核心例子還原 (論述題專用)
+                // 3. 核心範文例子：Professional Full-Mark Exemplar (論述題專用)
                 if (isErq && bankInsight.length > 10) {
                     cards.push(
                         <div key="bank-ref" className="themed-card card-slate">
-                            <span className="badge-mini border-none">Model Exemplar (Student Sample)</span>
+                            <span className="badge-mini border-none">Professional Full-Mark Exemplar</span>
                             <div className="font-medium opacity-80 italic leading-relaxed text-blue-500/90" dangerouslySetInnerHTML={{ __html: bioCompiler(bankInsight) }} />
                         </div>
                     );
@@ -308,11 +325,9 @@
                     });
                 }
 
-                // 5. 兜底顯示：如果切割完沒東西，直接顯示原始回覆
                 if (cards.length === 0 && sourceText.length > 10) {
-                    cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini border-none">Evaluation Insight</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(sourceText) }} /></div>);
+                    cards.push(<div key="raw" className="themed-card card-blue"><span className="badge-mini border-none">Assessment Insight</span><div dangerouslySetInnerHTML={{ __html: bioCompiler(sourceText) }} /></div>);
                 }
-                
                 return cards;
             }, [cur]);
 
@@ -343,14 +358,18 @@
 
             const askAI = async (p, s, retries = 5, delay = 1000) => {
                 if (!userApiKey) return null;
-                setAiProgress("準備連線...");
+                setAiProgress("連線中...");
                 try {
                     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${userApiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: p }] }], systemInstruction: { parts: [{ text: s }] } })
                     });
-                    if (res.status === 429 && retries > 0) { setAiProgress(`限額重試 (${delay/1000}s)...`); await new Promise(r => setTimeout(r, delay)); return askAI(p, s, retries - 1, delay * 2); }
+                    if (res.status === 429 && retries > 0) {
+                        setAiProgress(`限額重試 (${delay/1000}s)...`);
+                        await new Promise(r => setTimeout(r, delay));
+                        return askAI(p, s, retries - 1, delay * 2);
+                    }
                     if (!res.ok) throw new Error();
                     setAiProgress("AI 思考中...");
                     const data = await res.json();
@@ -367,7 +386,7 @@
                     <header className="header-fixed flex items-center justify-between px-4 py-3">
                         <div className="flex items-center gap-2">
                             {tab === 'quiz' && quizStep === 'practice' && <button onClick={() => setQuizStep('setup')} className="back-nav-btn shadow-sm active:scale-95"><AppIcon name="House" size={24} /></button>}
-                            {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-800/10 px-2.5 py-1.5 rounded-xl border border-slate-700/20 flex items-center gap-1"><span className="text-[11px] font-black uppercase">Q {currentIndex + 1} / {queue.length}</span></div>}
+                            {tab === 'quiz' && quizStep === 'practice' && <div className="ml-2 bg-slate-800/10 px-2.5 py-1.5 rounded-xl border border-slate-700/20 flex items-center gap-1"><span className="text-[11px] font-black uppercase tracking-widest">Q {currentIndex + 1} / {queue.length}</span></div>}
                         </div>
                         <h1 className="font-black italic text-sm uppercase tracking-widest text-blue-500 opacity-80">IB Bio Master Pro</h1>
                         <div className="flex items-center gap-2">
@@ -394,7 +413,7 @@
                                         <h2 className="font-black text-xs uppercase italic opacity-40 flex items-center gap-2"><AppIcon name="Sparkles" size={12} /> AI Generator</h2>
                                         <div className="space-y-3">
                                             <div className="flex gap-2 p-1 rounded-xl bg-slate-800/20">{THEMES_LIST.map(t=>(<button key={t.id} onClick={()=>setBuildTheme(t.id)} className={`flex-1 py-1.5 rounded-lg font-black text-xs transition-all ${buildTheme===t.id ? 'bg-slate-700 text-white shadow-md' : 'opacity-40'}`} style={{ color: buildTheme===t.id ? t.color : 'inherit' }}>{t.id}</button>))}</div>
-                                            <button onClick={async()=>{setLoading(true); setAiProgress("準備中..."); const usr=`Generate 10 IB bio questions for Unit ${buildTheme}. JSON { "${buildTheme}": [ ... ] }. Include model answer. Use ATP, Rubisco.`; const r = await askAI(usr, "Expert IB Bio Teacher."); if(r) { const m = r.match(/\{[\s\S]*\}/); if(m) { const j = JSON.parse(m[0]); importToBank(j); showToast("同步成功！"); } } setLoading(false); setAiProgress("");}} disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] shadow-md hover:bg-blue-500 disabled:opacity-50 transition-all">{loading ? (aiProgress || '運作中...') : 'Generate 10 New Questions'}</button>
+                                            <button onClick={async()=>{setLoading(true); setAiProgress("準備中..."); const usr=`Generate 10 IB bio questions for Unit ${buildTheme}. JSON object { "${buildTheme}": [ ... ] }. Include Full-Mark Model Answers. Use scientific terms like Rubisco, ATP.`; const r = await askAI(usr, "Expert IB Bio Teacher."); if(r) { const m = r.match(/\{[\s\S]*\}/); if(m) { setGeneratedJson(r); importToBank(JSON.parse(m[0])); showToast("同步成功！"); } } setLoading(false); setAiProgress("");}} disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] shadow-md hover:bg-blue-500 disabled:opacity-50 transition-all">{loading ? (aiProgress || '運作中...') : 'Generate 10 New Questions'}</button>
                                         </div>
                                     </div>
                                 </div>
@@ -425,19 +444,19 @@
                                                     )}
                                                 </div>
                                                 {sessionResults[cur.id] && (
-                                                    <div id="report-content" className="mt-10"> {/* 核心修正：增加首段間距 */}
+                                                    <div id="report-content" className="mt-10"> {/* 增加首段間距 */}
                                                         <div className="print-only">
-                                                            <div style={{ borderBottom: '2px solid black', paddingBottom: '10px', marginBottom: '20px' }}>
-                                                                <h1 style={{ fontSize: '18pt', fontWeight: 900, textAlign: 'center' }}>IB BIOLOGY ASSESSMENT REPORT</h1>
+                                                            <div style={{ borderBottom: '3px solid black', paddingBottom: '10px', marginBottom: '20px' }}>
+                                                                <h1 style={{ fontSize: '18pt', fontWeight: 900, textAlign: 'center' }}>IB BIOLOGY ASSESSMENT</h1>
                                                             </div>
                                                             <div style={{ marginBottom: '15px' }}>
-                                                                <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline' }}>EXAM QUESTION:</span>
-                                                                <div style={{ marginTop: '4px', fontStyle: 'italic', fontSize: '11pt' }} dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
+                                                                <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline' }}>QUESTION:</span>
+                                                                <div style={{ marginTop: '5px', fontStyle: 'italic', fontSize: '12pt' }} dangerouslySetInnerHTML={{ __html: bioCompiler(cur.question) }} />
                                                             </div>
                                                             {cur.type === 'ERQ' && (
                                                                 <div style={{ marginBottom: '30px' }}>
                                                                     <span style={{ fontSize: '11pt', fontWeight: 900, textDecoration: 'underline' }}>YOUR RESPONSE:</span>
-                                                                    <div style={{ marginTop: '4px', fontSize: '11pt', padding: '10px', background: '#f8fafc', borderLeft: '3px solid #ccc' }} dangerouslySetInnerHTML={{ __html: bioCompiler(sessionResults[cur.id].answer) }} />
+                                                                    <div style={{ marginTop: '5px', fontSize: '12pt', padding: '10px', background: '#f8fafc', borderLeft: '3px solid #3b82f6' }} dangerouslySetInnerHTML={{ __html: bioCompiler(sessionResults[cur.id].answer) }} />
                                                                 </div>
                                                             )}
                                                         </div>
@@ -469,7 +488,7 @@
                                             </div>
                                         </div>
                                         <div className="p-4 bg-slate-500/5 border border-slate-700/20 rounded-2xl space-y-2"><p className="text-[9px] font-black uppercase text-blue-400">Gemini Key</p><input type="password" placeholder="API Key" className="w-full p-3 bg-transparent border-none rounded-lg text-sm text-inherit" value={userApiKey} onChange={(e)=>{setUserApiKey(e.target.value); localStorage.setItem('gemini_api_key', e.target.value);}} /></div>
-                                        <button onClick={()=>{if(confirm("確定重置數據？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest border border-rose-500/20 active:scale-95">Reset Data</button>
+                                        <button onClick={()=>{if(confirm("重置所有數據？")){localStorage.clear(); window.location.reload();}}} className="w-full py-3 text-[10px] font-black text-rose-500 bg-rose-50 rounded-lg uppercase tracking-widest border border-rose-500/20 active:scale-95">Reset Data</button>
                                     </div>
                                 </div>
                             )}
